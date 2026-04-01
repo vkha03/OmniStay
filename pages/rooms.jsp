@@ -159,11 +159,8 @@
               <div class="card-body p-4 d-flex flex-column">
                 <div>
                     <span class="badge rounded-pill mb-2" style="background: rgba(26, 107, 90, 0.1); color: var(--primary); font-size: 0.65rem; letter-spacing: 0.1em;">
-                      <%= typeName %>
+                      <h5 class="font-display fw-normal mb-1"><%= typeName %></h
                     </span>
-                    <h4 class="font-display fw-normal mb-2">
-                      <%= typeName %>
-                    </h4>
                     <p class="text-muted mb-3" style="font-size: 0.82rem; line-height: 1.6">
                       <%= des %>
                     </p>
