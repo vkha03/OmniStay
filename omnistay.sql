@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th3 29, 2026 lúc 05:58 AM
+-- Thời gian đã tạo: Th4 01, 2026 lúc 05:48 AM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
 
@@ -39,6 +39,15 @@ CREATE TABLE `bookings` (
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Đang đổ dữ liệu cho bảng `bookings`
+--
+
+INSERT INTO `bookings` (`id`, `booking_code`, `guest_id`, `check_in_date`, `check_out_date`, `total_amount`, `notes`, `status`, `created_at`) VALUES
+(1, 'BKG2603001', 1, '2026-03-28', '2026-03-30', 7250000, 'Kỷ niệm ngày cưới, cần chuẩn bị hoa tươi', 'CHECKED_IN', '2026-03-25 10:00:00'),
+(2, 'BKG2603002', 2, '2026-04-05', '2026-04-07', 3200000, 'Xin phòng tầng cao', 'CONFIRMED', '2026-03-29 08:30:00'),
+(3, 'BKG2603003', 4, '2026-03-20', '2026-03-22', 2000000, 'Xuất hóa đơn công ty', 'COMPLETED', '2026-03-15 14:20:00');
+
 -- --------------------------------------------------------
 
 --
@@ -50,6 +59,15 @@ CREATE TABLE `booking_rooms` (
   `room_id` int(11) NOT NULL,
   `historical_price` decimal(12,0) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `booking_rooms`
+--
+
+INSERT INTO `booking_rooms` (`booking_id`, `room_id`, `historical_price`) VALUES
+(1, 11, 3200000),
+(2, 6, 1600000),
+(3, 1, 950000);
 
 -- --------------------------------------------------------
 
@@ -65,6 +83,14 @@ CREATE TABLE `booking_services` (
   `historical_price` decimal(12,0) NOT NULL,
   `used_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `booking_services`
+--
+
+INSERT INTO `booking_services` (`id`, `booking_id`, `service_id`, `quantity`, `historical_price`, `used_at`) VALUES
+(1, 1, 2, 1, 850000, '2026-03-28 16:00:00'),
+(2, 3, 6, 1, 100000, '2026-03-21 09:00:00');
 
 -- --------------------------------------------------------
 
@@ -82,6 +108,14 @@ CREATE TABLE `contacts` (
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Đang đổ dữ liệu cho bảng `contacts`
+--
+
+INSERT INTO `contacts` (`id`, `full_name`, `email`, `subject`, `message`, `status`, `created_at`) VALUES
+(1, 'Hoàng Tú', 'tu.hoang@gmail.com', 'Hỏi về tiệc cưới', 'Khách sạn có nhận tổ chức tiệc cưới quy mô 100 khách không?', 'UNREAD', '2026-03-29 23:42:07'),
+(2, 'Lý Mạc Sầu', 'lymacsau@gmail.com', 'Thất lạc đồ', 'Tôi để quên áo khoác ở phòng 101 ngày 22/3, xin kiểm tra giúp.', 'RESOLVED', '2026-03-29 23:42:07');
+
 -- --------------------------------------------------------
 
 --
@@ -95,6 +129,16 @@ CREATE TABLE `guests` (
   `email` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Đang đổ dữ liệu cho bảng `guests`
+--
+
+INSERT INTO `guests` (`id`, `full_name`, `phone_number`, `email`) VALUES
+(1, 'Trần Minh Khoa', '0901234567', 'khoa.tran@example.com'),
+(2, 'Nguyễn Thị Lan', '0987654321', 'lan.nguyen@example.com'),
+(3, 'Phạm Hồng Anh', '0912345678', 'honganh.pham@example.com'),
+(4, 'Lê Văn Đạt', '0933445566', 'dat.le@example.com');
+
 -- --------------------------------------------------------
 
 --
@@ -107,6 +151,23 @@ CREATE TABLE `rooms` (
   `room_type_id` int(11) NOT NULL,
   `status` varchar(50) DEFAULT 'AVAILABLE' COMMENT 'AVAILABLE, OCCUPIED, CLEANING, MAINTENANCE'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `rooms`
+--
+
+INSERT INTO `rooms` (`id`, `room_number`, `room_type_id`, `status`) VALUES
+(1, '101', 1, 'AVAILABLE'),
+(2, '102', 1, 'AVAILABLE'),
+(3, '103', 1, 'OCCUPIED'),
+(4, '104', 1, 'CLEANING'),
+(5, '105', 1, 'AVAILABLE'),
+(6, '201', 2, 'AVAILABLE'),
+(7, '202', 2, 'OCCUPIED'),
+(8, '203', 2, 'AVAILABLE'),
+(9, '204', 2, 'MAINTENANCE'),
+(10, '301', 3, 'AVAILABLE'),
+(11, '302', 3, 'OCCUPIED');
 
 -- --------------------------------------------------------
 
@@ -123,6 +184,15 @@ CREATE TABLE `room_types` (
   `image_url` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Đang đổ dữ liệu cho bảng `room_types`
+--
+
+INSERT INTO `room_types` (`id`, `type_name`, `base_price`, `max_occupancy`, `description`, `image_url`) VALUES
+(1, 'Ninh Kieu Standard', 950000, 2, 'Sàn gỗ sồi tự nhiên, thiết kế tối giản, view nhìn ra trung tâm thành phố nhộn nhịp.', 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&q=80'),
+(2, 'Hau River Deluxe', 1600000, 2, 'Ban công rộng đón gió sông Hậu, bồn tắm sứ thủ công và nệm tiêu chuẩn 5 sao.', 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&q=80'),
+(3, 'Mekong Heritage Suite', 3200000, 3, 'Phòng khách hoàng gia, nội thất khảm trai tinh xảo. Miễn phí trà chiều và đưa đón sân bay.', 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80');
+
 -- --------------------------------------------------------
 
 --
@@ -135,6 +205,18 @@ CREATE TABLE `services` (
   `price` decimal(12,0) NOT NULL,
   `unit` varchar(50) NOT NULL COMMENT 'Bottle, Hour, Person'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `services`
+--
+
+INSERT INTO `services` (`id`, `service_name`, `price`, `unit`) VALUES
+(1, 'Tour Chợ Nổi Cái Răng VIP', 500000, 'Người'),
+(2, 'Sen Spa & Massage 90 phút', 850000, 'Lượt'),
+(3, 'Xe Limousine đưa đón Sân bay', 350000, 'Chuyến'),
+(4, 'Trà chiều Jade Lounge', 450000, 'Set 2 người'),
+(5, 'Giường phụ (Extra Bed)', 400000, 'Đêm'),
+(6, 'Giặt ủi tiêu chuẩn', 100000, 'Bộ');
 
 -- --------------------------------------------------------
 
@@ -150,6 +232,15 @@ CREATE TABLE `staff` (
   `role` varchar(20) NOT NULL DEFAULT 'RECEPTIONIST' COMMENT 'ADMIN or RECEPTIONIST',
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `staff`
+--
+
+INSERT INTO `staff` (`id`, `full_name`, `email`, `password`, `role`, `created_at`) VALUES
+(1, 'Quản trị viên', 'admin@omnistay.vn', '123456', 'ADMIN', '2026-03-29 23:42:07'),
+(2, 'Nguyễn Thị Lễ Tân', 'reception1@omnistay.vn', '123456', 'RECEPTIONIST', '2026-03-29 23:42:07'),
+(3, 'Trần Văn Hỗ Trợ', 'reception2@omnistay.vn', '123456', 'RECEPTIONIST', '2026-03-29 23:42:07');
 
 --
 -- Chỉ mục cho các bảng đã đổ
@@ -225,49 +316,49 @@ ALTER TABLE `staff`
 -- AUTO_INCREMENT cho bảng `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT cho bảng `booking_services`
 --
 ALTER TABLE `booking_services`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT cho bảng `contacts`
 --
 ALTER TABLE `contacts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT cho bảng `guests`
 --
 ALTER TABLE `guests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT cho bảng `rooms`
 --
 ALTER TABLE `rooms`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT cho bảng `room_types`
 --
 ALTER TABLE `room_types`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT cho bảng `services`
 --
 ALTER TABLE `services`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT cho bảng `staff`
 --
 ALTER TABLE `staff`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Các ràng buộc cho các bảng đã đổ

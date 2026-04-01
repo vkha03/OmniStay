@@ -109,7 +109,7 @@ pageEncoding="UTF-8"%>
           >
         </li>
         <li class="nav-item">
-          <a class="nav-link nav-link-custom" href="rooms.jsp">Phòng</a>
+          <a class="nav-link nav-link-custom" href="./pages/rooms.jsp">Phòng</a>
         </li>
         <li class="nav-item">
           <a class="nav-link nav-link-custom" href="#amenities">Tiện ích</a>
@@ -122,7 +122,9 @@ pageEncoding="UTF-8"%>
         </li>
       </ul>
 
-      <a href="rooms.jsp" class="btn btn-booking rounded-pill"> Đặt phòng </a>
+      <a href="./pages/rooms.jsp" class="btn btn-booking rounded-pill">
+        Đặt phòng
+      </a>
     </div>
   </div>
 </nav>
