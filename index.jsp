@@ -734,9 +734,8 @@
               </div>
               <div class="card-body p-4">
                 <span class="badge rounded-pill mb-2" style="background: rgba(26, 107, 90, 0.1); color: var(--primary); font-size: 0.65rem;">
-                  <%= maxOcc > 4 ? "LUXURY" : "EXCLUSIVE" %>
+                  <h5 class="font-display fw-normal mb-1"><%= typeName %></h
                 </span>
-                <h5 class="font-display fw-normal mb-1"><%= typeName %></h5>
                 <p class="text-muted mb-2" style="font-size: 0.78rem; line-height: 1.6"><%= desc %></p>
                 <div class="d-flex flex-wrap gap-1 mb-3">
                   <span class="badge rounded-pill bg-light text-secondary border" style="font-size: 0.65rem"><%= maxOcc %> Khách</span>
