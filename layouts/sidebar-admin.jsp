@@ -7,7 +7,7 @@
 
 <aside class="sidebar d-flex flex-column">
     <div class="brand font-display text-white">
-        Omni<span>Stay</span>
+       <a href="../doanmonhoc/index.jsp" class="text-decoration-none text-white">Omni<span>Stay</span></a>  
         <div style="font-size: 0.65rem; font-family: 'Outfit'; letter-spacing: 0.2em; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-top: 4px;">Quản trị viên</div>
     </div>
     
