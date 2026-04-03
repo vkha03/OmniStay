@@ -97,18 +97,53 @@
             font-family: "Outfit", sans-serif;
             background-color: var(--bg-light);
             color: #333;
+            overflow-x: hidden;
         }
         .font-display { font-family: "Playfair Display", serif; }
         .text-primary-theme { color: var(--primary) !important; }
         .text-accent { color: var(--accent) !important; }
         .bg-primary-theme { background-color: var(--primary) !important; }
+
+        /* ── ANIMATIONS ── */
+        .animate-fade-in {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .animate-fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
         
         /* Hero Section */
         .hero-contact {
-            background: linear-gradient(rgba(26, 107, 90, 0.9), rgba(26, 107, 90, 0.95)), 
-                        url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1600&q=80') center/cover no-repeat;
+            background: linear-gradient(
+                160deg,
+                rgba(10, 40, 33, 0.90) 0%,
+                rgba(20, 85, 70, 0.78) 50%,
+                rgba(30, 110, 90, 0.70) 100%
+            ), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&q=80') center/cover no-repeat;
+            background-attachment: fixed;
             padding: 160px 0 120px 0;
             border-bottom: 5px solid var(--accent);
+        }
+        .hero-contact h1 {
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        .hero-contact p {
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        .hero-contact .breadcrumb-item a {
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+        }
+        .hero-breadcrumb {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            display: inline-block;
         }
 
         /* Department Cards */
@@ -118,7 +153,7 @@
             border-radius: 16px;
             padding: 2.5rem 2rem;
             height: 100%;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
             z-index: 1;
@@ -127,7 +162,7 @@
             content: '';
             position: absolute;
             top: 0; left: 0; width: 100%; height: 4px;
-            background: var(--accent);
+            background: linear-gradient(90deg, var(--primary), var(--accent));
             transform: scaleX(0);
             transform-origin: left;
             transition: transform 0.4s ease;
@@ -135,21 +170,23 @@
         }
         .dept-card:hover {
             transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(26, 107, 90, 0.08);
+            box-shadow: 0 24px 48px rgba(26, 107, 90, 0.12);
         }
         .dept-card:hover::before { transform: scaleX(1); }
         .dept-icon {
             width: 70px; height: 70px;
-            background: var(--accent-light);
+            background: linear-gradient(135deg, var(--accent-light), rgba(212, 168, 71, 0.15));
             color: var(--accent);
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             font-size: 2rem; margin-bottom: 1.5rem;
-            transition: all 0.3s;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .dept-card:hover .dept-icon {
             background: var(--primary);
             color: #fff;
+            transform: scale(1.1) rotate(-5deg);
+            box-shadow: 0 8px 20px rgba(26, 107, 90, 0.3);
         }
 
         /* Floating Form Styles */
@@ -165,20 +202,33 @@
             box-shadow: 0 0 0 0.25rem rgba(212, 168, 71, 0.2);
         }
         .btn-submit {
-            background-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: #fff;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 15px 30px;
             font-weight: 500;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             text-transform: uppercase;
             letter-spacing: 1px;
+            border: none;
+            box-shadow: 0 6px 18px rgba(26, 107, 90, 0.25);
         }
         .btn-submit:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(26, 107, 90, 0.2);
-            color: var(--accent);
+            background: linear-gradient(135deg, var(--accent), #c49a3a);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(212, 168, 71, 0.4);
+            color: #111;
+        }
+
+        /* Form Card */
+        .form-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+        }
+        .form-card:hover {
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08) !important;
         }
 
         /* FAQ Accordion */
@@ -193,10 +243,15 @@
 
         /* Map Card */
         .map-wrapper {
-            border-radius: 16px;
+            border-radius: 20px;
             overflow: hidden;
             border: 1px solid var(--border-color);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.06);
+            transition: all 0.4s ease;
+        }
+        .map-wrapper:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 24px 50px rgba(0,0,0,0.1);
         }
     </style>
 </head>
@@ -207,13 +262,16 @@
     <section class="hero-contact">
         <div class="container text-center text-white position-relative">
             <nav aria-label="breadcrumb">
-                <ol class="breadcrumb justify-content-center mb-4 opacity-75 small text-uppercase" style="letter-spacing: 2px;">
-                    <li class="breadcrumb-item"><a href="index.jsp" class="text-white text-decoration-none">Trang chủ</a></li>
-                    <li class="breadcrumb-item active text-accent" aria-current="page">Liên hệ</li>
-                </ol>
+                <div class="hero-breadcrumb mb-4">
+                    <ol class="breadcrumb justify-content-center mb-0 small text-uppercase" style="letter-spacing: 2px;">
+                        <li class="breadcrumb-item"><a href="<%=request.getContextPath()%>/index.jsp" class="text-white text-decoration-none" style="color: rgba(255,255,255,0.85) !important;">Trang chủ</a></li>
+                        <li class="breadcrumb-item active" style="color: var(--accent);" aria-current="page">Liên hệ</li>
+                    </ol>
+                </div>
             </nav>
-            <h1 class="font-display display-3 fw-normal mb-3">Tận Tâm & Chuyên Nghiệp</h1>
-            <p class="mx-auto" style="max-width: 700px; font-size: 1.15rem; line-height: 1.8; color: #e0e0e0;">
+            <p class="text-uppercase fw-500 mb-3" style="font-size: 0.75rem; letter-spacing: 0.2em; color: var(--accent);">✦ Hỗ trợ khách hàng 24/7</p>
+            <h1 class="font-display display-3 fw-normal mb-3">Tận Tâm & <em style="color: var(--accent);">Chuyên Nghiệp</em></h1>
+            <p class="mx-auto" style="max-width: 700px; font-size: 1.15rem; line-height: 1.8; color: rgba(255,255,255,0.85);">
                 Trải nghiệm chuẩn mực dịch vụ 5 sao bắt đầu ngay từ khoảnh khắc bạn liên hệ. Đội ngũ chuyên gia của OmniStay Cần Thơ luôn sẵn sàng thiết kế riêng kỳ nghỉ hoàn hảo cho bạn.
             </p>
         </div>
@@ -262,7 +320,7 @@
             <div class="row g-5">
                 
                 <div class="col-lg-7">
-                    <div class="bg-white p-4 p-md-5 rounded-4 shadow-sm border" style="border-color: var(--border-color) !important;">
+                    <div class="form-card bg-white p-4 p-md-5 rounded-4 shadow-sm border" style="border-color: var(--border-color) !important;">
                         <h3 class="font-display mb-2 text-primary-theme">Gửi thông điệp cho chúng tôi</h3>
                         <p class="text-muted mb-4 pb-2 border-bottom">Mọi thông tin của quý khách đều được bảo mật tuyệt đối.</p>
                         
@@ -413,5 +471,29 @@
     <%@ include file="../layouts/chatbot.jsp" %>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Navbar scroll
+      window.addEventListener("scroll", function () {
+        const navbar = document.querySelector(".navbar");
+        if (navbar) {
+          navbar.classList.toggle("navbar-scrolled", window.scrollY > 50);
+        }
+      });
+
+      // Scroll-triggered fade-in animations
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+      document.querySelectorAll('.dept-card, .form-card, .accordion-item, .map-wrapper').forEach((el, i) => {
+        el.classList.add('animate-fade-in');
+        el.style.transitionDelay = (i * 0.08) + 's';
+        observer.observe(el);
+      });
+    </script>
 </body>
 </html>

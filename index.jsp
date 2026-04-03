@@ -42,35 +42,143 @@
         font-weight: 300;
         color: #2c2c2c;
         background: #fff;
+        overflow-x: hidden;
       }
       .font-display {
         font-family: "Playfair Display", serif;
+      }
+
+      /* ── ANIMATIONS ── */
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(40px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-12px); }
+      }
+      @keyframes shimmer {
+        0% { background-position: -200% center; }
+        100% { background-position: 200% center; }
+      }
+      @keyframes pulseGlow {
+        0%, 100% { box-shadow: 0 0 20px rgba(212, 168, 71, 0.3); }
+        50% { box-shadow: 0 0 40px rgba(212, 168, 71, 0.6); }
+      }
+      .animate-fade-in {
+        opacity: 0;
+        transform: translateY(40px);
+        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .animate-fade-in.visible {
+        opacity: 1;
+        transform: translateY(0);
       }
 
       #hero {
         min-height: 100vh;
         background: linear-gradient(
           160deg,
-          #0f3d33 0%,
-          #1a6b5a 60%,
-          #2d8c72 100%
-        );
+          rgba(10, 40, 33, 0.90) 0%,
+          rgba(20, 85, 70, 0.78) 50%,
+          rgba(30, 110, 90, 0.68) 100%
+        ), url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1600&q=80') center/cover no-repeat;
+        background-attachment: fixed;
+        position: relative;
       }
+      #hero::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 120px;
+        background: linear-gradient(transparent, var(--light-bg));
+        pointer-events: none;
+      }
+      /* ── Hero text enhancements ── */
+      #hero h1 {
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+      }
+      #hero p {
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+      #hero .text-white-50 {
+        color: rgba(255, 255, 255, 0.85) !important;
+        text-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+      }
+      /* ── Hero buttons ── */
+      .btn-hero-primary {
+        background: var(--accent) !important;
+        color: #111 !important;
+        border: none;
+        font-weight: 600;
+        box-shadow: 0 8px 25px rgba(212, 168, 71, 0.35);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .btn-hero-primary:hover {
+        background: #f0c356 !important;
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 12px 35px rgba(212, 168, 71, 0.55);
+        color: #111 !important;
+      }
+      .btn-hero-outline {
+        border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+        color: #fff !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+      .btn-hero-outline:hover {
+        background: rgba(255, 255, 255, 0.22) !important;
+        border-color: rgba(255, 255, 255, 0.7) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1);
+      }
+      /* ── Hero stats bar ── */
+      .hero-stats {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
+      }
+      .hero-stats .stat-number {
+        font-size: 2rem;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+      }
+      .hero-stats .stat-label {
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .hero-stats .stat-divider {
+        width: 1px;
+        background: rgba(255, 255, 255, 0.2);
+        align-self: stretch;
+      }
+      /* ── Hero image card ── */
       .hero-img {
         height: 480px;
         object-fit: cover;
-        border-radius: 12px;
-        box-shadow: 0 32px 64px rgba(0, 0, 0, 0.25);
+        border-radius: 16px;
+        box-shadow: 0 32px 64px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.15);
       }
       .badge-floating {
         position: absolute;
         bottom: -20px;
         left: 24px;
-        background: #fff;
-        border-radius: 10px;
-        padding: 14px 20px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-        min-width: 200px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 14px;
+        padding: 16px 22px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+        min-width: 210px;
+        border: 1px solid rgba(255, 255, 255, 0.6);
       }
 
       /* ── BOOKING ── */
@@ -141,34 +249,102 @@
         font-size: 0.7rem;
         letter-spacing: 0.2em;
         text-transform: uppercase;
-        color: var(--primary);
-        font-weight: 500;
+        color: var(--accent);
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .section-tag::before,
+      .section-tag::after {
+        content: '';
+        width: 20px;
+        height: 1px;
+        background: var(--accent);
       }
       .divider {
-        width: 40px;
-        height: 2px;
-        background: var(--accent);
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(90deg, var(--accent), var(--primary));
+        border-radius: 3px;
       }
       .room-img {
         height: 220px;
         object-fit: cover;
       }
       .amenity-icon {
-        width: 52px;
-        height: 52px;
-        border-radius: 12px;
-        background: rgba(26, 107, 90, 0.08);
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, rgba(26, 107, 90, 0.1), rgba(212, 168, 71, 0.08));
         color: var(--primary);
-        font-size: 1.3rem;
+        font-size: 1.4rem;
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .amenity-card {
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+      .amenity-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary), var(--accent));
+        transform: scaleX(0);
+        transition: transform 0.4s ease;
+        transform-origin: left;
+      }
+      .amenity-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(26, 107, 90, 0.12) !important;
+      }
+      .amenity-card:hover::before {
+        transform: scaleX(1);
+      }
+      .amenity-card:hover .amenity-icon {
+        background: var(--primary);
+        color: #fff;
+        transform: scale(1.1) rotate(-5deg);
       }
       .review-card {
         border-left: 3px solid var(--accent);
+        transition: all 0.3s ease;
+      }
+      .review-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08) !important;
       }
       .star {
         color: var(--accent);
+      }
+      /* ── GALLERY ── */
+      .gallery-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 16px !important;
+      }
+      .gallery-item img {
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .gallery-item:hover img {
+        transform: scale(1.08);
+      }
+      .gallery-item::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(26, 107, 90, 0.6), transparent 60%);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        pointer-events: none;
+      }
+      .gallery-item:hover::after {
+        opacity: 1;
       }
 
       /* ── OFFERS ── */
@@ -260,12 +436,12 @@
 
     <!-- ═══ HERO ═══ -->
     <section id="hero" class="d-flex align-items-center">
-      <div class="container py-5">
+      <div class="container py-5 mt-5">
         <div class="row align-items-center gy-5">
           <div class="col-lg-6">
             <p
-              class="text-white-50 text-uppercase fw-500 mb-3"
-              style="font-size: 0.75rem; letter-spacing: 0.2em"
+              class="text-uppercase fw-500 mb-3"
+              style="font-size: 0.75rem; letter-spacing: 0.2em; color: var(--accent);"
             >
               ✦ Khách sạn 5 sao · TP. Cần Thơ
             </p>
@@ -277,8 +453,8 @@
               ><br />đỉnh cao
             </h1>
             <p
-              class="text-white-50 mb-5"
-              style="font-size: 0.95rem; max-width: 400px; line-height: 1.8"
+              class="mb-5"
+              style="font-size: 0.95rem; max-width: 420px; line-height: 1.8; color: rgba(255,255,255,0.85);"
             >
               OmniStay kiến tạo chuẩn mực sống thượng lưu bên dòng sông Hậu —
               nơi nghệ thuật hiện đại hòa quyện cùng ẩm thực tinh hoa và dịch vụ
@@ -287,84 +463,33 @@
             <div class="d-flex gap-3 flex-wrap">
               <a
                 href="#rooms"
-                class="btn btn-lg px-5 py-3 rounded-pill text-white fw-500"
-                style="background: var(--primary); font-size: 0.85rem"
+                class="btn btn-lg px-5 py-3 rounded-pill btn-hero-primary"
+                style="font-size: 0.85rem"
                 >Xem phòng</a
               >
               <a
                 href="#amenities"
-                class="btn btn-lg px-5 py-3 rounded-pill fw-500"
-                style="
-                  border: 1px solid rgba(255, 255, 255, 0.3);
-                  color: #fff;
-                  font-size: 0.85rem;
-                  background: rgba(255, 255, 255, 0.08);
-                "
+                class="btn btn-lg px-5 py-3 rounded-pill btn-hero-outline"
+                style="font-size: 0.85rem;"
                 >Khám phá</a
               >
             </div>
-            <div class="d-flex gap-4 mt-5 pt-2">
+            <div class="hero-stats d-flex gap-4 mt-5">
               <div>
-                <div
-                  class="font-display text-white fw-normal"
-                  style="font-size: 2rem"
-                >
-                  128
-                </div>
-                <div
-                  class="text-white-50"
-                  style="
-                    font-size: 0.7rem;
-                    letter-spacing: 0.1em;
-                    text-transform: uppercase;
-                  "
-                >
-                  Phòng nghỉ
-                </div>
+                <div class="font-display text-white fw-normal stat-number">128</div>
+                <div class="stat-label">Phòng nghỉ</div>
               </div>
-              <div
-                style="width: 1px; background: rgba(255, 255, 255, 0.15)"
-              ></div>
+              <div class="stat-divider"></div>
               <div>
-                <div
-                  class="font-display text-white fw-normal"
-                  style="font-size: 2rem"
-                >
-                  4.9<span style="font-size: 1rem; color: var(--accent)"
-                    >★</span
-                  >
+                <div class="font-display text-white fw-normal stat-number">
+                  4.9<span style="font-size: 1rem; color: var(--accent)">★</span>
                 </div>
-                <div
-                  class="text-white-50"
-                  style="
-                    font-size: 0.7rem;
-                    letter-spacing: 0.1em;
-                    text-transform: uppercase;
-                  "
-                >
-                  Đánh giá
-                </div>
+                <div class="stat-label">Đánh giá</div>
               </div>
-              <div
-                style="width: 1px; background: rgba(255, 255, 255, 0.15)"
-              ></div>
+              <div class="stat-divider"></div>
               <div>
-                <div
-                  class="font-display text-white fw-normal"
-                  style="font-size: 2rem"
-                >
-                  15+
-                </div>
-                <div
-                  class="text-white-50"
-                  style="
-                    font-size: 0.7rem;
-                    letter-spacing: 0.1em;
-                    text-transform: uppercase;
-                  "
-                >
-                  Năm kinh nghiệm
-                </div>
+                <div class="font-display text-white fw-normal stat-number">15+</div>
+                <div class="stat-label">Năm kinh nghiệm</div>
               </div>
             </div>
           </div>
@@ -692,11 +817,11 @@
     <!-- ═══ ROOMS ═══ -->
     <section id="rooms" style="padding: 5rem 0; background: var(--light-bg)">
       <div class="container">
-        <div class="row align-items-end mb-5">
+        <div class="row align-items-center mb-5">
           <div class="col">
-            <p class="section-tag">Danh mục phòng</p>
+            <p class="section-tag mb-1">Danh mục phòng</p>
             <h2
-              class="font-display fw-normal mt-1"
+              class="font-display fw-normal"
               style="font-size: clamp(1.8rem, 3vw, 2.8rem)"
             >
               Phòng & Suite
@@ -705,14 +830,14 @@
           </div>
           <div class="col-auto">
             <a
-              href="#"
-              class="btn btn-outline-secondary rounded-pill px-4"
-              style="font-size: 0.8rem"
+              href="<%=request.getContextPath()%>/pages/rooms.jsp"
+              class="btn btn-outline-primary rounded-pill px-4"
+              style="font-size: 0.8rem; border-color: var(--primary); color: var(--primary);"
               >Xem tất cả</a
             >
           </div>
         </div>
-        <div class="row g-4">
+        <div class="row g-4 justify-content-center">
           <%
             if (conn != null) {
               try {
@@ -726,16 +851,14 @@
                   String img = rs.getString("image_url");
                   double price = rs.getDouble("base_price");
           %>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+          <div class="col-md-6 col-lg-4">
+            <div class="room-card card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-white">
               <div class="overflow-hidden">
-                <img src="<%= img %>" class="room-img w-100" style="transition: transform 0.5s; height: 180px; object-fit: cover;" 
+                <img src="<%= img %>" class="room-img w-100" style="transition: transform 0.5s; height: 240px; object-fit: cover;" 
                      onmouseover="this.style.transform = 'scale(1.05)'" onmouseout="this.style.transform = 'scale(1)'" alt="<%= typeName %>" />
               </div>
               <div class="card-body p-4">
-                <span class="badge rounded-pill mb-2" style="background: rgba(26, 107, 90, 0.1); color: var(--primary); font-size: 0.65rem;">
-                  <h5 class="font-display fw-normal mb-1"><%= typeName %></h
-                </span>
+                <h5 class="font-display fw-normal mb-2"><%= typeName %></h5>
                 <p class="text-muted mb-2" style="font-size: 0.78rem; line-height: 1.6"><%= desc %></p>
                 <div class="d-flex flex-wrap gap-1 mb-3">
                   <span class="badge rounded-pill bg-light text-secondary border" style="font-size: 0.65rem"><%= maxOcc %> Khách</span>
@@ -814,7 +937,7 @@
         <div class="row g-4 text-center">
           <div class="col-6 col-md-3">
             <div
-              class="bg-white rounded-4 p-4 h-100 shadow-sm"
+              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
               style="border: 1px solid var(--border)"
             >
               <div class="amenity-icon mx-auto mb-3">
@@ -828,7 +951,7 @@
           </div>
           <div class="col-6 col-md-3">
             <div
-              class="bg-white rounded-4 p-4 h-100 shadow-sm"
+              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
               style="border: 1px solid var(--border)"
             >
               <div class="amenity-icon mx-auto mb-3">
@@ -842,7 +965,7 @@
           </div>
           <div class="col-6 col-md-3">
             <div
-              class="bg-white rounded-4 p-4 h-100 shadow-sm"
+              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
               style="border: 1px solid var(--border)"
             >
               <div class="amenity-icon mx-auto mb-3">
@@ -856,7 +979,7 @@
           </div>
           <div class="col-6 col-md-3">
             <div
-              class="bg-white rounded-4 p-4 h-100 shadow-sm"
+              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
               style="border: 1px solid var(--border)"
             >
               <div class="amenity-icon mx-auto mb-3">
@@ -870,7 +993,7 @@
           </div>
           <div class="col-6 col-md-3">
             <div
-              class="bg-white rounded-4 p-4 h-100 shadow-sm"
+              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
               style="border: 1px solid var(--border)"
             >
               <div class="amenity-icon mx-auto mb-3">
@@ -884,7 +1007,7 @@
           </div>
           <div class="col-6 col-md-3">
             <div
-              class="bg-white rounded-4 p-4 h-100 shadow-sm"
+              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
               style="border: 1px solid var(--border)"
             >
               <div class="amenity-icon mx-auto mb-3">
@@ -898,7 +1021,7 @@
           </div>
           <div class="col-6 col-md-3">
             <div
-              class="bg-white rounded-4 p-4 h-100 shadow-sm"
+              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
               style="border: 1px solid var(--border)"
             >
               <div class="amenity-icon mx-auto mb-3">
@@ -912,7 +1035,7 @@
           </div>
           <div class="col-6 col-md-3">
             <div
-              class="bg-white rounded-4 p-4 h-100 shadow-sm"
+              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
               style="border: 1px solid var(--border)"
             >
               <div class="amenity-icon mx-auto mb-3">
@@ -1127,72 +1250,45 @@
         </div>
         <div class="row g-3">
           <div class="col-md-6">
-            <img
-              src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&q=80"
-              class="w-100 rounded-4 object-fit-cover"
-              style="height: 320px"
-              alt="Lobby"
-            />
+            <div class="gallery-item" style="height: 320px">
+              <img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&q=80" class="w-100 h-100 object-fit-cover" alt="Lobby" />
+            </div>
           </div>
           <div class="col-md-3">
-            <img
-              src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&q=80"
-              class="w-100 rounded-4 object-fit-cover mb-3"
-              style="height: 152px"
-              alt="Pool"
-            />
-            <img
-              src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80"
-              class="w-100 rounded-4 object-fit-cover"
-              style="height: 152px"
-              alt="Restaurant"
-            />
+            <div class="gallery-item mb-3" style="height: 152px">
+              <img src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="Pool" />
+            </div>
+            <div class="gallery-item" style="height: 152px">
+              <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="Restaurant" />
+            </div>
           </div>
           <div class="col-md-3">
-            <img
-              src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80"
-              class="w-100 rounded-4 object-fit-cover mb-3"
-              style="height: 152px"
-              alt="Spa"
-            />
-            <img
-              src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80"
-              class="w-100 rounded-4 object-fit-cover"
-              style="height: 152px"
-              alt="River view"
-            />
+            <div class="gallery-item mb-3" style="height: 152px">
+              <img src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="Spa" />
+            </div>
+            <div class="gallery-item" style="height: 152px">
+              <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="River view" />
+            </div>
           </div>
           <div class="col-md-3">
-            <img
-              src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=400&q=80"
-              class="w-100 rounded-4 object-fit-cover"
-              style="height: 200px"
-              alt="Room"
-            />
+            <div class="gallery-item" style="height: 200px">
+              <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="Room" />
+            </div>
           </div>
           <div class="col-md-3">
-            <img
-              src="https://images.unsplash.com/photo-1559329007-40df8a9345d8?w=400&q=80"
-              class="w-100 rounded-4 object-fit-cover"
-              style="height: 200px"
-              alt="Bar"
-            />
+            <div class="gallery-item" style="height: 200px">
+              <img src="https://images.unsplash.com/photo-1559329007-40df8a9345d8?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="Bar" />
+            </div>
           </div>
           <div class="col-md-3">
-            <img
-              src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400&q=80"
-              class="w-100 rounded-4 object-fit-cover"
-              style="height: 200px"
-              alt="Suite"
-            />
+            <div class="gallery-item" style="height: 200px">
+              <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="Suite" />
+            </div>
           </div>
           <div class="col-md-3">
-            <img
-              src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80"
-              class="w-100 rounded-4 object-fit-cover"
-              style="height: 200px"
-              alt="Deluxe"
-            />
+            <div class="gallery-item" style="height: 200px">
+              <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="Deluxe" />
+            </div>
           </div>
         </div>
       </div>
@@ -2146,51 +2242,50 @@
 
     <!-- ═══ CTA ═══ -->
     <section
-      class="py-5 text-white text-center"
+      class="py-5 text-white text-center position-relative"
       style="
         background: linear-gradient(
           135deg,
-          var(--primary-dark),
-          var(--primary)
-        );
+          rgba(19, 79, 67, 0.92),
+          rgba(26, 107, 90, 0.88)
+        ), url('https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=1400&q=80') center/cover no-repeat;
+        background-attachment: fixed;
       "
     >
-      <div class="container py-4">
+      <div class="container py-5">
         <p
-          class="text-white-50 text-uppercase mb-2"
-          style="font-size: 0.72rem; letter-spacing: 0.2em"
+          class="text-uppercase mb-2"
+          style="font-size: 0.72rem; letter-spacing: 0.2em; color: var(--accent);"
         >
-          Ưu đãi đặc biệt
+          ✦ Ưu đãi đặc biệt ✦
         </p>
         <h2
           class="font-display fw-normal mb-3"
-          style="font-size: clamp(1.8rem, 3vw, 2.8rem)"
+          style="font-size: clamp(1.8rem, 3vw, 2.8rem); text-shadow: 0 3px 15px rgba(0,0,0,0.3);"
         >
-          Đặt phòng sớm — <em>Giảm 20%</em>
+          Đặt phòng sớm — <em style="color: var(--accent)">Giảm 20%</em>
         </h2>
         <p
-          class="mb-4 text-white-50 mx-auto"
-          style="font-size: 0.9rem; max-width: 500px"
+          class="mb-5 mx-auto"
+          style="font-size: 0.95rem; max-width: 520px; color: rgba(255,255,255,0.85); text-shadow: 0 1px 6px rgba(0,0,0,0.2);"
         >
           Đặt trước 7 ngày để nhận ưu đãi bao gồm bữa sáng miễn phí và check-in
-          sớm.
+          sớm. Áp dụng cho tất cả các hạng phòng.
         </p>
-        <a
-          href="#booking"
-          class="btn btn-lg px-5 py-3 rounded-pill fw-500 me-3"
-          style="background: var(--accent); color: #111; font-size: 0.85rem"
-          >Đặt ngay hôm nay</a
-        >
-        <a
-          href="#rooms"
-          class="btn btn-lg px-5 py-3 rounded-pill fw-500"
-          style="
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            color: #fff;
-            font-size: 0.85rem;
-          "
-          >Xem chi tiết</a
-        >
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+          <a
+            href="#booking"
+            class="btn btn-lg px-5 py-3 rounded-pill btn-hero-primary"
+            style="font-size: 0.85rem; animation: pulseGlow 2s infinite;"
+            >Đặt ngay hôm nay</a
+          >
+          <a
+            href="#rooms"
+            class="btn btn-lg px-5 py-3 rounded-pill btn-hero-outline"
+            style="font-size: 0.85rem;"
+            >Xem chi tiết</a
+          >
+        </div>
       </div>
     </section>
 
@@ -2205,6 +2300,20 @@
         if (navbar) {
           navbar.classList.toggle("navbar-scrolled", window.scrollY > 50);
         }
+      });
+
+      // Scroll-triggered fade-in animations
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+      document.querySelectorAll('.amenity-card, .review-card, .offer-card, .gallery-item, .dept-card').forEach(el => {
+        el.classList.add('animate-fade-in');
+        observer.observe(el);
       });
 
       // Auto nights counter

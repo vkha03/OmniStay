@@ -47,19 +47,20 @@ OmniStay/
 ├── index.jsp           # Trang chủ công cộng (Cấu hình gọi trực tiếp DB bảng room_types)
 ├── omnistay.sql        # File script phục hồi cơ sở dữ liệu dự phòng
 ├── README.md           # Tài liệu hướng dẫn (File bạn đang đọc)
-├── admin-pages/        # Nơi chứa các trang quản trị (Chưa có dữ liệu hiện tại)
+├── admin-pages/        # Nơi chứa các trang quản trị
+│   ├── index.jsp           # Trang Dashboard tổng quan của Admin (mới tạo)
+│   ├── dashboard.jsp       # Trang Dashboard mẫu cũ (đã lưu trữ)
+│   ├── admin-rooms.jsp     # Trang quản lý hệ thống Phòng (trước là manager.jsp)
+│   └── admin-room-edit.jsp # Trang chỉnh sửa cập nhật phòng dành cho Admin
 ├── images/             # Thư mục hình ảnh động của dự án (Chưa có tư liệu hiện tại)
 ├── layouts/            # Các thành phần giao diện dùng chung (Includes)
 │   ├── navbar.jsp          # Thanh điều hướng trên cùng
 │   ├── footer.jsp          # Chân trang web
 │   ├── chatbot.jsp         # Tích hợp widget Chatbot
 │   └── sidebar-admin.jsp   # Menu bên phục vụ nội dung người dùng Admin
-└── pages/              # Các trang chức năng nội bộ (dành cho Khách & Admin)
+└── pages/              # Các trang chức năng công cộng dành cho Khách hàng
     ├── rooms.jsp           # Trang liệt kê hệ thống phòng đầy đủ
-    ├── contact.jsp         # Trang liên hệ
-    ├── dashboard.jsp       # Trang tổng quan
-    ├── manager.jsp         # Trang quản lý hệ thống
-    └── admin-room-edit.jsp # Trang chỉnh sửa cập nhật phòng dành cho Admin
+    └── contact.jsp         # Trang liên hệ
 ```
 
 ---

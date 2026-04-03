@@ -21,89 +21,84 @@
                     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
                     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
                     <style>
-                         :root {
+                        :root {
                             --primary: #1a6b5a;
-                            --primary-dark: #134f43;
+                            --primary-dark: #124a3e;
                             --accent: #d4a847;
-                            --light-bg: #f8f6f2;
+                            --bg-light: #f5f8f7;
                             --border: #e8e2d9;
-                            --sidebar-width: 260px;
+                            --text-main: #2c3e50;
                         }
                         
                         body {
-                            font-family: "Outfit", sans-serif;
-                            font-weight: 300;
-                            color: #2c2c2c;
-                            background: var(--light-bg);
+                            font-family: 'Outfit', sans-serif;
+                            background-color: var(--bg-light);
+                            color: var(--text-main);
                             overflow-x: hidden;
                         }
                         
-                        .font-display {
-                            font-family: "Playfair Display", serif;
-                        }
-                        /* ─── SIDEBAR ─── */
-                        
+                        .font-display { font-family: "Playfair Display", serif; }
+
+                        /* ─── SIDEBAR (Đồng bộ từ index.jsp) ─── */
                         .sidebar {
-                            width: var(--sidebar-width);
-                            height: 100vh;
+                            width: 260px;
+                            background: var(--primary-dark);
+                            min-height: 100vh;
                             position: fixed;
                             top: 0;
                             left: 0;
-                            background: linear-gradient(180deg, var(--primary-dark) 0%, var(--primary) 100%);
-                            color: white;
                             z-index: 1000;
-                            padding-top: 2rem;
-                            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
+                            padding-top: 1.5rem;
+                            box-shadow: 4px 0 20px rgba(0,0,0,0.05);
                         }
-                        
                         .sidebar .brand {
-                            font-size: 1.8rem;
-                            text-align: center;
-                            margin-bottom: 2.5rem;
+                            padding: 0 1.5rem 2rem;
+                            border-bottom: 1px solid rgba(255,255,255,0.05);
+                            margin-bottom: 1rem;
                         }
-                        
+                        .sidebar .brand a {
+                            font-size: 1.6rem;
+                            letter-spacing: 1px;
+                        }
                         .sidebar .brand span {
                             color: var(--accent);
                             font-weight: 600;
                         }
-                        
                         .nav-sidebar .nav-link {
-                            color: rgba(255, 255, 255, 0.7);
+                            color: rgba(255,255,255,0.7);
                             padding: 0.8rem 1.5rem;
-                            font-weight: 400;
-                            font-size: 0.95rem;
-                            transition: all 0.3s ease;
+                            margin: 0.2rem 1rem;
+                            border-radius: 8px;
+                            transition: all 0.3s;
                             display: flex;
                             align-items: center;
-                            gap: 12px;
-                            border-left: 4px solid transparent;
+                            font-weight: 400;
                         }
-                        
-                        .nav-sidebar .nav-link:hover,
-                        .nav-sidebar .nav-link.active {
-                            color: #fff;
-                            background: rgba(255, 255, 255, 0.08);
-                            border-left-color: var(--accent);
-                        }
-                        
                         .nav-sidebar .nav-link i {
-                            font-size: 1.2rem;
-                            color: var(--accent);
+                            margin-right: 12px;
+                            font-size: 1.1rem;
                         }
+                        .nav-sidebar .nav-link:hover, .nav-sidebar .nav-link.active {
+                            color: #fff;
+                            background: rgba(255,255,255,0.1);
+                        }
+                        .nav-sidebar .nav-link.active {
+                            background: var(--primary);
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                        }
+
                         /* ─── MAIN CONTENT ─── */
-                        
                         .main-content {
-                            margin-left: var(--sidebar-width);
-                            padding: 2rem 3rem;
-                            min-height: 100vh;
+                            margin-left: 260px;
+                            padding: 2rem;
                         }
                         
                         .stat-card {
                             background: #fff;
                             border-radius: 16px;
                             padding: 1.5rem;
-                            border: 1px solid var(--border);
-                            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+                            border: 1px solid rgba(0,0,0,0.05);
+                            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
                             display: flex;
                             align-items: center;
                             gap: 1rem;
@@ -118,37 +113,36 @@
                             justify-content: center;
                             font-size: 1.5rem;
                         }
+
                         /* ─── TABLE ─── */
-                        
                         .table-custom {
                             background: #fff;
                             border-radius: 16px;
-                            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-                            border: 1px solid var(--border);
+                            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+                            border: 1px solid rgba(0,0,0,0.05);
                             overflow: hidden;
                         }
-                        
                         .table-custom th {
-                            font-size: 0.75rem;
+                            background-color: #f8f9fa;
+                            color: #6c757d;
+                            font-weight: 500;
                             text-transform: uppercase;
-                            letter-spacing: 0.1em;
-                            color: var(--primary);
-                            font-weight: 600;
-                            padding: 1.2rem 1.5rem;
-                            background: rgba(26, 107, 90, 0.03);
-                            border-bottom: 1px solid var(--border);
+                            font-size: 0.75rem;
+                            letter-spacing: 0.5px;
+                            padding: 1rem 1.5rem;
+                            border-bottom: 2px solid #edf2f9;
                         }
-                        
                         .table-custom td {
-                            padding: 1.2rem 1.5rem;
+                            padding: 1rem 1.5rem;
                             vertical-align: middle;
+                            color: #495057;
                             font-size: 0.9rem;
-                            border-bottom: 1px solid var(--border);
+                            border-bottom: 1px solid #edf2f9;
                         }
-                        
-                        .table-custom tr:last-child td {
-                            border-bottom: none;
+                        .table-custom tbody tr:hover {
+                            background-color: #f8f9fa;
                         }
+                        .table-custom tr:last-child td { border-bottom: none; }
                         
                         .action-btn {
                             width: 32px;
@@ -159,45 +153,15 @@
                             border-radius: 8px;
                             transition: 0.2s;
                         }
-                        
                         .action-btn:hover {
-                            background: var(--light-bg);
+                            background: var(--bg-light);
                         }
                     </style>
                 </head>
 
                 <body>
 
-                    <aside class="sidebar d-flex flex-column">
-                        <div class="brand font-display text-white">
-                            Omni<span>Stay</span>
-                            <div style="font-size: 0.65rem; font-family: 'Outfit'; letter-spacing: 0.2em; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-top: 4px;">Quản trị viên</div>
-                        </div>
-
-                        <ul class="nav flex-column nav-sidebar flex-grow-1">
-                            <li class="nav-item">
-                                <a class="nav-link active" href="admin-dashboard.jsp"><i class="bi bi-grid"></i> Tổng quan</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="admin-rooms.jsp"><i class="bi bi-door-open"></i> Quản lý Phòng</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="admin-bookings.jsp"><i class="bi bi-calendar-check"></i> Đơn đặt phòng</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="admin-guests.jsp"><i class="bi bi-people"></i> Khách hàng</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="admin-services.jsp"><i class="bi bi-cup-hot"></i> Dịch vụ thêm</a>
-                            </li>
-                        </ul>
-
-                        <div class="mt-auto mb-4 px-3">
-                            <a href="logout.jsp" class="btn w-100 text-white" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px;">
-                                <i class="bi bi-box-arrow-left me-2"></i> Đăng xuất
-                            </a>
-                        </div>
-                    </aside>
+                    <%@ include file="../layouts/sidebar-admin.jsp" %>
 
                     <main class="main-content">
                         <div class="d-flex justify-content-between align-items-center mb-5">

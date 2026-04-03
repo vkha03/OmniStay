@@ -112,7 +112,7 @@ pageEncoding="UTF-8"%>
       <div class="col-6 col-lg-2 offset-lg-1">
         <div class="footer-title mb-4">Khách sạn</div>
         <div class="d-flex flex-column gap-3">
-          <a href="rooms.jsp" class="footer-link">Phòng nghỉ</a>
+          <a href="<%=request.getContextPath()%>/pages/rooms.jsp" class="footer-link">Phòng nghỉ</a>
           <a href="#amenities" class="footer-link">Dịch vụ</a>
           <a href="#" class="footer-link">Ưu đãi</a>
           <a href="#reviews" class="footer-link">Đánh giá</a>
@@ -123,7 +123,7 @@ pageEncoding="UTF-8"%>
         <div class="footer-title mb-4">Hỗ trợ</div>
         <div class="d-flex flex-column gap-3">
           <a href="#" class="footer-link">Câu hỏi thường gặp</a>
-          <a href="contact.jsp" class="footer-link">Liên hệ</a>
+          <a href="<%=request.getContextPath()%>/pages/contact.jsp" class="footer-link">Liên hệ</a>
           <a href="#" class="footer-link">Chính sách bảo mật</a>
           <a href="#" class="footer-link">Điều khoản dịch vụ</a>
         </div>
