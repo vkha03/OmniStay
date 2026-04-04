@@ -31,6 +31,11 @@
                 <i class="bi bi-people"></i> Khách hàng
             </a>
         </li>
+          <li class="nav-item">
+            <a class="nav-link <%= currentAdminURL.contains("admin-staff.jsp") ? "active" : "" %>" href="<%=request.getContextPath()%>/admin-pages/admin-staff.jsp">
+                <i class="bi bi-person-circle"></i></i> Quản Lý Nhân Viên
+            </a>
+        </li>
         <li class="nav-item">
             <a class="nav-link <%= currentAdminURL.contains("admin-services.jsp") ? "active" : "" %>" href="<%=request.getContextPath()%>/admin-pages/admin-services.jsp">
                 <i class="bi bi-cup-hot"></i> Dịch vụ thêm
