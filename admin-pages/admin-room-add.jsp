@@ -96,6 +96,7 @@
           psADD.executeUpdate();
           psADD.close();
           
+          session.setAttribute("thongBao", "Thêm phòng mới thành công!");
           response.sendRedirect("admin-rooms.jsp");
           return; 
       }

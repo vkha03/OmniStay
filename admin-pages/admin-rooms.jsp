@@ -190,13 +190,29 @@
                 <button type="submit" class="btn text-white px-4" style="background: var(--primary); border-radius: 8px;">Lọc</button>
             </div>
         </form>
-
+			<%
+            // 1. Thò tay vào túi session lấy tin nhắn ra
+            String msg = (String) session.getAttribute("thongBao");
+            
+            // 2. Nếu có tin nhắn thì in cái bảng màu xanh lá ra
+            if (msg != null) {
+        	%>
+            <div class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert" style="border-radius: 12px; background-color: #d1e7dd; color: #0f5132;">
+                <i class="bi bi-check-circle-fill me-2"></i> <strong>Thành công!</strong> <%= msg %>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <%
+                // 3. QUAN TRỌNG NHẤT: Lấy ra xài xong thì phải xóa nó đi
+                // Nếu không xóa, mỗi lần bạn F5 tải lại trang nó lại hiện ra tiếp!
+                session.removeAttribute("thongBao");
+            }
+       		%>
         <div class="table-custom">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 50px;" class="text-center">ID</th>
+                           
                             <th style="width: 120px;">Số phòng</th>
                             <th>Tên loại phòng</th>
                             <th>Sức chứa</th>
@@ -217,7 +233,7 @@
                                 String updateId = request.getParameter("updateId");
                                 String newStatus = request.getParameter("newStatus");
 
-                                // Nếu phát hiện có tín hiệu đổi trạng thái -> Cập nhật CSDL ngay
+                                // Nếu phát hiện có tín hiệu đổi trạng thái -> Cập nhật CSDL ngay (Lấy ID để sửa trạng thái "status")
                                 if (updateId != null && newStatus != null) {
                                     String updateSQL = "UPDATE rooms SET status = ? WHERE id = ?";
                                     PreparedStatement upStatus = conn.prepareStatement(updateSQL);
@@ -226,6 +242,8 @@
                                     upStatus.executeUpdate();
                                     upStatus.close();
                                 }
+                                
+                                //Tìm loại phòng - trạng thái
                                 if(loaiphong != null && !loaiphong.isEmpty()){
                                	 SQL = SQL + "WHERE rt.type_name = '" + loaiphong +"'";
                                 }
@@ -237,6 +255,7 @@
                                 PreparedStatement ps = conn.prepareStatement(SQL);
                                 ResultSet rs = ps.executeQuery();
                                 
+                                // Hiện tất cả phòng trong DB
                                 while(rs.next()){
                                 	int id = rs.getInt("id");
                                 	int roomsNB = rs.getInt("room_number");
@@ -245,13 +264,11 @@
                                 	double price = rs.getDouble("base_price");
                                 	int people = rs.getInt("max_occupancy");
                                 	String typeName = rs.getString("type_name");
-                                	
-                                	
-                      
+                                	                    	
                         %>
                         
                         <tr>
-                            <td class="text-center fw-500 text-muted"><%= id %></td>       
+                               
                             <td class="text-center fw-500 text-muted"><%= roomsNB %></td> 
                             <td>
                                 <div class="fw-500 font-display" style="font-size: 1.1rem; color: var(--primary);"><%= typeName %></div>
@@ -279,7 +296,7 @@
                                 </form>
                             </td>
                             <td class="text-end">
-                                <a href="admin-room-edit.jsp?id=1" class="action-btn text-primary" title="Chỉnh sửa"><i class="bi bi-pencil-square"></i></a>
+                                <a href="admin-room-edit.jsp?id=<%=id %>" class="action-btn text-primary" title="Chỉnh sửa"><i class="bi bi-pencil-square"></i></a>
                                 <a href="#" class="action-btn text-danger" title="Xóa"><i class="bi bi-trash3"></i></a>
                             </td>
                         </tr>
