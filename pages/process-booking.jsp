@@ -110,7 +110,7 @@
                 // XONG! CHUYỂN TRANG BÁO THÀNH CÔNG
                 // ==========================================
                 session.setAttribute("thongBao", "Đặt phòng thành công! Mã đơn: " + bookingCode);
-                response.sendRedirect("rooms.jsp"); 
+                response.sendRedirect("booking.jsp"); 
                 
             } else {
                 out.println("Lỗi: Không tìm thấy số phòng này.");
