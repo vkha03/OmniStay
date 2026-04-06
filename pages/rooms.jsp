@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.sql.*" %> 
+<%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
 <%
     Connection conn = null;
     String dbError = null;
@@ -9,6 +9,7 @@
     }catch(Exception e){
         dbError = e.getMessage();
     }
+    NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -288,7 +289,7 @@
                     <div class="d-flex justify-content-between align-items-center pt-3 border-top" style="border-color: var(--border) !important;">
                       <div>
                         <span class="font-display" style="font-size: 1.35rem; color: var(--primary); line-height: 1">
-                            <%= price %>
+                            <%= nf.format(price).replace("VNĐ", "₫") %>
                         </span>
                         <span class="text-muted" style="font-size: 0.75rem">/đêm</span>
                       </div>
@@ -311,15 +312,6 @@
             }
           %>
         </div>
-
-        <div class="d-flex justify-content-center mt-5 pt-3">
-            <ul class="pagination">
-                <li class="page-item disabled"><a class="page-link rounded-circle mx-1 border-0 text-muted" href="#" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"><i class="bi bi-chevron-left"></i></a></li>
-                <li class="page-item active"><a class="page-link rounded-circle mx-1 border-0 shadow-sm" href="#" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--primary); color: white;">1</a></li>
-                <li class="page-item"><a class="page-link rounded-circle mx-1 border-0 text-dark bg-white shadow-sm" href="#" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">2</a></li>
-                <li class="page-item"><a class="page-link rounded-circle mx-1 border-0 text-dark bg-white shadow-sm" href="#" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"><i class="bi bi-chevron-right"></i></a></li>
-            </ul>
-        </div>
       </div>
     </section>
 
@@ -327,29 +319,6 @@
     <%@ include file="../layouts/footer.jsp" %>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-      window.addEventListener("scroll", function () {
-        const navbar = document.querySelector(".navbar");
-        if (navbar) {
-          navbar.classList.toggle("navbar-scrolled", window.scrollY > 50);
-        }
-      });
-
-      // Scroll-triggered fade-in animations
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-          }
-        });
-      }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-
-      document.querySelectorAll('.room-card').forEach((el, i) => {
-        el.classList.add('animate-fade-in');
-        el.style.transitionDelay = (i * 0.1) + 's';
-        observer.observe(el);
-      });
-    </script>
     <% 
         if(conn != null) try { conn.close(); } catch(Exception e) {} 
     %>
