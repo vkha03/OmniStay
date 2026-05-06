@@ -4,6 +4,8 @@
     String activeNav = "index";
     if (currentURI.contains("rooms.jsp") || currentURI.contains("room-detail.jsp")) {
         activeNav = "rooms";
+    } else if (currentURI.contains("dichvu.jsp")) {
+        activeNav = "dichvu";
     } else if (currentURI.contains("contact.jsp")) {
         activeNav = "contact";
     }
@@ -126,7 +128,7 @@
           <a class="nav-link nav-link-custom <%= activeNav.equals("rooms") ? "active" : "" %>" href="<%=request.getContextPath()%>/pages/rooms.jsp">Phòng</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link nav-link-custom" href="<%=request.getContextPath()%>/index.jsp#amenities">Tiện ích</a>
+          <a class="nav-link nav-link-custom <%= activeNav.equals("dichvu") ? "active" : "" %>" href="<%=request.getContextPath()%>/pages/dichvu.jsp">Dịch Vụ</a>
         </li>
         <li class="nav-item">
           <a class="nav-link nav-link-custom" href="<%=request.getContextPath()%>/index.jsp#reviews">Đánh giá</a>

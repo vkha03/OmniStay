@@ -60,6 +60,66 @@
                 mimeMessage.setContent(emailContent, "text/html; charset=UTF-8");
                 Transport.send(mimeMessage);
                 
+                // 3. GỬI THÔNG BÁO QUA ZALO BOT
+                try {
+                    String botToken = "1290665474322229691:kfifYPnggzyPSurqkbUNpjHbgzTXSqfCMcxXgkBDIYJICCnwmgNUaodGZZDKqogt";
+                    String chatId = "bf5ea5d44f86a6d8ff97";
+                    
+                    System.out.println("--- BẮT ĐẦU GỬI ZALO BOT ---");
+                    System.out.println("Token: " + botToken);
+                    System.out.println("Chat ID: " + chatId);
+                    
+                    if (botToken != null && !botToken.isEmpty() && chatId != null && !chatId.isEmpty()) {
+                        String zaloMessage = "🔔 CÓ LIÊN HỆ MỚI TỪ OMNISTAY\n"
+                                + "- Khách hàng: " + fullname + "\n"
+                                + "- SĐT: " + phone + "\n"
+                                + "- Email: " + email + "\n"
+                                + "- Chủ đề: " + subjectSelect + "\n"
+                                + "- Lời nhắn: " + message;
+                                
+                        // Escape chuỗi thành định dạng JSON hợp lệ
+                        zaloMessage = zaloMessage.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "");
+                        
+                        String jsonPayload = "{\"chat_id\": \"" + chatId + "\", \"text\": \"" + zaloMessage + "\"}";
+                        System.out.println("Payload: " + jsonPayload);
+                        
+                        String apiUrl = "https://bot-api.zaloplatforms.com/bot" + botToken + "/sendMessage";
+                        System.out.println("API URL: " + apiUrl);
+                        
+                        java.net.URL url = new java.net.URL(apiUrl);
+                        java.net.HttpURLConnection httpConn = (java.net.HttpURLConnection) url.openConnection();
+                        httpConn.setRequestMethod("POST");
+                        httpConn.setRequestProperty("Content-Type", "application/json");
+                        httpConn.setDoOutput(true);
+                        httpConn.setConnectTimeout(5000);
+                        httpConn.setReadTimeout(5000);
+                        
+                        System.out.println("Đang gửi HTTP POST...");
+                        try (java.io.OutputStream os = httpConn.getOutputStream()) {
+                            byte[] input = jsonPayload.getBytes("utf-8");
+                            os.write(input, 0, input.length);
+                        }
+                        
+                        // Gọi HTTP Request để lấy kết quả
+                        int responseCode = httpConn.getResponseCode();
+                        System.out.println("Mã phản hồi HTTP: " + responseCode);
+                        
+                        // Đọc chi tiết phản hồi từ Zalo API
+                        java.io.InputStream is = (responseCode >= 200 && responseCode < 300) ? httpConn.getInputStream() : httpConn.getErrorStream();
+                        if (is != null) {
+                            java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
+                            String responseBody = s.hasNext() ? s.next() : "";
+                            System.out.println("Zalo Response Body: " + responseBody);
+                        }
+                        System.out.println("--- KẾT THÚC GỬI ZALO BOT ---");
+                    } else {
+                        System.out.println("Thiếu Token hoặc Chat ID, huỷ gửi Zalo.");
+                    }
+                } catch (Exception zaloEx) {
+                    System.out.println("Lỗi gửi Zalo Bot (Exception): " + zaloEx.getMessage());
+                    zaloEx.printStackTrace();
+                }
+
                 messageSent = "success";
             } catch (Exception e) {
                 errorMessage = e.getMessage();

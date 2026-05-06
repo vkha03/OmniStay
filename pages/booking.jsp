@@ -110,6 +110,24 @@
 
     <section class="py-5 mb-5">
         <div class="container">
+            <% 
+                String thongBao = (String)session.getAttribute("thongBao");
+                if(thongBao != null) {
+            %>
+                <div class="alert alert-success alert-dismissible fade show rounded-4 border-0 shadow-sm p-4 mb-5 d-flex align-items-center" role="alert">
+                    <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; color: var(--primary);">
+                        <i class="bi bi-check-lg fs-4"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="alert-heading mb-1 font-display fw-bold">Thông báo từ hệ thống</h5>
+                        <p class="mb-0 opacity-75"><%= thongBao %></p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% 
+                    session.removeAttribute("thongBao");
+                }
+            %>
             <a href="javascript:history.back()" class="text-decoration-none text-muted mb-4 d-inline-block">
                 <i class="bi bi-arrow-left me-2"></i> Quay lại chọn phòng
             </a>

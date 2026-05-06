@@ -935,118 +935,56 @@
           <div class="divider mx-auto mt-2"></div>
         </div>
         <div class="row g-4 text-center">
+<%
+if(conn != null){
+    try{
+        String sql = "SELECT * FROM services LIMIT 8";
+        Statement stmt = conn.createStatement();
+        ResultSet rsServ = stmt.executeQuery(sql);
+
+        String[] icons = {"bi-cup-hot", "bi-droplet-half", "bi-water", "bi-car-front", "bi-wifi", "bi-calendar-event", "bi-shield-check", "bi-stars"};
+        int iconIndex = 0;
+        NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+
+        while(rsServ.next()){
+            String name = rsServ.getString("service_name");
+            String des  = rsServ.getString("unit"); 
+            double price = rsServ.getDouble("price");
+
+            if(des == null || des.trim().isEmpty()){
+                des = "Trải nghiệm dịch vụ cao cấp tại OmniStay với chất lượng phục vụ 5 sao.";
+            }
+            
+            String icon = icons[iconIndex % icons.length];
+            iconIndex++;
+%>
           <div class="col-6 col-md-3">
-            <div
-              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
-              style="border: 1px solid var(--border)"
-            >
+            <div class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm d-flex flex-column" style="border: 1px solid var(--border)">
               <div class="amenity-icon mx-auto mb-3">
-                <i class="bi bi-cup-hot"></i>
+                <i class="bi <%= icon %>"></i>
               </div>
-              <h6 class="font-display fw-normal mb-2">Nhà hàng & Bar</h6>
-              <p class="text-muted mb-0" style="font-size: 0.82rem">
-                Ẩm thực quốc tế với đầu bếp 5 sao phục vụ 24/7.
+              <h6 class="font-display fw-normal mb-2"><%= name %></h6>
+              <p class="text-muted mb-3 flex-grow-1" style="font-size: 0.82rem; line-height: 1.6;">
+                <%= des %>
               </p>
+              <div class="mt-auto pt-3 border-top" style="border-color: var(--border) !important;">
+                <span class="font-display" style="font-size: 1.1rem; color: var(--primary); font-weight: 500;">
+                  <%= nf.format(price).replace("VNĐ","₫") %>
+                </span>
+              </div>
             </div>
           </div>
-          <div class="col-6 col-md-3">
-            <div
-              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
-              style="border: 1px solid var(--border)"
-            >
-              <div class="amenity-icon mx-auto mb-3">
-                <i class="bi bi-droplet-half"></i>
-              </div>
-              <h6 class="font-display fw-normal mb-2">Spa & Wellness</h6>
-              <p class="text-muted mb-0" style="font-size: 0.82rem">
-                Liệu trình thư giãn cao cấp và trung tâm thể dục hiện đại.
-              </p>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div
-              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
-              style="border: 1px solid var(--border)"
-            >
-              <div class="amenity-icon mx-auto mb-3">
-                <i class="bi bi-water"></i>
-              </div>
-              <h6 class="font-display fw-normal mb-2">Hồ bơi vô cực</h6>
-              <p class="text-muted mb-0" style="font-size: 0.82rem">
-                Tầm nhìn toàn cảnh thành phố từ hồ bơi rooftop tầng 15.
-              </p>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div
-              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
-              style="border: 1px solid var(--border)"
-            >
-              <div class="amenity-icon mx-auto mb-3">
-                <i class="bi bi-car-front"></i>
-              </div>
-              <h6 class="font-display fw-normal mb-2">Đưa đón sân bay</h6>
-              <p class="text-muted mb-0" style="font-size: 0.82rem">
-                Xe hạng sang đón tận nơi, phục vụ 24/7 theo yêu cầu.
-              </p>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div
-              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
-              style="border: 1px solid var(--border)"
-            >
-              <div class="amenity-icon mx-auto mb-3">
-                <i class="bi bi-wifi"></i>
-              </div>
-              <h6 class="font-display fw-normal mb-2">Wi-Fi tốc độ cao</h6>
-              <p class="text-muted mb-0" style="font-size: 0.82rem">
-                Kết nối internet gigabit miễn phí trong toàn khách sạn.
-              </p>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div
-              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
-              style="border: 1px solid var(--border)"
-            >
-              <div class="amenity-icon mx-auto mb-3">
-                <i class="bi bi-calendar-event"></i>
-              </div>
-              <h6 class="font-display fw-normal mb-2">Phòng hội nghị</h6>
-              <p class="text-muted mb-0" style="font-size: 0.82rem">
-                Không gian sự kiện linh hoạt, tiệc cưới và hội thảo.
-              </p>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div
-              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
-              style="border: 1px solid var(--border)"
-            >
-              <div class="amenity-icon mx-auto mb-3">
-                <i class="bi bi-shield-check"></i>
-              </div>
-              <h6 class="font-display fw-normal mb-2">An ninh 24/7</h6>
-              <p class="text-muted mb-0" style="font-size: 0.82rem">
-                Hệ thống bảo mật thông minh, an toàn tuyệt đối.
-              </p>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div
-              class="amenity-card bg-white rounded-4 p-4 h-100 shadow-sm"
-              style="border: 1px solid var(--border)"
-            >
-              <div class="amenity-icon mx-auto mb-3">
-                <i class="bi bi-stars"></i>
-              </div>
-              <h6 class="font-display fw-normal mb-2">Concierge VIP</h6>
-              <p class="text-muted mb-0" style="font-size: 0.82rem">
-                Quản gia riêng phục vụ mọi nhu cầu cá nhân.
-              </p>
-            </div>
-          </div>
+<%
+        }
+        rsServ.close();
+        stmt.close();
+    }catch(Exception e){
+        out.println("<div class='col-12'><p class='alert alert-danger'>Lỗi lấy dữ liệu dịch vụ: " + e.getMessage() + "</p></div>");
+    }
+}else{
+    out.println("<div class='col-12'><p class='alert alert-danger'>Lỗi kết nối DB: " + dbError + "</p></div>");
+}
+%>
         </div>
       </div>
     </section>
