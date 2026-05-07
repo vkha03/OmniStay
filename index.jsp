@@ -1,12 +1,16 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
+<%@ include file="env-secrets.jsp" %>
+<%! 
+    public static final String GEMINI_API_KEY = SECRET_GEMINI_KEY; 
+    public static final String GEMINI_MODEL = SECRET_GEMINI_MODEL; 
+%>
 <%
     Connection conn = null;
     String dbError = null;
     try {
-        // Driver for mysql-connector-java-8.0.15.jar found in server lib
         Class.forName("com.mysql.cj.jdbc.Driver");
-        conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/omnistay?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true", "root", "");
+        conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
     } catch(Exception e) {
         dbError = e.getMessage() != null ? e.getMessage() : e.toString();
     }

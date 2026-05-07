@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
+<%@ include file="../env-secrets.jsp" %>
 <%
     // =====================================================================
     // KHU VỰC BACKEND: Hứng ID Phòng (Mới làm mộc, Khang tự code thêm SQL sau)
@@ -13,7 +14,7 @@
     String dbError = null;
     try{
         Class.forName("com.mysql.cj.jdbc.Driver");
-        conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/omnistay", "root", "");
+        conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
     }catch(Exception e){
         dbError = e.getMessage();
     }

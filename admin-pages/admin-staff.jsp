@@ -1,4 +1,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ include file="../layouts/admin-auth.jsp" %>
+<%
+    // Trang này chỉ cho phép ADMIN truy cập
+    if (!"ADMIN".equals((String)session.getAttribute("role"))) {
+        out.println("<script>alert('Bạn không có quyền truy cập vào trang quản lý nhân sự!'); window.location.href='dashboard.jsp';</script>");
+        return;
+    }
+%>
 <%@ page import="java.sql.*" %>
 <%
     Connection conn = null;

@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ include file="../layouts/admin-auth.jsp" %>
     <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
         <%
     // Khởi tạo kết nối Backend của bạn ở đây (Kiểm tra session Admin, connect DB...)
@@ -175,8 +176,10 @@
                                     <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2 ms-3 pl-3" style="border-left: 1px solid var(--border);">
-                                    <img src="https://ui-avatars.com/api/?name=Admin+Khang&background=1a6b5a&color=fff" class="rounded-circle" width="40" alt="Admin">
-                                    <span class="fw-500" style="font-size: 0.9rem;">Admin Khang</span>
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-weight: 600;">
+                                        <%= (adminEmail != null && !adminEmail.isEmpty()) ? adminEmail.substring(0, 1).toUpperCase() : "A" %>
+                                    </div>
+                                    <span class="fw-500" style="font-size: 0.9rem;"><%= adminEmail %></span>
                                 </div>
                             </div>
                         </div>

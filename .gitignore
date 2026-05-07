@@ -1,0 +1,13 @@
+# Secrets
+env-secrets.jsp
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Tomcat
+WEB-INF/classes/
+WEB-INF/lib/*.jar
+!WEB-INF/lib/mysql-connector-j-*.jar

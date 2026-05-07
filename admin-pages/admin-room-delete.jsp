@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ include file="../layouts/admin-auth.jsp" %>
 <%@ page import="java.sql.*" %>
 <%
     // 1. Hứng ID của phòng cần xóa từ URL

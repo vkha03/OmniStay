@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th4 01, 2026 lúc 05:48 AM
+-- Thời gian đã tạo: Th5 07, 2026 lúc 03:12 PM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
 
@@ -46,7 +46,9 @@ CREATE TABLE `bookings` (
 INSERT INTO `bookings` (`id`, `booking_code`, `guest_id`, `check_in_date`, `check_out_date`, `total_amount`, `notes`, `status`, `created_at`) VALUES
 (1, 'BKG2603001', 1, '2026-03-28', '2026-03-30', 7250000, 'Kỷ niệm ngày cưới, cần chuẩn bị hoa tươi', 'CHECKED_IN', '2026-03-25 10:00:00'),
 (2, 'BKG2603002', 2, '2026-04-05', '2026-04-07', 3200000, 'Xin phòng tầng cao', 'CONFIRMED', '2026-03-29 08:30:00'),
-(3, 'BKG2603003', 4, '2026-03-20', '2026-03-22', 2000000, 'Xuất hóa đơn công ty', 'COMPLETED', '2026-03-15 14:20:00');
+(3, 'BKG2603003', 4, '2026-03-20', '2026-03-22', 2000000, 'Xuất hóa đơn công ty', 'COMPLETED', '2026-03-15 14:20:00'),
+(4, 'BK758776', 5, '2026-05-07', '2026-05-23', 15200000, 'Cần phòng gấp', 'PENDING', '2026-05-07 18:35:58'),
+(5, 'BK767420', 6, '2026-05-07', '2026-05-23', 15200000, 'Cần phòng gấp', 'CONFIRMED', '2026-05-07 18:36:07');
 
 -- --------------------------------------------------------
 
@@ -67,7 +69,9 @@ CREATE TABLE `booking_rooms` (
 INSERT INTO `booking_rooms` (`booking_id`, `room_id`, `historical_price`) VALUES
 (1, 11, 3200000),
 (2, 6, 1600000),
-(3, 1, 950000);
+(3, 1, 950000),
+(4, 1, 950000),
+(5, 1, 950000);
 
 -- --------------------------------------------------------
 
@@ -137,7 +141,35 @@ INSERT INTO `guests` (`id`, `full_name`, `phone_number`, `email`) VALUES
 (1, 'Trần Minh Khoa', '0901234567', 'khoa.tran@example.com'),
 (2, 'Nguyễn Thị Lan', '0987654321', 'lan.nguyen@example.com'),
 (3, 'Phạm Hồng Anh', '0912345678', 'honganh.pham@example.com'),
-(4, 'Lê Văn Đạt', '0933445566', 'dat.le@example.com');
+(4, 'Lê Văn Đạt', '0933445566', 'dat.le@example.com'),
+(5, 'Đỗ Văn Kha', '0385226320', 'dovankha0802@gmail.com'),
+(6, 'Đỗ Văn Kha', '0385226320', 'dovankha0802@gmail.com');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `reviews`
+--
+
+CREATE TABLE `reviews` (
+  `id` int(11) NOT NULL,
+  `guest_id` int(11) NOT NULL,
+  `booking_id` int(11) NOT NULL,
+  `room_id` int(11) NOT NULL,
+  `rating` int(11) NOT NULL COMMENT 'Số sao từ 1 đến 5',
+  `comment` text DEFAULT NULL COMMENT 'Nội dung đánh giá',
+  `status` tinyint(4) DEFAULT 1 COMMENT '0: Ẩn/Spam, 1: Hiển thị',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ;
+
+--
+-- Đang đổ dữ liệu cho bảng `reviews`
+--
+
+INSERT INTO `reviews` (`id`, `guest_id`, `booking_id`, `room_id`, `rating`, `comment`, `status`, `created_at`) VALUES
+(1, 4, 3, 1, 5, 'Phòng sạch sẽ, nhân viên phục vụ rất chu đáo. View trung tâm thành phố rất đẹp!', 1, '2026-05-07 13:11:12'),
+(2, 1, 1, 11, 4, 'Phòng Suite cực kỳ sang trọng, nội thất tinh xảo. Tuy nhiên wifi hơi yếu một chút vào ban đêm.', 1, '2026-05-07 13:11:12'),
+(3, 2, 2, 6, 5, 'Không gian yên tĩnh, ban công hướng sông Hậu đón gió rất mát. Sẽ quay lại!', 1, '2026-05-07 13:11:12');
 
 -- --------------------------------------------------------
 
@@ -157,7 +189,7 @@ CREATE TABLE `rooms` (
 --
 
 INSERT INTO `rooms` (`id`, `room_number`, `room_type_id`, `status`) VALUES
-(1, '101', 1, 'AVAILABLE'),
+(1, '101', 1, 'OCCUPIED'),
 (2, '102', 1, 'AVAILABLE'),
 (3, '103', 1, 'OCCUPIED'),
 (4, '104', 1, 'CLEANING'),
@@ -282,6 +314,15 @@ ALTER TABLE `guests`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Chỉ mục cho bảng `reviews`
+--
+ALTER TABLE `reviews`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_booking_review` (`booking_id`),
+  ADD KEY `fk_review_guest` (`guest_id`),
+  ADD KEY `fk_review_room` (`room_id`);
+
+--
 -- Chỉ mục cho bảng `rooms`
 --
 ALTER TABLE `rooms`
@@ -316,7 +357,7 @@ ALTER TABLE `staff`
 -- AUTO_INCREMENT cho bảng `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT cho bảng `booking_services`
@@ -334,7 +375,13 @@ ALTER TABLE `contacts`
 -- AUTO_INCREMENT cho bảng `guests`
 --
 ALTER TABLE `guests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT cho bảng `reviews`
+--
+ALTER TABLE `reviews`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT cho bảng `rooms`
@@ -383,6 +430,14 @@ ALTER TABLE `booking_rooms`
 ALTER TABLE `booking_services`
   ADD CONSTRAINT `booking_services_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `booking_services_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `services` (`id`);
+
+--
+-- Các ràng buộc cho bảng `reviews`
+--
+ALTER TABLE `reviews`
+  ADD CONSTRAINT `fk_review_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_review_guest` FOREIGN KEY (`guest_id`) REFERENCES `guests` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_review_room` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE CASCADE;
 
 --
 -- Các ràng buộc cho bảng `rooms`

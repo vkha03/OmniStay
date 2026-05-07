@@ -2,6 +2,7 @@
 <%@ page import="java.util.*, java.text.*, java.util.Properties" %>
 <%@ page import="java.sql.*" %>
 <%@ page import="jakarta.mail.*, jakarta.mail.internet.*" %>
+<%@ include file="../env-secrets.jsp" %>
 <%
     // Xử lý gửi email và lưu Database khi form được submit
     String messageSent = null;
@@ -35,7 +36,7 @@
 
                 // 2. GỬI EMAIL THÔNG BÁO BẰNG JAKARTA MAIL
                 final String fromEmail = "dvk2341@gmail.com"; 
-                final String password = "xpztgdxincbilukw"; 
+                final String password = SECRET_MAIL_PASS; 
                 
                 Properties props = new Properties();
                 props.put("mail.smtp.host", "smtp.gmail.com");
@@ -62,8 +63,8 @@
                 
                 // 3. GỬI THÔNG BÁO QUA ZALO BOT
                 try {
-                    String botToken = "1290665474322229691:kfifYPnggzyPSurqkbUNpjHbgzTXSqfCMcxXgkBDIYJICCnwmgNUaodGZZDKqogt";
-                    String chatId = "bf5ea5d44f86a6d8ff97";
+                    String botToken = SECRET_ZALO_TOKEN;
+                    String chatId = SECRET_ZALO_CHATID;
                     
                     System.out.println("--- BẮT ĐẦU GỬI ZALO BOT ---");
                     System.out.println("Token: " + botToken);

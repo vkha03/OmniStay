@@ -1,6 +1,10 @@
 <%@ page language="java" contentType="text/event-stream; charset=UTF-8" pageEncoding="UTF-8" buffer="none" %>
 <%@ page import="java.io.*, java.net.*" %>
-<%@ include file="config.jsp" %>
+<%@ include file="../env-secrets.jsp" %>
+<%! 
+    public static final String GEMINI_API_KEY = SECRET_GEMINI_KEY; 
+    public static final String GEMINI_MODEL = SECRET_GEMINI_MODEL; 
+%>
 <%
     response.setHeader("Cache-Control", "no-cache");
     response.setHeader("Connection", "keep-alive");

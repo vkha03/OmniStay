@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ include file="../layouts/admin-auth.jsp" %>
 <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
 <%
     Connection conn = null;
