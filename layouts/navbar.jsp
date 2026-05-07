@@ -8,6 +8,8 @@
         activeNav = "dichvu";
     } else if (currentURI.contains("contact.jsp")) {
         activeNav = "contact";
+    } else if (currentURI.contains("invoice-lookup.jsp") || currentURI.contains("invoice-detail.jsp")) {
+        activeNav = "invoice";
     }
 %>
 <style>
@@ -90,6 +92,27 @@
     transform: translateY(-2px) scale(1.02);
     box-shadow: 0 8px 30px rgba(212, 168, 71, 0.65);
   }
+
+  /* 6. Nút Tra cứu Hóa đơn - Style sang trọng, nhẹ nhàng hơn nút Đặt phòng */
+  .btn-lookup-nav {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    color: #fff !important;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.55rem 1.4rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-left: 10px;
+  }
+  .btn-lookup-nav:hover, .btn-lookup-nav.active {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+  }
 </style>
 
 <nav class="navbar navbar-expand-lg fixed-top navbar-custom" id="mainNav">
@@ -138,9 +161,14 @@
         </li>
       </ul>
 
-      <a href="<%=request.getContextPath()%>/pages/rooms.jsp" class="btn btn-booking rounded-pill">
-        Đặt phòng
-      </a>
+      <div class="d-flex align-items-center gap-2">
+        <a href="<%=request.getContextPath()%>/pages/rooms.jsp" class="btn btn-booking rounded-pill">
+          Đặt phòng
+        </a>
+        <a href="<%=request.getContextPath()%>/pages/invoice-lookup.jsp" class="btn btn-lookup-nav rounded-pill <%= activeNav.equals("invoice") ? "active" : "" %>">
+          <i class="bi bi-receipt me-1"></i> Tra cứu
+        </a>
+      </div>
     </div>
 
     <!-- Admin Link moved to the far right -->

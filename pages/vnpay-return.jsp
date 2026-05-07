@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.sql.*, java.util.*" %>
+<%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
+<%@ page import="jakarta.mail.*, jakarta.mail.internet.*" %>
 <%@ include file="vnpay-config.jsp" %>
 <%
     // 1. THU THẬP THAM SỐ
@@ -27,6 +28,7 @@
     // Khai báo biến hiển thị UI
     String uiGuestName = "N/A";
     String uiGuestPhone = "N/A";
+    String uiGuestEmail = "N/A";
     String uiRoomNumber = "N/A";
     double uiAmount = 0;
     String vnp_TransactionNo = request.getParameter("vnp_TransactionNo");
@@ -73,8 +75,8 @@
                     statusText = "Thanh toán thành công";
                     message = "Cảm ơn bạn đã sử dụng dịch vụ của OmniStay. Phòng của bạn đã được xác nhận!";
 
-                    // 4. LẤY THÔNG TIN HIỂN THỊ UI VÀ GỬI ZALO
-                    String sqlDetail = "SELECT b.booking_code, b.total_amount, g.full_name, g.phone_number, r.room_number " +
+                    // 4. LẤY THÔNG TIN HIỂN THỊ UI VÀ GỬI ZALO/EMAIL
+                    String sqlDetail = "SELECT b.booking_code, b.total_amount, b.check_in_date, b.check_out_date, g.full_name, g.phone_number, g.email, r.room_number " +
                                      "FROM bookings b " +
                                      "JOIN guests g ON b.guest_id = g.id " +
                                      "JOIN booking_rooms br ON b.id = br.booking_id " +
@@ -86,8 +88,11 @@
                     if(rsD.next()) {
                         uiGuestName = rsD.getString("full_name");
                         uiGuestPhone = rsD.getString("phone_number");
+                        uiGuestEmail = rsD.getString("email");
                         uiRoomNumber = rsD.getString("room_number");
                         uiAmount = rsD.getDouble("total_amount");
+                        String checkIn = rsD.getString("check_in_date");
+                        String checkOut = rsD.getString("check_out_date");
 
                         // Gửi Zalo
                         try {
@@ -116,6 +121,68 @@
                             httpConn.getResponseCode();
                         } catch (Exception zEx) {
                             System.out.println("Lỗi gửi Zalo: " + zEx.getMessage());
+                        }
+
+                        // ─── GỬI EMAIL HÓA ĐƠN ───
+                        try {
+                            if (uiGuestEmail != null && uiGuestEmail.contains("@")) {
+                                Properties props = new Properties();
+                                props.put("mail.smtp.auth", "true");
+                                props.put("mail.smtp.starttls.enable", "true");
+                                props.put("mail.smtp.host", SECRET_MAIL_HOST);
+                                props.put("mail.smtp.port", SECRET_MAIL_PORT);
+                                props.put("mail.smtp.ssl.trust", SECRET_MAIL_HOST);
+
+                                Session mailSession = Session.getInstance(props, new jakarta.mail.Authenticator() {
+                                    protected PasswordAuthentication getPasswordAuthentication() {
+                                        return new PasswordAuthentication(SECRET_MAIL_USER, SECRET_MAIL_PASS);
+                                    }
+                                });
+
+                                Message mailMessage = new MimeMessage(mailSession);
+                                mailMessage.setFrom(new InternetAddress(SECRET_MAIL_USER, "OmniStay Luxury Hotel"));
+                                mailMessage.setRecipients(Message.RecipientType.TO, InternetAddress.parse(uiGuestEmail));
+                                mailMessage.setSubject("[OmniStay] Xác nhận đặt phòng thành công - " + vnp_TxnRef);
+
+                                NumberFormat mailNf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+                                String mailAmount = mailNf.format(uiAmount);
+
+                                String htmlContent = 
+                                    "<div style=\"font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 50px 20px; color: #333;\">" +
+                                    "  <div style=\"max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #eef2f1;\">" +
+                                    "    <div style=\"background-color: #1a6b5a; padding: 40px; text-align: center; color: #ffffff;\">" +
+                                    "      <h1 style=\"margin: 0; font-size: 32px; letter-spacing: 2px;\">OmniStay</h1>" +
+                                    "      <p style=\"margin: 10px 0 0; opacity: 0.7; font-size: 12px; text-transform: uppercase; letter-spacing: 3px;\">Luxury Hotel & Resort</p>" +
+                                    "    </div>" +
+                                    "    <div style=\"padding: 45px;\">" +
+                                    "      <h2 style=\"color: #1a6b5a; margin-top: 0; font-weight: 600;\">Xác nhận đặt phòng</h2>" +
+                                    "      <p style=\"font-size: 16px; line-height: 1.6;\">Chào <strong>" + uiGuestName + "</strong>,</p>" +
+                                    "      <p style=\"font-size: 15px; line-height: 1.6; color: #666;\">Cảm ơn bạn đã lựa chọn OmniStay cho kỳ nghỉ của mình. Chúng tôi xin xác nhận đơn đặt phòng của bạn đã được thanh toán thành công qua cổng VNPAY.</p>" +
+                                    "      <div style=\"background-color: #f9fbfb; border-radius: 15px; padding: 30px; margin: 35px 0; border: 1px solid #f0f4f3;\">" +
+                                    "        <h3 style=\"margin-top: 0; font-size: 14px; text-transform: uppercase; color: #1a6b5a; border-bottom: 1px solid #e8eeec; padding-bottom: 12px; margin-bottom: 20px; letter-spacing: 1px;\">Chi tiết giao dịch</h3>" +
+                                    "        <table style=\"width: 100%; border-collapse: collapse; font-size: 15px;\">" +
+                                    "          <tr><td style=\"padding: 10px 0; color: #888;\">Mã đặt phòng:</td><td style=\"padding: 10px 0; text-align: right; font-weight: 700; color: #1a6b5a;\">" + vnp_TxnRef + "</td></tr>" +
+                                    "          <tr><td style=\"padding: 10px 0; color: #888;\">Hạng phòng:</td><td style=\"padding: 10px 0; text-align: right; font-weight: 500;\">" + uiRoomNumber + "</td></tr>" +
+                                    "          <tr><td style=\"padding: 10px 0; color: #888;\">Ngày nhận phòng:</td><td style=\"padding: 10px 0; text-align: right; font-weight: 500;\">" + checkIn + "</td></tr>" +
+                                    "          <tr><td style=\"padding: 10px 0; color: #888;\">Ngày trả phòng:</td><td style=\"padding: 10px 0; text-align: right; font-weight: 500;\">" + checkOut + "</td></tr>" +
+                                    "          <tr><td style=\"padding: 25px 0 10px; border-top: 1px solid #e8eeec; font-weight: 600;\">Tổng cộng đã thanh toán:</td><td style=\"padding: 25px 0 10px; border-top: 1px solid #e8eeec; text-align: right; font-size: 22px; font-weight: 800; color: #d4a847;\">" + mailAmount + "</td></tr>" +
+                                    "        </table>" +
+                                    "      </div>" +
+                                    "      <p style=\"font-size: 14px; color: #999; text-align: center; font-style: italic; margin-top: 30px;\">Vui lòng xuất trình email này khi làm thủ tục nhận phòng.</p>" +
+                                    "    </div>" +
+                                    "    <div style=\"background-color: #fafafa; padding: 35px; text-align: center; border-top: 1px solid #f0f0f0; font-size: 13px; color: #aaa;\">" +
+                                    "      <p style=\"margin: 0 0 10px; color: #1a6b5a; font-weight: 600;\">OmniStay Luxury Hotel & Resort</p>" +
+                                    "      <p style=\"margin: 5px 0;\">123 Luxury Road, Da Nang, Vietnam</p>" +
+                                    "      <p style=\"margin: 5px 0;\">Hotline: 1900 1234 | Email: support@omnistay.vn</p>" +
+                                    "    </div>" +
+                                    "  </div>" +
+                                    "</div>";
+
+                                mailMessage.setContent(htmlContent, "text/html; charset=UTF-8");
+                                Transport.send(mailMessage);
+                            }
+                        } catch (Exception mEx) {
+                            System.out.println("Lỗi gửi Email: " + mEx.getMessage());
                         }
                     }
                 } else {
@@ -306,13 +373,20 @@
                 </div>
 
                 <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center mt-4">
-                    <a href="../index.jsp" class="btn btn-omni">
-                        <i class="bi bi-house-door me-2"></i> Quay về Trang chủ
-                    </a>
-                    <% if(!isSuccess) { %>
-                    <a href="rooms.jsp" class="btn btn-outline-omni">
-                        <i class="bi bi-arrow-repeat me-2"></i> Thử lại
-                    </a>
+                    <% if(isSuccess) { %>
+                        <a href="invoice-detail.jsp?code=<%= vnp_TxnRef %>&phone=<%= uiGuestPhone %>" class="btn btn-omni">
+                            <i class="bi bi-receipt me-2"></i> Xem hóa đơn
+                        </a>
+                        <a href="../index.jsp" class="btn btn-outline-omni">
+                            <i class="bi bi-house-door me-2"></i> Trang chủ
+                        </a>
+                    <% } else { %>
+                        <a href="../index.jsp" class="btn btn-omni">
+                            <i class="bi bi-house-door me-2"></i> Quay về Trang chủ
+                        </a>
+                        <a href="rooms.jsp" class="btn btn-outline-omni">
+                            <i class="bi bi-arrow-left me-2"></i> Thử lại
+                        </a>
                     <% } %>
                 </div>
             </div>
