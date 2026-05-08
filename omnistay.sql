@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th5 08, 2026 lúc 02:26 AM
+-- Thời gian đã tạo: Th5 08, 2026 lúc 06:22 PM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
 
@@ -53,10 +53,10 @@ CREATE TABLE `bookings` (
 --
 
 INSERT INTO `bookings` (`id`, `booking_code`, `guest_id`, `check_in_date`, `check_out_date`, `total_amount`, `notes`, `status`, `created_at`, `customer_full_name`, `customer_email`, `customer_phone`, `customer_id_card`, `num_adults`, `num_children`, `payment_method`, `payment_status`, `paid_amount`) VALUES
-(1, 'BKG2603001', 1, '2026-03-28', '2026-03-30', 7250000, 'Kỷ niệm ngày cưới, cần chuẩn bị hoa tươi', 'CHECKED_IN', '2026-03-25 10:00:00', 'Trần Minh Khoa', 'khoa.tran@example.com', '0901234567', '079190001234', 2, 0, 'VNPAY', 'PAID', 7250000),
-(2, 'BKG2603002', 2, '2026-04-05', '2026-04-07', 3200000, 'Xin phòng tầng cao', 'CONFIRMED', '2026-03-29 08:30:00', 'Nguyễn Thị Lan', 'lan.nguyen@example.com', '0987654321', '079195005678', 2, 1, 'VNPAY', 'PAID', 3200000),
+(1, 'BKG2603001', 1, '2026-03-28', '2026-03-30', 7250000, 'Kỷ niệm ngày cưới, cần chuẩn bị hoa tươi', 'COMPLETED', '2026-03-25 10:00:00', 'Trần Minh Khoa', 'khoa.tran@example.com', '0901234567', '079190001234', 2, 0, 'VNPAY', 'PAID', 7250000),
+(2, 'BKG2603002', 2, '2026-04-05', '2026-04-07', 3200000, 'Xin phòng tầng cao', 'CHECKED_IN', '2026-03-29 08:30:00', 'Nguyễn Thị Lan', 'lan.nguyen@example.com', '0987654321', '079195005678', 2, 1, 'VNPAY', 'PAID', 3200000),
 (3, 'BKG2603003', 4, '2026-03-20', '2026-03-22', 2000000, 'Xuất hóa đơn công ty', 'COMPLETED', '2026-03-15 14:20:00', 'Lê Văn Đạt', 'dat.le@example.com', '0933445566', '079188009999', 1, 0, 'VNPAY', 'PAID', 2000000),
-(4, 'BK758776', 5, '2026-05-07', '2026-05-23', 15200000, 'Cần phòng gấp', 'PENDING', '2026-05-07 18:35:58', 'Đỗ Văn Kha', 'dovankha0802@gmail.com', '0385226320', '079200001111', 2, 0, 'VNPAY', 'UNPAID', 0);
+(4, 'BK758776', 5, '2026-05-06', '2026-05-18', 15200000, 'Cần phòng gấp', 'COMPLETED', '2026-05-07 18:35:58', 'Đỗ Văn Kha', 'dovankha0802@gmail.com', '0385226320', '079200001111', 2, 0, 'VNPAY', 'PAID', 15200000);
 
 -- --------------------------------------------------------
 
@@ -124,8 +124,9 @@ CREATE TABLE `contacts` (
 --
 
 INSERT INTO `contacts` (`id`, `full_name`, `email`, `subject`, `message`, `status`, `created_at`) VALUES
-(1, 'Hoàng Tú', 'tu.hoang@gmail.com', 'Hỏi về tiệc cưới', 'Khách sạn có nhận tổ chức tiệc cưới quy mô 100 khách không?', 'UNREAD', '2026-03-29 23:42:07'),
-(2, 'Lý Mạc Sầu', 'lymacsau@gmail.com', 'Thất lạc đồ', 'Tôi để quên áo khoác ở phòng 101 ngày 22/3, xin kiểm tra giúp.', 'RESOLVED', '2026-03-29 23:42:07');
+(1, 'Hoàng Tú', 'tu.hoang@gmail.com', 'Hỏi về tiệc cưới', 'Khách sạn có nhận tổ chức tiệc cưới quy mô 100 khách không?', 'RESOLVED', '2026-03-29 23:42:07'),
+(2, 'Lý Mạc Sầu', 'lymacsau@gmail.com', 'Thất lạc đồ', 'Tôi để quên áo khoác ở phòng 101 ngày 22/3, xin kiểm tra giúp.', 'RESOLVED', '2026-03-29 23:42:07'),
+(3, 'do kha', 'admin@gmail.com', 'Hỏi đáp Dịch vụ/Tiện ích', 'hi\r\n', 'RESOLVED', '2026-05-08 20:36:49');
 
 -- --------------------------------------------------------
 
@@ -168,7 +169,7 @@ CREATE TABLE `reviews` (
   `comment` text DEFAULT NULL COMMENT 'Nội dung đánh giá',
   `status` tinyint(4) DEFAULT 1 COMMENT '0: Ẩn/Spam, 1: Hiển thị',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `reviews`
@@ -197,17 +198,17 @@ CREATE TABLE `rooms` (
 --
 
 INSERT INTO `rooms` (`id`, `room_number`, `room_type_id`, `status`) VALUES
-(1, '101', 1, 'OCCUPIED'),
-(2, '102', 1, 'OCCUPIED'),
-(3, '103', 1, 'OCCUPIED'),
-(4, '104', 1, 'CLEANING'),
+(1, '101', 1, 'AVAILABLE'),
+(2, '102', 1, 'AVAILABLE'),
+(3, '103', 1, 'AVAILABLE'),
+(4, '104', 1, 'AVAILABLE'),
 (5, '105', 1, 'AVAILABLE'),
 (6, '201', 2, 'AVAILABLE'),
-(7, '202', 2, 'OCCUPIED'),
+(7, '202', 2, 'AVAILABLE'),
 (8, '203', 2, 'AVAILABLE'),
-(9, '204', 2, 'MAINTENANCE'),
-(10, '301', 3, 'OCCUPIED'),
-(11, '302', 3, 'OCCUPIED');
+(9, '204', 2, 'AVAILABLE'),
+(10, '301', 3, 'AVAILABLE'),
+(11, '302', 3, 'AVAILABLE');
 
 -- --------------------------------------------------------
 
@@ -229,9 +230,9 @@ CREATE TABLE `room_types` (
 --
 
 INSERT INTO `room_types` (`id`, `type_name`, `base_price`, `max_occupancy`, `description`, `image_url`) VALUES
-(1, 'Ninh Kieu Standard', 950000, 2, 'Sàn gỗ sồi tự nhiên, thiết kế tối giản, view nhìn ra trung tâm thành phố nhộn nhịp.', 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&q=80'),
-(2, 'Hau River Deluxe', 1600000, 2, 'Ban công rộng đón gió sông Hậu, bồn tắm sứ thủ công và nệm tiêu chuẩn 5 sao.', 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&q=80'),
-(3, 'Mekong Heritage Suite', 3200000, 3, 'Phòng khách hoàng gia, nội thất khảm trai tinh xảo. Miễn phí trà chiều và đưa đón sân bay.', 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80');
+(1, 'STANDARD', 950000, 2, 'Sàn gỗ sồi tự nhiên, thiết kế tối giản, view nhìn ra trung tâm thành phố nhộn nhịp.', 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&q=80'),
+(2, 'DELUXE', 1600000, 2, 'Ban công rộng đón gió sông Hậu, bồn tắm sứ thủ công và nệm tiêu chuẩn 5 sao.', 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&q=80'),
+(3, 'PREMIUM', 3200000, 3, 'Phòng khách hoàng gia, nội thất khảm trai tinh xảo. Miễn phí trà chiều và đưa đón sân bay.', 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80');
 
 -- --------------------------------------------------------
 
@@ -278,9 +279,10 @@ CREATE TABLE `staff` (
 --
 
 INSERT INTO `staff` (`id`, `full_name`, `email`, `password`, `role`, `created_at`) VALUES
-(1, 'Quản trị viên', 'admin@omnistay.vn', '123456', 'ADMIN', '2026-03-29 23:42:07'),
-(2, 'Nguyễn Thị Lễ Tân', 'reception1@omnistay.vn', '123456', 'RECEPTIONIST', '2026-03-29 23:42:07'),
-(3, 'Trần Văn Hỗ Trợ', 'reception2@omnistay.vn', '123456', 'RECEPTIONIST', '2026-03-29 23:42:07');
+(1, 'Đỗ Văn Kha', 'admin@omnistay.vn', '123456', 'ADMIN', '2026-03-29 23:42:07'),
+(2, 'Nguyễn Phú Khang', 'nguyenphukhang@omnistay.vn', '123456', 'RECEPTIONIST', '2026-03-29 23:42:07'),
+(3, 'Đoàn Như Thảo', 'doannhuthao@omnistay.vn', '123456', 'RECEPTIONIST', '2026-03-29 23:42:07'),
+(5, 'Trần Minh Hiếu', 'tranminhhieu@omnistay.vn', '123456', 'RECEPTIONIST', '2026-05-08 21:13:19');
 
 --
 -- Chỉ mục cho các bảng đã đổ
@@ -377,7 +379,7 @@ ALTER TABLE `booking_services`
 -- AUTO_INCREMENT cho bảng `contacts`
 --
 ALTER TABLE `contacts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT cho bảng `guests`
@@ -389,7 +391,7 @@ ALTER TABLE `guests`
 -- AUTO_INCREMENT cho bảng `reviews`
 --
 ALTER TABLE `reviews`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT cho bảng `rooms`
@@ -413,7 +415,7 @@ ALTER TABLE `services`
 -- AUTO_INCREMENT cho bảng `staff`
 --
 ALTER TABLE `staff`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- Các ràng buộc cho các bảng đã đổ
