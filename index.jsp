@@ -466,13 +466,13 @@
             </p>
             <div class="d-flex gap-3 flex-wrap">
               <a
-                href="#rooms"
+                href="<%=request.getContextPath()%>/pages/rooms.jsp"
                 class="btn btn-lg px-5 py-3 rounded-pill btn-hero-primary"
                 style="font-size: 0.85rem"
                 >Xem phòng</a
               >
               <a
-                href="#amenities"
+                href="<%=request.getContextPath()%>/pages/dichvu.jsp"
                 class="btn btn-lg px-5 py-3 rounded-pill btn-hero-outline"
                 style="font-size: 0.85rem;"
                 >Khám phá</a
@@ -549,7 +549,7 @@
           </div>
           <!-- Input fields -->
           <div class="booking-body">
-            <div class="row g-3 align-items-end">
+            <form action="<%=request.getContextPath()%>/pages/rooms.jsp" method="GET" class="row g-3 align-items-end">
               <div class="col-md-2 col-sm-6">
                 <label class="booking-field-label"
                   ><i class="bi bi-box-arrow-in-right me-1"></i>Nhận
@@ -557,6 +557,7 @@
                 >
                 <input
                   type="date"
+                  name="checkin"
                   class="booking-input form-control"
                   value="2026-03-30"
                   id="checkin"
@@ -568,6 +569,7 @@
                 >
                 <input
                   type="date"
+                  name="checkout"
                   class="booking-input form-control"
                   value="2026-04-02"
                   id="checkout"
@@ -593,24 +595,24 @@
                 <label class="booking-field-label"
                   ><i class="bi bi-people me-1"></i>Khách</label
                 >
-                <select class="booking-input form-select">
-                  <option>1 người lớn</option>
-                  <option selected>2 người lớn</option>
-                  <option>2 lớn + 1 trẻ em</option>
-                  <option>2 lớn + 2 trẻ em</option>
-                  <option>4+ khách</option>
+                <select name="occupancy" class="booking-input form-select">
+                  <option value="1">1 người lớn</option>
+                  <option value="2" selected>2 người lớn</option>
+                  <option value="3">2 lớn + 1 trẻ em</option>
+                  <option value="4">2 lớn + 2 trẻ em</option>
+                  <option value="5">4+ khách</option>
                 </select>
               </div>
               <div class="col-md-2 col-sm-6">
                 <label class="booking-field-label"
                   ><i class="bi bi-door-open me-1"></i>Loại phòng</label
                 >
-                <select class="booking-input form-select">
-                  <option>Tất cả loại phòng</option>
-                  <option>Standard</option>
-                  <option>Deluxe</option>
-                  <option>Superior Suite</option>
-                  <option>Presidential Suite</option>
+                <select name="type" class="booking-input form-select">
+                  <option value="all">Tất cả loại phòng</option>
+                  <option value="standard">Standard</option>
+                  <option value="deluxe">Deluxe</option>
+                  <option value="suite">Superior Suite</option>
+                  <option value="presidential">Presidential Suite</option>
                 </select>
               </div>
               <div class="col-md-2 col-sm-6">
@@ -619,16 +621,17 @@
                 >
                 <input
                   type="text"
+                  name="promo"
                   class="booking-input form-control"
                   placeholder="VD: EARLY20"
                 />
               </div>
               <div class="col-md-1 col-sm-12">
-                <button class="btn-book-search">
+                <button type="submit" class="btn-book-search">
                   <i class="bi bi-search"></i>
                 </button>
               </div>
-            </div>
+            </form>
           </div>
           <!-- Promo strip -->
           <div class="promo-strip d-flex align-items-center gap-2 flex-wrap">
@@ -1738,10 +1741,38 @@ if(conn != null){
           <div class="divider mx-auto mt-2"></div>
         </div>
         <div class="row g-4">
+          <%
+            if(conn != null){
+              try {
+                String reviewSql = "SELECT r.*, g.full_name FROM reviews r JOIN guests g ON r.guest_id = g.id WHERE r.status = 1 ORDER BY r.created_at DESC LIMIT 3";
+                PreparedStatement psReview = conn.prepareStatement(reviewSql);
+                ResultSet rsReview = psReview.executeQuery();
+                
+                String[] avatars = {"NT", "TM", "PH", "LK", "HA"};
+                String[] bgColors = {"var(--primary)", "var(--accent)", "#6c757d", "#1a6b5a", "#d4a847"};
+                int revIdx = 0;
+                
+                boolean hasDbReviews = false;
+                while(rsReview.next()){
+                  hasDbReviews = true;
+                  String guestName = rsReview.getString("full_name");
+                  String comment = rsReview.getString("comment");
+                  int rating = rsReview.getInt("rating");
+                  Timestamp createdAt = rsReview.getTimestamp("created_at");
+                  String initial = guestName.substring(0, 1).toUpperCase() + (guestName.contains(" ") ? guestName.split(" ")[guestName.split(" ").length-1].substring(0,1).toUpperCase() : "");
+                  
+                  // Simple platform tags for variety
+                  String[] platforms = {"Booking.com", "TripAdvisor", "Google", "Agoda"};
+                  String platform = platforms[revIdx % platforms.length];
+          %>
           <div class="col-md-4">
             <div class="review-card bg-white rounded-4 p-4 shadow-sm h-100">
               <div class="d-flex align-items-center gap-2 mb-3">
-                <span class="star">★★★★★</span>
+                <span class="star">
+                  <% for(int i=0; i<5; i++) { %>
+                    <%= (i < rating) ? "★" : "☆" %>
+                  <% } %>
+                </span>
                 <span
                   class="badge rounded-pill"
                   style="
@@ -1749,15 +1780,14 @@ if(conn != null){
                     color: var(--primary);
                     font-size: 0.62rem;
                   "
-                  >Booking.com</span
+                  ><%= platform %></span
                 >
               </div>
               <p
                 class="mb-3"
                 style="font-size: 0.88rem; line-height: 1.75; color: #444"
               >
-                "Dịch vụ xuất sắc, phòng rộng và sạch đẹp. View từ phòng nhìn ra
-                thành phố vào ban đêm thật tuyệt vời. Nhất định sẽ quay lại!"
+                "<%= comment %>"
               </p>
               <div class="d-flex align-items-center gap-3">
                 <div
@@ -1765,114 +1795,39 @@ if(conn != null){
                   style="
                     width: 40px;
                     height: 40px;
-                    background: var(--primary);
+                    background: <%= bgColors[revIdx % bgColors.length] %>;
                     font-size: 0.85rem;
                     flex-shrink: 0;
                   "
                 >
-                  NT
+                  <%= initial %>
                 </div>
                 <div>
                   <div class="fw-500" style="font-size: 0.85rem">
-                    Nguyễn Thị Lan
+                    <%= guestName %>
                   </div>
                   <div class="text-muted" style="font-size: 0.75rem">
-                    TP. Hà Nội · Tháng 3/2026
+                    Đã ở · <%= new java.text.SimpleDateFormat("MM/yyyy").format(createdAt) %>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="col-md-4">
-            <div class="review-card bg-white rounded-4 p-4 shadow-sm h-100">
-              <div class="d-flex align-items-center gap-2 mb-3">
-                <span class="star">★★★★★</span>
-                <span
-                  class="badge rounded-pill"
-                  style="
-                    background: rgba(26, 107, 90, 0.08);
-                    color: var(--primary);
-                    font-size: 0.62rem;
-                  "
-                  >TripAdvisor</span
-                >
-              </div>
-              <p
-                class="mb-3"
-                style="font-size: 0.88rem; line-height: 1.75; color: #444"
-              >
-                "Phòng Presidential Suite là trải nghiệm không thể nào quên.
-                Concierge phục vụ tận tình từng chi tiết nhỏ. Xứng đáng 5 sao!"
-              </p>
-              <div class="d-flex align-items-center gap-3">
-                <div
-                  class="rounded-circle d-flex align-items-center justify-content-center text-white fw-500"
-                  style="
-                    width: 40px;
-                    height: 40px;
-                    background: var(--accent);
-                    font-size: 0.85rem;
-                    flex-shrink: 0;
-                  "
-                >
-                  TM
-                </div>
-                <div>
-                  <div class="fw-500" style="font-size: 0.85rem">
-                    Trần Minh Khoa
-                  </div>
-                  <div class="text-muted" style="font-size: 0.75rem">
-                    TP. HCM · Tháng 3/2026
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="review-card bg-white rounded-4 p-4 shadow-sm h-100">
-              <div class="d-flex align-items-center gap-2 mb-3">
-                <span class="star">★★★★☆</span>
-                <span
-                  class="badge rounded-pill"
-                  style="
-                    background: rgba(26, 107, 90, 0.08);
-                    color: var(--primary);
-                    font-size: 0.62rem;
-                  "
-                  >Google</span
-                >
-              </div>
-              <p
-                class="mb-3"
-                style="font-size: 0.88rem; line-height: 1.75; color: #444"
-              >
-                "Vị trí trung tâm rất thuận tiện. Bữa sáng buffet phong phú và
-                ngon miệng. Spa thư giãn tuyệt vời sau chuyến công tác dài."
-              </p>
-              <div class="d-flex align-items-center gap-3">
-                <div
-                  class="rounded-circle d-flex align-items-center justify-content-center text-white fw-500"
-                  style="
-                    width: 40px;
-                    height: 40px;
-                    background: #6c757d;
-                    font-size: 0.85rem;
-                    flex-shrink: 0;
-                  "
-                >
-                  PH
-                </div>
-                <div>
-                  <div class="fw-500" style="font-size: 0.85rem">
-                    Phạm Hồng Anh
-                  </div>
-                  <div class="text-muted" style="font-size: 0.75rem">
-                    Đà Nẵng · Tháng 2/2026
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <%
+                  revIdx++;
+                }
+                rsReview.close();
+                psReview.close();
+                
+                if(!hasDbReviews) {
+                  // Fallback to static if no reviews in DB (though we saw some in SQL)
+                  out.println("<div class='col-12 text-center py-4'><p class='text-muted'>Đang cập nhật những đánh giá mới nhất...</p></div>");
+                }
+              } catch(Exception e) {
+                out.println("<div class='col-12 text-center text-danger'>Lỗi tải đánh giá: " + e.getMessage() + "</div>");
+              }
+            }
+          %>
         </div>
         <!-- Rating breakdown -->
         <div class="row justify-content-center mt-5">

@@ -1,16 +1,28 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ include file="../layouts/admin-auth.jsp" %>
 <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
+<%@ include file="../env-secrets.jsp" %>
 <%
     Connection conn = null;
     String dbError = null;
     try{
         Class.forName("com.mysql.cj.jdbc.Driver");
-        conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/omnistay", "root", "");
+        conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
     }catch(Exception e){
         dbError = e.getMessage();
     }
     NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+    
+    // Helper translation
+    java.util.function.Function<String, String> translateType = (type) -> {
+        if(type == null) return "Chưa xác định";
+        switch(type.trim().toUpperCase()) {
+            case "STANDARD": return "Tiêu chuẩn (Standard)";
+            case "DELUXE": return "Sang trọng (Deluxe)";
+            case "PREMIUM": return "Cao cấp (Premium)";
+            default: return type;
+        }
+    };
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -120,11 +132,13 @@
                 <h2 class="font-display fw-normal mb-1">Danh sách Phòng nghỉ</h2>
                 <p class="text-muted mb-0" style="font-size: 0.9rem;">Quản lý thông tin, giá cả và trạng thái của toàn bộ hệ thống phòng.</p>
             </div>
+            <% if ("ADMIN".equals(adminRole)) { %>
             <div class="d-flex align-items-center gap-3">
                 <a href="admin-room-add.jsp" class="btn text-white fw-500 rounded-pill px-4" style="background: var(--primary); font-size: 0.85rem;">
                     <i class="bi bi-plus-lg me-1"></i> Thêm phòng mới
                 </a>
             </div>
+            <% } %>
         </div>	
 
         <%
@@ -136,14 +150,15 @@
             <div class="d-flex gap-2">
                 <select name="loaiphong" class="form-select border-0 bg-light rounded-3" style="font-size: 0.85rem; width: 160px;">
                     <option value="" <%= (loaiphong == null || loaiphong.isEmpty()) ? "selected" : "" %> >Tất cả loại phòng</option>
-                    <option value="Standard" <%= "Standard".equals(loaiphong) ? "selected" : "" %>>Standard</option>
-                    <option value="Premium" <%= "Premium".equals(loaiphong) ? "selected" : "" %>>Premium</option>
-                    <option value="Luxury" <%= "Luxury".equals(loaiphong) ? "selected" : "" %>>Luxury</option>
+                    <option value="Standard" <%= "Standard".equals(loaiphong) ? "selected" : "" %>>Tiêu chuẩn</option>
+                    <option value="Deluxe" <%= "Deluxe".equals(loaiphong) ? "selected" : "" %>>Sang trọng</option>
+                    <option value="Premium" <%= "Premium".equals(loaiphong) ? "selected" : "" %>>Cao cấp</option>
                 </select>
                 <select name="trangthai" class="form-select border-0 bg-light rounded-3" style="font-size: 0.85rem; width: 150px;">
                     <option value="" <%= (trangthai == null || trangthai.isEmpty()) ? "selected" : "" %>>Tất cả trạng thái</option>
                     <option value="AVAILABLE" <%= "AVAILABLE".equals(trangthai) ? "selected" : "" %>>Sẵn sàng</option>
                     <option value="OCCUPIED" <%= "OCCUPIED".equals(trangthai) ? "selected" : "" %>>Đang có khách</option>
+                    <option value="CLEANING" <%= "CLEANING".equals(trangthai) ? "selected" : "" %>>Đang dọn dẹp</option>
                     <option value="MAINTENANCE" <%= "MAINTENANCE".equals(trangthai) ? "selected" : "" %>>Bảo trì</option>
                 </select>
                 <button type="submit" class="btn text-white px-4" style="background: var(--primary); border-radius: 8px;">Lọc</button>
@@ -173,7 +188,9 @@
                             <th>Sức chứa</th>
                             <th>Giá niêm yết</th>
                             <th>Trạng thái</th>
+                            <% if ("ADMIN".equals(adminRole)) { %>
                             <th class="text-end">Hành động</th>
+                            <% } %>
                         </tr>
                     </thead>
                     <tbody>
@@ -213,7 +230,7 @@
                         %>
                         <tr>
                             <td class="text-center fw-500 text-muted"><%= roomsNB %></td> 
-                            <td><div class="fw-500 font-display" style="font-size: 1.1rem; color: var(--primary);"><%= typeName %></div></td>
+                            <td><div class="fw-500 font-display" style="font-size: 1.1rem; color: var(--primary);"><%= translateType.apply(typeName) %></div></td>
                             <td><span class="badge bg-light text-dark border fw-normal"><i class="bi bi-people me-1"></i><%= people %> Người lớn</span></td>
                             <td class="font-display fw-600" style="color: var(--primary); font-size: 1.1rem;">
                                 <%= nf.format(price).replace("VNĐ", "₫") %> <span class="text-muted fw-normal" style="font-size: 0.75rem;">/ đêm</span>
@@ -226,14 +243,18 @@
                                     <select name="newStatus" class="form-select form-select-sm shadow-none" onchange="this.form.submit()" style="border-radius: 8px; width: 140px; cursor: pointer; border-color: var(--border);">
                                         <option value="AVAILABLE" <%= "AVAILABLE".equals(status) ? "selected" : "" %>>Sẵn sàng</option>
                                         <option value="OCCUPIED" <%= "OCCUPIED".equals(status) ? "selected" : "" %>>Đang có khách</option>
+                                        <option value="CLEANING" <%= "CLEANING".equals(status) ? "selected" : "" %>>Đang dọn dẹp</option>
                                         <option value="MAINTENANCE" <%= "MAINTENANCE".equals(status) ? "selected" : "" %>>Bảo trì</option>
                                     </select>
                                 </form>
                             </td>
+                            </td>
+                            <% if ("ADMIN".equals(adminRole)) { %>
                             <td class="text-end">
                                 <a href="admin-room-edit.jsp?id=<%=id %>" class="action-btn text-primary" title="Chỉnh sửa"><i class="bi bi-pencil-square"></i></a>
                                 <a href="admin-room-delete.jsp?id=<%=id %>" onclick="return confirm('Bạn có chắc muốn xóa phòng này?')" class="action-btn text-danger" title="Xóa"><i class="bi bi-trash3"></i></a>
                             </td>
+                            <% } %>
                         </tr>
                         <%
                                 } 

@@ -15,11 +15,11 @@
         String action = request.getParameter("action");
         if (action != null) {
             int id = Integer.parseInt(request.getParameter("id"));
-            if (action.equals("markRead")) {
-                PreparedStatement ps = conn.prepareStatement("UPDATE contacts SET status = 'READ' WHERE id = ?");
+            if (action.equals("markResolved")) {
+                PreparedStatement ps = conn.prepareStatement("UPDATE contacts SET status = 'RESOLVED' WHERE id = ?");
                 ps.setInt(1, id);
                 ps.executeUpdate();
-                thongBao = "Đã đánh dấu là đã đọc!";
+                thongBao = "Đã đánh dấu là đã giải quyết!";
             } else if (action.equals("delete")) {
                 PreparedStatement ps = conn.prepareStatement("DELETE FROM contacts WHERE id = ?");
                 ps.setInt(1, id);
@@ -72,7 +72,7 @@
         .table-custom td { padding: 1.2rem 1.5rem; vertical-align: middle; color: #495057; font-size: 0.9rem; border-bottom: 1px solid #edf2f9; }
         
         .status-unread { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
-        .status-read { background: rgba(26, 107, 90, 0.1); color: var(--primary); }
+        .status-resolved { background: rgba(26, 107, 90, 0.1); color: var(--primary); }
         
         .action-btn { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: 0.2s; color: #666; text-decoration: none; border: 1px solid transparent; cursor: pointer; }
         .action-btn:hover { background: var(--bg-light); color: var(--primary); border-color: var(--border); }
@@ -101,6 +101,28 @@
             </div>
         <% } %>
 
+        <%
+            String contactSearch = request.getParameter("contactSearch");
+        %>
+
+        <!-- Filter Bar -->
+        <form action="admin-contacts.jsp" method="GET" class="bg-white p-3 rounded-4 border mb-4 shadow-sm" style="border-color: var(--border) !important;">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+                        <input type="text" name="contactSearch" class="form-control border-0 bg-light" placeholder="Tìm theo tên khách, email hoặc tiêu đề liên hệ..." value="<%= (contactSearch != null) ? contactSearch : "" %>">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn text-white w-100" style="background: var(--primary); border-radius: 10px;">Tìm kiếm</button>
+                </div>
+                <div class="col-md-2 text-end">
+                    <a href="admin-contacts.jsp" class="btn btn-light w-100 border rounded-pill text-muted small">Xóa lọc</a>
+                </div>
+            </div>
+        </form>
+
         <div class="table-custom">
             <div class="table-responsive">
                 <table id="contactTable" class="table table-hover align-middle mb-0">
@@ -117,8 +139,19 @@
                         <%
                             if(conn != null) {
                                 try {
-                                    Statement st = conn.createStatement();
-                                    ResultSet rs = st.executeQuery("SELECT * FROM contacts ORDER BY created_at DESC");
+                                    String sql = "SELECT * FROM contacts WHERE 1=1 ";
+                                    if(contactSearch != null && !contactSearch.trim().isEmpty()) {
+                                        sql += " AND (full_name LIKE ? OR email LIKE ? OR subject LIKE ?)";
+                                    }
+                                    sql += " ORDER BY created_at DESC";
+                                    
+                                    PreparedStatement ps = conn.prepareStatement(sql);
+                                    if(contactSearch != null && !contactSearch.trim().isEmpty()) {
+                                        String pat = "%" + contactSearch.trim() + "%";
+                                        ps.setString(1, pat); ps.setString(2, pat); ps.setString(3, pat);
+                                    }
+                                    
+                                    ResultSet rs = ps.executeQuery();
                                     while(rs.next()) {
                                         int id = rs.getInt("id");
                                         String name = rs.getString("full_name");
@@ -136,17 +169,17 @@
                             <td><div class="text-truncate" style="max-width: 250px;"><%= subject %></div></td>
                             <td><div class="small text-muted"><%= sdf.format(createdAt) %></div></td>
                             <td>
-                                <span class="badge rounded-pill px-3 py-2 <%= status.equals("UNREAD") ? "status-unread" : "status-read" %>">
-                                    <%= status.equals("UNREAD") ? "Chưa đọc" : "Đã đọc" %>
+                                <span class="badge rounded-pill px-3 py-2 <%= status.equals("UNREAD") ? "status-unread" : "status-resolved" %>">
+                                    <%= status.equals("UNREAD") ? "Chưa đọc" : "Đã giải quyết" %>
                                 </span>
                             </td>
                             <td class="text-end">
                                 <a class="action-btn" onclick="viewMessage('<%= name %>', '<%= email %>', '<%= subject %>', `<%= message %>`)" title="Xem nội dung"><i class="bi bi-eye"></i></a>
                                 <% if(status.equals("UNREAD")) { %>
                                     <form action="admin-contacts.jsp" method="POST" style="display:inline;">
-                                        <input type="hidden" name="action" value="markRead">
+                                        <input type="hidden" name="action" value="markResolved">
                                         <input type="hidden" name="id" value="<%= id %>">
-                                        <button type="submit" class="action-btn" title="Đánh dấu đã đọc"><i class="bi bi-check2-circle text-success"></i></button>
+                                        <button type="submit" class="action-btn" title="Đánh dấu đã giải quyết"><i class="bi bi-check2-circle text-success"></i></button>
                                     </form>
                                 <% } %>
                                 <form action="admin-contacts.jsp" method="POST" style="display:inline;" onsubmit="return confirm('Xóa liên hệ này?')">
@@ -158,7 +191,7 @@
                         </tr>
                         <%
                                     }
-                                    rs.close(); st.close();
+                                    rs.close(); ps.close();
                                 } catch(Exception e) { out.println("Lỗi: " + e.getMessage()); }
                             }
                         %>
@@ -208,8 +241,9 @@
             $('#contactTable').DataTable({
                 "pageLength": 10,
                 "lengthChange": false,
+                "searching": false,
+                "ordering": false,
                 "language": {
-                    "search": "Tìm kiếm:",
                     "paginate": { "previous": "<i class='bi bi-chevron-left'></i>", "next": "<i class='bi bi-chevron-right'></i>" }
                 }
             });

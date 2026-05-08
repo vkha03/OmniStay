@@ -24,7 +24,7 @@
             try {
                 // 1. LƯU VÀO DATABASE
                 Class.forName("com.mysql.cj.jdbc.Driver");
-                conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/omnistay?useUnicode=true&characterEncoding=UTF-8", "root", "");
+                conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
                 
                 String sql = "INSERT INTO contacts (full_name, email, subject, message) VALUES (?, ?, ?, ?)";
                 pstmt = conn.prepareStatement(sql);

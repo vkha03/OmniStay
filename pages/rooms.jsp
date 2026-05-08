@@ -1,15 +1,38 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
+<%@ include file="../env-secrets.jsp" %>
 <%
     Connection conn = null;
     String dbError = null;
     try{
         Class.forName("com.mysql.cj.jdbc.Driver");
-        conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/omnistay", "root", "");
+        conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
     }catch(Exception e){
         dbError = e.getMessage();
     }
+    
+    // Lấy các tham số lọc
+    String filterType = request.getParameter("type");
+    if(filterType == null) filterType = "all";
+    
+    String filterOccupancy = request.getParameter("occupancy");
+    if(filterOccupancy == null) filterOccupancy = "";
+    
+    String filterSort = request.getParameter("sort");
+    if(filterSort == null) filterSort = "price_asc";
+    
     NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+
+    // Helper translation
+    java.util.function.Function<String, String> translateType = (type) -> {
+        if(type == null) return "Chưa xác định";
+        switch(type.trim().toUpperCase()) {
+            case "STANDARD": return "Tiêu chuẩn (Standard)";
+            case "DELUXE": return "Sang trọng (Deluxe)";
+            case "PREMIUM": return "Cao cấp (Premium)";
+            default: return type;
+        }
+    };
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -212,26 +235,26 @@
             <div class="col-md-3">
               <label class="form-label" style="font-size: 0.72rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em">Loại phòng</label>
               <select name="type" class="form-select">
-                <option value="all">Tất cả các loại</option>
-                <option value="standard">Standard</option>
-                <option value="deluxe">Deluxe</option>
-                <option value="suite">Suite cao cấp</option>
+                <option value="all" <%= filterType.equals("all") ? "selected" : "" %>>Tất cả các loại</option>
+                <option value="standard" <%= filterType.equals("standard") ? "selected" : "" %>>Tiêu chuẩn (Standard)</option>
+                <option value="deluxe" <%= filterType.equals("deluxe") ? "selected" : "" %>>Sang trọng (Deluxe)</option>
+                <option value="premium" <%= filterType.equals("premium") ? "selected" : "" %>>Cao cấp (Premium)</option>
               </select>
             </div>
             <div class="col-md-3">
               <label class="form-label" style="font-size: 0.72rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em">Sức chứa</label>
               <select name="occupancy" class="form-select">
-                <option value="">Bất kỳ</option>
-                <option value="2">2 Khách</option>
-                <option value="4">Gia đình (4 Khách)</option>
+                <option value="" <%= filterOccupancy.equals("") ? "selected" : "" %>>Bất kỳ</option>
+                <option value="2" <%= filterOccupancy.equals("2") ? "selected" : "" %>>2 Khách</option>
+                <option value="4" <%= filterOccupancy.equals("4") ? "selected" : "" %>>Gia đình (4 Khách)</option>
               </select>
             </div>
             <div class="col-md-4">
               <label class="form-label" style="font-size: 0.72rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em">Sắp xếp theo</label>
               <select name="sort" class="form-select">
-                <option value="price_asc">Giá: Thấp đến Cao</option>
-                <option value="price_desc">Giá: Cao đến Thấp</option>
-                <option value="popular">Phổ biến nhất</option>
+                <option value="price_asc" <%= filterSort.equals("price_asc") ? "selected" : "" %>>Giá: Thấp đến Cao</option>
+                <option value="price_desc" <%= filterSort.equals("price_desc") ? "selected" : "" %>>Giá: Cao đến Thấp</option>
+                <option value="popular" <%= filterSort.equals("popular") ? "selected" : "" %>>Phổ biến nhất</option>
               </select>
             </div>
             <div class="col-md-2">
@@ -244,11 +267,38 @@
           <%
             if(conn != null){
                 try{
-                    String SQL = "SELECT * FROM room_types";
-                    PreparedStatement ps = conn.prepareStatement(SQL);
+                    // Xây dựng câu truy vấn động
+                    StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM room_types WHERE 1=1");
+                    List<Object> params = new ArrayList<>();
+                    
+                    if(!filterType.equals("all")) {
+                        sqlBuilder.append(" AND type_name LIKE ?");
+                        params.add("%" + filterType + "%");
+                    }
+                    
+                    if(!filterOccupancy.isEmpty()) {
+                        sqlBuilder.append(" AND max_occupancy >= ?");
+                        params.add(Integer.parseInt(filterOccupancy));
+                    }
+                    
+                    if(filterSort.equals("price_asc")) {
+                        sqlBuilder.append(" ORDER BY base_price ASC");
+                    } else if(filterSort.equals("price_desc")) {
+                        sqlBuilder.append(" ORDER BY base_price DESC");
+                    } else {
+                        sqlBuilder.append(" ORDER BY id DESC");
+                    }
+                    
+                    PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString());
+                    for(int i=0; i<params.size(); i++) {
+                        ps.setObject(i+1, params.get(i));
+                    }
+                    
                     ResultSet rs = ps.executeQuery();
+                    boolean hasResults = false;
                     
                     while(rs.next()){
+                        hasResults = true;
                         int id = rs.getInt("id");
                         String typeName = rs.getString("type_name");
                         double price = rs.getDouble("base_price");
@@ -272,7 +322,7 @@
               
               <div class="card-body p-4 d-flex flex-column">
                 <div>
-                    <h5 class="font-display fw-normal mb-2"><%= typeName %></h5>
+                    <h5 class="font-display fw-normal mb-2"><%= translateType.apply(typeName) %></h5>
 
                     <p class="text-muted mb-3" style="font-size: 0.82rem; line-height: 1.6">
                       <%= des %>
@@ -301,6 +351,9 @@
           </div>
           
           <%
+                    }
+                    if(!hasResults) {
+                        out.println("<div class='col-12 text-center py-5'><div class='p-5 bg-white rounded-4 shadow-sm'><i class='bi bi-search mb-3' style='font-size: 3rem; color: var(--border)'></i><h4 class='font-display'>Không tìm thấy phòng phù hợp</h4><p class='text-muted'>Vui lòng thử lại với các tiêu chí lọc khác.</p><a href='rooms.jsp' class='btn btn-outline-primary rounded-pill mt-3'>Xem tất cả phòng</a></div></div>");
                     }
                     rs.close();
                     ps.close();

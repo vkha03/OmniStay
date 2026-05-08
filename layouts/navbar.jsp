@@ -8,6 +8,8 @@
         activeNav = "dichvu";
     } else if (currentURI.contains("contact.jsp")) {
         activeNav = "contact";
+    } else if (currentURI.contains("reviews.jsp")) {
+        activeNav = "reviews";
     } else if (currentURI.contains("invoice-lookup.jsp") || currentURI.contains("invoice-detail.jsp")) {
         activeNav = "invoice";
     }
@@ -154,7 +156,7 @@
           <a class="nav-link nav-link-custom <%= activeNav.equals("dichvu") ? "active" : "" %>" href="<%=request.getContextPath()%>/pages/dichvu.jsp">Dịch Vụ</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link nav-link-custom" href="<%=request.getContextPath()%>/index.jsp#reviews">Đánh giá</a>
+          <a class="nav-link nav-link-custom <%= activeNav.equals("reviews") ? "active" : "" %>" href="<%=request.getContextPath()%>/pages/reviews.jsp">Đánh giá</a>
         </li>
         <li class="nav-item">
           <a class="nav-link nav-link-custom <%= activeNav.equals("contact") ? "active" : "" %>" href="<%=request.getContextPath()%>/pages/contact.jsp">Liên hệ</a>

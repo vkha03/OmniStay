@@ -84,6 +84,41 @@
                 java.sql.Date checkOut = java.sql.Date.valueOf(request.getParameter("checkOut"));
                 String notes = request.getParameter("notes");
                 
+                double paidAmount = 0;
+                try { paidAmount = Double.parseDouble(request.getParameter("paidAmount")); } catch(Exception e){}
+                
+                // --- LOGIC TÍNH TOÁN TỔNG TIỀN THÔNG MINH (BẢO TOÀN ĐIỀU CHỈNH CŨ) ---
+                // 1. Lấy thông tin cũ để tính "Chênh lệch thủ công" hiện tại
+                double oldTotalDB = 0;
+                int oldRoomIdFromDB = 0;
+                PreparedStatement psOldB = conn.prepareStatement("SELECT b.total_amount, br.room_id, b.check_in_date, b.check_out_date FROM bookings b JOIN booking_rooms br ON b.id = br.booking_id WHERE b.id = ? LIMIT 1");
+                psOldB.setInt(1, bid);
+                ResultSet rsOldB = psOldB.executeQuery();
+                long oldNights = 0;
+                if(rsOldB.next()) {
+                    oldTotalDB = rsOldB.getDouble("total_amount");
+                    oldRoomIdFromDB = rsOldB.getInt("room_id");
+                    java.sql.Date d1 = rsOldB.getDate("check_in_date");
+                    java.sql.Date d2 = rsOldB.getDate("check_out_date");
+                    long dDiff = Math.abs(d2.getTime() - d1.getTime());
+                    oldNights = TimeUnit.DAYS.convert(dDiff, TimeUnit.MILLISECONDS);
+                    if(oldNights == 0) oldNights = 1;
+                }
+                
+                // 2. Tính giá phòng cũ
+                PreparedStatement psOldP = conn.prepareStatement("SELECT base_price FROM room_types rt JOIN rooms r ON r.room_type_id = rt.id WHERE r.id = ?");
+                psOldP.setInt(1, oldRoomIdFromDB); ResultSet rsOldP = psOldP.executeQuery();
+                double oldRoomPrice = 0; if(rsOldP.next()) oldRoomPrice = rsOldP.getDouble("base_price");
+                
+                // 3. Tính tiền dịch vụ hiện tại
+                PreparedStatement psS = conn.prepareStatement("SELECT SUM(quantity * historical_price) as svc_total FROM booking_services WHERE booking_id = ?");
+                psS.setInt(1, bid); ResultSet rsS = psS.executeQuery();
+                double svcTotal = 0; if(rsS.next()) svcTotal = rsS.getDouble("svc_total");
+                
+                // 4. Khoản điều chỉnh thủ công cũ = Tổng hiện tại - (Giá phòng cũ * Số đêm cũ + Dịch vụ)
+                double previousManualAdj = oldTotalDB - (oldRoomPrice * oldNights + svcTotal);
+                
+                // 5. Tính toán giá trị mới cho phòng
                 long diff = Math.abs(checkOut.getTime() - checkIn.getTime());
                 long nights = TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
                 if(nights == 0) nights = 1;
@@ -92,12 +127,9 @@
                 psP.setInt(1, newRoomId); ResultSet rsP = psP.executeQuery();
                 double roomBasePrice = 0; if(rsP.next()) roomBasePrice = rsP.getDouble("base_price");
                 double newRoomTotal = roomBasePrice * nights;
-                
-                PreparedStatement psS = conn.prepareStatement("SELECT SUM(quantity * historical_price) as svc_total FROM booking_services WHERE booking_id = ?");
-                psS.setInt(1, bid); ResultSet rsS = psS.executeQuery();
-                double svcTotal = 0; if(rsS.next()) svcTotal = rsS.getDouble("svc_total");
-                
-                double currentTotal = newRoomTotal + svcTotal;
+
+                // 6. Tổng mới = (Giá phòng mới * Số đêm mới + Dịch vụ) + Khoản điều chỉnh cũ + Khoản điều chỉnh mới
+                double currentTotal = (newRoomTotal + svcTotal) + previousManualAdj;
                 
                 String adjType = request.getParameter("adjType");
                 double adjAmount = 0;
@@ -106,8 +138,25 @@
                 if("increase".equals(adjType)) currentTotal += adjAmount;
                 else if("decrease".equals(adjType)) currentTotal -= adjAmount;
                 
-                double paidAmount = 0;
-                try { paidAmount = Double.parseDouble(request.getParameter("paidAmount")); } catch(Exception e){}
+                // --- XỬ LÝ GHI CHÚ BỔ SUNG (APPEND) ---
+                String existingNotes = "";
+                PreparedStatement psGetNotes = conn.prepareStatement("SELECT notes FROM bookings WHERE id = ?");
+                psGetNotes.setInt(1, bid);
+                ResultSet rsGetNotes = psGetNotes.executeQuery();
+                if(rsGetNotes.next()) existingNotes = rsGetNotes.getString("notes");
+                if(existingNotes == null) existingNotes = "";
+                
+                if (notes != null && !notes.trim().isEmpty()) {
+                    SimpleDateFormat noteTime = new SimpleDateFormat("dd/MM HH:mm");
+                    String logEntry = "[" + noteTime.format(new java.util.Date()) + "] " + notes.trim();
+                    if (!existingNotes.isEmpty()) {
+                        notes = existingNotes + "\n" + logEntry;
+                    } else {
+                        notes = logEntry;
+                    }
+                } else {
+                    notes = existingNotes;
+                }
                 
                 PreparedStatement psUp = conn.prepareStatement("UPDATE bookings SET customer_full_name=?, customer_phone=?, customer_id_card=?, check_in_date=?, check_out_date=?, total_amount=?, paid_amount=?, notes=? WHERE id=?");
                 psUp.setString(1, name); psUp.setString(2, phone); psUp.setString(3, idCard); psUp.setDate(4, checkIn); psUp.setDate(5, checkOut); 
@@ -155,6 +204,17 @@
     }
     NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
     SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+
+    // Helper translation
+    java.util.function.Function<String, String> translateType = (type) -> {
+        if(type == null) return "Chưa xác định";
+        switch(type.trim().toUpperCase()) {
+            case "STANDARD": return "Tiêu chuẩn (Standard)";
+            case "DELUXE": return "Sang trọng (Deluxe)";
+            case "PREMIUM": return "Cao cấp (Premium)";
+            default: return type;
+        }
+    };
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -220,6 +280,39 @@
             </div>
         <% } %>
 
+        <%
+            String search = request.getParameter("search");
+            String statusFilter = request.getParameter("statusFilter");
+        %>
+
+        <!-- Filter Bar -->
+        <form action="admin-bookings.jsp" method="GET" class="bg-white p-3 rounded-4 border mb-4 shadow-sm" style="border-color: var(--border) !important;">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" class="form-control border-0 bg-light" placeholder="Tìm tên khách, SĐT, CCCD hoặc mã đơn..." value="<%= (search != null) ? search : "" %>">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="statusFilter" class="form-select border-0 bg-light">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="PENDING" <%= "PENDING".equals(statusFilter) ? "selected" : "" %>>Chờ xử lý</option>
+                        <option value="CONFIRMED" <%= "CONFIRMED".equals(statusFilter) ? "selected" : "" %>>Đã xác nhận</option>
+                        <option value="CHECKED_IN" <%= "CHECKED_IN".equals(statusFilter) ? "selected" : "" %>>Đang lưu trú</option>
+                        <option value="COMPLETED" <%= "COMPLETED".equals(statusFilter) ? "selected" : "" %>>Đã hoàn thành</option>
+                        <option value="CANCELLED" <%= "CANCELLED".equals(statusFilter) ? "selected" : "" %>>Đã hủy</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn text-white w-100" style="background: var(--primary); border-radius: 10px;">Lọc dữ liệu</button>
+                </div>
+                <div class="col-md-2 text-end">
+                    <a href="admin-bookings.jsp" class="btn btn-light w-100 border rounded-pill text-muted small">Xóa lọc</a>
+                </div>
+            </div>
+        </form>
+
         <div class="table-custom">
             <div class="table-responsive">
                 <table id="bookingTable" class="table table-hover mb-0">
@@ -240,9 +333,30 @@
                         <%
                             if(conn != null) {
                                 try {
-                                    String sql = "SELECT b.*, r.id as room_id, r.room_number FROM bookings b LEFT JOIN booking_rooms br ON b.id = br.booking_id LEFT JOIN rooms r ON br.room_id = r.id ORDER BY b.created_at DESC";
-                                    Statement st = conn.createStatement();
-                                    ResultSet rs = st.executeQuery(sql);
+                                    String sql = "SELECT b.*, r.id as room_id, r.room_number FROM bookings b " +
+                                                 "LEFT JOIN booking_rooms br ON b.id = br.booking_id " +
+                                                 "LEFT JOIN rooms r ON br.room_id = r.id WHERE 1=1 ";
+                                    
+                                    if(search != null && !search.trim().isEmpty()) {
+                                        sql += " AND (b.booking_code LIKE ? OR b.customer_full_name LIKE ? OR b.customer_phone LIKE ? OR b.customer_id_card LIKE ?)";
+                                    }
+                                    if(statusFilter != null && !statusFilter.isEmpty()) {
+                                        sql += " AND b.status = ?";
+                                    }
+                                    
+                                    sql += " ORDER BY b.created_at DESC";
+                                    
+                                    PreparedStatement ps = conn.prepareStatement(sql);
+                                    int pIdx = 1;
+                                    if(search != null && !search.trim().isEmpty()) {
+                                        String pat = "%" + search.trim() + "%";
+                                        ps.setString(pIdx++, pat); ps.setString(pIdx++, pat); ps.setString(pIdx++, pat); ps.setString(pIdx++, pat);
+                                    }
+                                    if(statusFilter != null && !statusFilter.isEmpty()) {
+                                        ps.setString(pIdx++, statusFilter);
+                                    }
+                                    
+                                    ResultSet rs = ps.executeQuery();
                                     while(rs.next()) {
                                         int id = rs.getInt("id");
                                         String code = rs.getString("booking_code");
@@ -293,7 +407,7 @@
                                 </div>
                             </td>
                         </tr>
-                        <% } rs.close(); st.close(); } catch(Exception e) { out.println(e.getMessage()); } } %>
+                        <% } rs.close(); ps.close(); } catch(Exception e) { out.println(e.getMessage()); } } %>
                     </tbody>
                 </table>
             </div>
@@ -308,7 +422,7 @@
                     <h5 class="modal-title font-display fw-bold">Chỉnh sửa hóa đơn</h5>
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="admin-bookings.jsp" method="POST">
+                <form action="admin-bookings.jsp" method="POST" onsubmit="return validateBookingForm(this)">
                     <input type="hidden" name="action" value="editBooking">
                     <input type="hidden" name="id" id="editId">
                     <input type="hidden" name="oldRoomId" id="oldRoomId">
@@ -318,7 +432,7 @@
                         <div class="mb-3"><label class="form-label small fw-bold">Phòng lưu trú</label>
                             <select name="roomId" id="editRoomId" class="form-select" required>
                                 <% try { PreparedStatement psR = conn.prepareStatement("SELECT r.id, r.room_number, rt.type_name FROM rooms r JOIN room_types rt ON r.room_type_id = rt.id WHERE r.status = 'AVAILABLE' OR r.status = 'OCCUPIED'"); ResultSet rsR = psR.executeQuery(); while(rsR.next()){ %>
-                                <option value="<%= rsR.getInt("id") %>">P.<%= rsR.getString("room_number") %> - <%= rsR.getString("type_name") %></option>
+                                <option value="<%= rsR.getInt("id") %>">P.<%= rsR.getString("room_number") %> - <%= translateType.apply(rsR.getString("type_name")) %></option>
                                 <% } } catch(Exception e){} %>
                             </select></div>
                         <div class="row mb-3">
@@ -348,7 +462,11 @@
                             <input type="number" name="paidAmount" id="editPaidAmount" class="form-control fw-bold text-success" required>
                             <div class="small text-muted mt-1">Tổng bill hiện tại: <span id="displayTotal" class="fw-bold"></span></div>
                         </div>
-                        <div class="mb-0"><label class="form-label small fw-bold">Ghi chú</label><textarea name="notes" id="editNotes" class="form-control" rows="2"></textarea></div>
+                        <div class="mb-0">
+                            <label class="form-label small fw-bold">Ghi chú bổ sung</label>
+                            <textarea name="notes" id="editNotes" class="form-control" rows="2" placeholder="Nhập nội dung cần lưu ý thêm..."></textarea>
+                            <div class="small text-muted mt-1">Nội dung này sẽ được tự động nối vào sau ghi chú cũ.</div>
+                        </div>
                     </div>
                     <div class="modal-footer border-0 px-4 pb-4"><button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn text-white rounded-pill px-4" style="background: var(--primary);">Lưu thay đổi</button></div>
                 </form>
@@ -361,7 +479,7 @@
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content shadow-lg">
                 <div class="modal-header border-0 px-4 pt-4"><h5 class="modal-title font-display fw-bold">Lập hóa đơn mới</h5><button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button></div>
-                <form action="admin-bookings.jsp" method="POST">
+                <form action="admin-bookings.jsp" method="POST" onsubmit="return validateBookingForm(this)">
                     <input type="hidden" name="action" value="addBooking">
                     <div class="modal-body px-4"><div class="row g-3">
                         <div class="col-md-6"><label class="form-label small fw-bold">Họ và tên</label><input type="text" name="fullName" class="form-control" required></div>
@@ -370,12 +488,12 @@
                         <div class="col-md-6"><label class="form-label small fw-bold">Số CCCD</label><input type="text" name="idCard" class="form-control" required></div>
                         <div class="col-md-4"><label class="form-label small fw-bold">Phòng</label><select name="roomId" class="form-select">
                             <% try { PreparedStatement psR = conn.prepareStatement("SELECT r.id, r.room_number, rt.type_name FROM rooms r JOIN room_types rt ON r.room_type_id = rt.id WHERE r.status = 'AVAILABLE'"); ResultSet rsR = psR.executeQuery(); while(rsR.next()){ %>
-                            <option value="<%= rsR.getInt("id") %>">P.<%= rsR.getString("room_number") %></option>
+                            <option value="<%= rsR.getInt("id") %>">P.<%= rsR.getString("room_number") %> - <%= translateType.apply(rsR.getString("type_name")) %></option>
                             <% } } catch(Exception e){} %>
                         </select></div>
-                        <div class="col-md-4"><label class="form-label small fw-bold">Nhận</label><input type="date" name="checkIn" class="form-control" value="<%= new java.sql.Date(System.currentTimeMillis()) %>"></div>
+                        <div class="col-md-4"><label class="form-label small fw-bold">Nhận</label><input type="date" name="checkIn" class="form-control" value="<%= new java.sql.Date(System.currentTimeMillis()) %>" min="<%= new java.sql.Date(System.currentTimeMillis()) %>"></div>
                         <div class="col-md-4"><label class="form-label small fw-bold">Trả</label><input type="date" name="checkOut" class="form-control"></div>
-                        <div class="col-md-4"><label class="form-label small fw-bold text-danger">Tiền cộng thêm (₫)</label><input type="number" name="extraAmount" class="form-control" value="0"></div>
+                        <div class="col-md-4"><label class="form-label small fw-bold text-danger">Tiền cộng thêm (₫)</label><input type="number" name="extraAmount" class="form-control" value="0" min="0"></div>
                         <div class="col-12 mt-3">
                             <label class="form-label small fw-bold text-success">Dịch vụ</label>
                             <div class="row g-2 p-3 bg-light rounded-4" style="max-height: 150px; overflow-y: auto;">
@@ -397,10 +515,52 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script>
-        $(document).ready(function() { $('#bookingTable').DataTable({ "pageLength": 10, "lengthChange": false, "ordering": false, "language": { "search": "Tìm kiếm:" } }); });
+        $(document).ready(function() { $('#bookingTable').DataTable({ "pageLength": 10, "lengthChange": false, "ordering": false, "searching": false }); });
+        
+        function validateBookingForm(form) {
+            const checkIn = new Date(form.checkIn.value);
+            const checkOut = new Date(form.checkOut.value);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            
+            // 1. Kiểm tra ngày nhận (Chỉ áp dụng khi lập hóa đơn mới)
+            if (form.action.value === "addBooking" && checkIn < today) {
+                alert("Ngày nhận phòng không được ở trong quá khứ!");
+                return false;
+            }
+            
+            // 2. Kiểm tra ngày trả
+            if (checkOut <= checkIn) {
+                alert("Ngày trả phòng phải sau ngày nhận phòng ít nhất 1 ngày!");
+                return false;
+            }
+            
+            // 3. Kiểm tra CCCD (9 hoặc 12 số)
+            const idCard = form.idCard.value;
+            const idRegex = /^[0-9]{9}$|^[0-9]{12}$/;
+            if (!idRegex.test(idCard)) {
+                alert("Số CCCD không hợp lệ! Phải bao gồm 9 hoặc 12 chữ số.");
+                return false;
+            }
+            
+            // 4. Kiểm tra số tiền âm
+            if (form.extraAmount && form.extraAmount.value < 0) {
+                alert("Số tiền cộng thêm không được nhỏ hơn 0!");
+                return false;
+            }
+            
+            if (form.paidAmount && form.paidAmount.value < 0) {
+                alert("Số tiền đã thanh toán không được nhỏ hơn 0!");
+                return false;
+            }
+            
+            return true;
+        }
+
         function openEditModal(id, name, phone, idCard, roomId, checkIn, checkOut, notes, total, paid) {
             $('#editId').val(id); $('#editName').val(name); $('#editPhone').val(phone); $('#editIdCard').val(idCard);
-            $('#editRoomId').val(roomId); $('#oldRoomId').val(roomId); $('#editCheckIn').val(checkIn); $('#editCheckOut').val(checkOut); $('#editNotes').val(notes);
+            $('#editRoomId').val(roomId); $('#oldRoomId').val(roomId); $('#editCheckIn').val(checkIn); $('#editCheckOut').val(checkOut); 
+            $('#editNotes').val(''); // Luôn để trống để nhập nội dung mới
             $('#editPaidAmount').val(paid);
             $('#displayTotal').text(new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total));
             $('#adjNone').prop('checked', true); // Reset radio

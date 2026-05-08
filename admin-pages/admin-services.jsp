@@ -126,6 +126,28 @@
             </div>
         <% } %>
 
+        <%
+            String serviceSearch = request.getParameter("serviceSearch");
+        %>
+
+        <!-- Filter Bar -->
+        <form action="admin-services.jsp" method="GET" class="bg-white p-3 rounded-4 border mb-4 shadow-sm" style="border-color: var(--border) !important;">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+                        <input type="text" name="serviceSearch" class="form-control border-0 bg-light" placeholder="Tìm theo tên dịch vụ hoặc sản phẩm..." value="<%= (serviceSearch != null) ? serviceSearch : "" %>">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn text-white w-100" style="background: var(--primary); border-radius: 10px;">Tìm kiếm</button>
+                </div>
+                <div class="col-md-2 text-end">
+                    <a href="admin-services.jsp" class="btn btn-light w-100 border rounded-pill text-muted small">Xóa lọc</a>
+                </div>
+            </div>
+        </form>
+
         <div class="table-custom">
             <div class="table-responsive">
                 <table id="serviceTable" class="table table-hover align-middle mb-0">
@@ -141,8 +163,18 @@
                         <%
                             if(conn != null) {
                                 try {
-                                    Statement st = conn.createStatement();
-                                    ResultSet rs = st.executeQuery("SELECT * FROM services ORDER BY service_name ASC");
+                                    String sql = "SELECT * FROM services WHERE 1=1 ";
+                                    if(serviceSearch != null && !serviceSearch.trim().isEmpty()) {
+                                        sql += " AND service_name LIKE ?";
+                                    }
+                                    sql += " ORDER BY service_name ASC";
+                                    
+                                    PreparedStatement ps = conn.prepareStatement(sql);
+                                    if(serviceSearch != null && !serviceSearch.trim().isEmpty()) {
+                                        ps.setString(1, "%" + serviceSearch.trim() + "%");
+                                    }
+                                    
+                                    ResultSet rs = ps.executeQuery();
                                     while(rs.next()) {
                                         int id = rs.getInt("id");
                                         String name = rs.getString("service_name");
@@ -175,7 +207,7 @@
                         </tr>
                         <%
                                     }
-                                    rs.close(); st.close();
+                                    rs.close(); ps.close();
                                 } catch(Exception e) { out.println("Lỗi: " + e.getMessage()); }
                             }
                         %>
@@ -266,8 +298,9 @@
             $('#serviceTable').DataTable({
                 "pageLength": 10,
                 "lengthChange": false,
+                "searching": false,
+                "ordering": false,
                 "language": {
-                    "search": "Tìm dịch vụ:",
                     "paginate": { "previous": "<i class='bi bi-chevron-left'></i>", "next": "<i class='bi bi-chevron-right'></i>" }
                 }
             });

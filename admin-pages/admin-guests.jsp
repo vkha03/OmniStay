@@ -98,7 +98,26 @@
         <%
                 session.removeAttribute("thongBao");
             }
+            String guestSearch = request.getParameter("guestSearch");
         %>
+
+        <!-- Filter Bar -->
+        <form action="admin-guests.jsp" method="GET" class="bg-white p-3 rounded-4 border mb-4 shadow-sm" style="border-color: var(--border) !important;">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+                        <input type="text" name="guestSearch" class="form-control border-0 bg-light" placeholder="Tìm theo tên, số điện thoại, email hoặc CCCD của khách..." value="<%= (guestSearch != null) ? guestSearch : "" %>">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn text-white w-100" style="background: var(--primary); border-radius: 10px;">Tìm kiếm</button>
+                </div>
+                <div class="col-md-2 text-end">
+                    <a href="admin-guests.jsp" class="btn btn-light w-100 border rounded-pill text-muted small">Xóa lọc</a>
+                </div>
+            </div>
+        </form>
 
         <!-- Table Card -->
         <div class="table-custom">
@@ -119,12 +138,24 @@
                             if(conn != null) {
                                 try {
                                     NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
-                                    Statement st = conn.createStatement();
                                     String sql = "SELECT g.*, " +
                                                  "(SELECT COUNT(*) FROM bookings b WHERE b.guest_id = g.id) as booking_count, " +
                                                  "(SELECT SUM(total_amount) FROM bookings b WHERE b.guest_id = g.id AND b.status != 'CANCELLED') as total_spent " +
-                                                 "FROM guests g ORDER BY total_spent DESC, full_name ASC";
-                                    ResultSet rs = st.executeQuery(sql);
+                                                 "FROM guests g WHERE 1=1 ";
+                                    
+                                    if(guestSearch != null && !guestSearch.trim().isEmpty()) {
+                                        sql += " AND (g.full_name LIKE ? OR g.phone_number LIKE ? OR g.email LIKE ? OR g.id_card LIKE ?)";
+                                    }
+                                    
+                                    sql += " ORDER BY total_spent DESC, full_name ASC";
+                                    
+                                    PreparedStatement ps = conn.prepareStatement(sql);
+                                    if(guestSearch != null && !guestSearch.trim().isEmpty()) {
+                                        String pat = "%" + guestSearch.trim() + "%";
+                                        ps.setString(1, pat); ps.setString(2, pat); ps.setString(3, pat); ps.setString(4, pat);
+                                    }
+                                    
+                                    ResultSet rs = ps.executeQuery();
                                     while(rs.next()) {
                                         int id = rs.getInt("id");
                                         String name = rs.getString("full_name");
@@ -176,7 +207,7 @@
                         </tr>
                         <%
                                     }
-                                    rs.close(); st.close();
+                                    rs.close(); ps.close();
                                     conn.close();
                                 } catch(Exception e) {
                                     out.println("<tr><td colspan='5'>Lỗi: " + e.getMessage() + "</td></tr>");
@@ -199,8 +230,9 @@
             $('#guestTable').DataTable({
                 "pageLength": 10,
                 "lengthChange": false,
+                "searching": false,
+                "ordering": false,
                 "language": {
-                    "search": "Tìm khách hàng:",
                     "zeroRecords": "Không tìm thấy khách hàng nào",
                     "info": "Đang xem _START_ đến _END_ trong tổng số _TOTAL_ khách",
                     "infoEmpty": "Không có dữ liệu",
