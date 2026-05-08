@@ -41,6 +41,16 @@
                 <i class="bi bi-cup-hot"></i> Dịch vụ thêm
             </a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link <%= currentAdminURL.contains("admin-contacts.jsp") ? "active" : "" %>" href="<%=request.getContextPath()%>/admin-pages/admin-contacts.jsp">
+                <i class="bi bi-envelope-paper"></i> Quản lý liên hệ
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <%= currentAdminURL.contains("admin-reviews.jsp") ? "active" : "" %>" href="<%=request.getContextPath()%>/admin-pages/admin-reviews.jsp">
+                <i class="bi bi-star"></i> Đánh giá khách hàng
+            </a>
+        </li>
     </ul>
 
     <div class="mt-auto mb-4 px-3">

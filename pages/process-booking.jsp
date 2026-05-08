@@ -12,6 +12,11 @@
     String phone = request.getParameter("phone");
     String email = request.getParameter("email");
     String note = request.getParameter("note");
+    String idCard = request.getParameter("idCard");
+    String birthDate = request.getParameter("birthDate");
+    String adults = request.getParameter("adults");
+    String children = request.getParameter("children");
+    String paymentMethod = request.getParameter("paymentMethod");
 
     if(roomNumber != null && fullName != null) {
         Connection conn = null;
@@ -42,24 +47,47 @@
                 if (soDem <= 0) { soDem = 1; }
                 double tongTien = roomPrice * soDem;
 
-                // 3. LƯU GUEST
-                String sql1 = "INSERT INTO guests (full_name, phone_number, email) VALUES (?, ?, ?)";
-                PreparedStatement ps1 = conn.prepareStatement(sql1, Statement.RETURN_GENERATED_KEYS);
-                ps1.setString(1, fullName);
-                ps1.setString(2, phone);
-                ps1.setString(3, email);
-                ps1.executeUpdate();
-                ResultSet rs1 = ps1.getGeneratedKeys();
-                rs1.next();
-                int guestId = rs1.getInt(1);
-                rs1.close(); ps1.close();
+                // 3. XỬ LÝ KHÁCH HÀNG (DÙNG CCCD ĐỂ ĐỊNH DANH)
+                int guestId = 0;
+                String sqlCheckGuest = "SELECT id FROM guests WHERE id_card = ?";
+                PreparedStatement psCheck = conn.prepareStatement(sqlCheckGuest);
+                psCheck.setString(1, idCard);
+                ResultSet rsCheck = psCheck.executeQuery();
+                
+                if(rsCheck.next()) {
+                    // Khách cũ -> Lấy ID và cập nhật thông tin liên lạc mới nhất
+                    guestId = rsCheck.getInt("id");
+                    String sqlUpdateGuest = "UPDATE guests SET full_name = ?, phone_number = ?, email = ?, birth_date = ? WHERE id = ?";
+                    PreparedStatement psUpdate = conn.prepareStatement(sqlUpdateGuest);
+                    psUpdate.setString(1, fullName);
+                    psUpdate.setString(2, phone);
+                    psUpdate.setString(3, email);
+                    psUpdate.setString(4, birthDate);
+                    psUpdate.setInt(5, guestId);
+                    psUpdate.executeUpdate();
+                    psUpdate.close();
+                } else {
+                    // Khách mới -> Tạo mới
+                    String sql1 = "INSERT INTO guests (full_name, phone_number, email, id_card, birth_date) VALUES (?, ?, ?, ?, ?)";
+                    PreparedStatement ps1 = conn.prepareStatement(sql1, Statement.RETURN_GENERATED_KEYS);
+                    ps1.setString(1, fullName);
+                    ps1.setString(2, phone);
+                    ps1.setString(3, email);
+                    ps1.setString(4, idCard);
+                    ps1.setString(5, birthDate);
+                    ps1.executeUpdate();
+                    ResultSet rs1 = ps1.getGeneratedKeys();
+                    if(rs1.next()) guestId = rs1.getInt(1);
+                    rs1.close(); ps1.close();
+                }
+                rsCheck.close(); psCheck.close();
 
                 // 4. LƯU BOOKING (TRẠNG THÁI PENDING)
                 String bookingCode = "BK" + (System.currentTimeMillis() % 1000000);
-                String sql2 = "INSERT INTO bookings (booking_code, guest_id, check_in_date, check_out_date, total_amount, notes, status, customer_full_name, customer_email, customer_phone) VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)";
+                String sql2 = "INSERT INTO bookings (booking_code, guest_id, check_in_date, check_out_date, total_amount, notes, status, customer_full_name, customer_email, customer_phone, customer_id_card, num_adults, num_children, payment_method) VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?, ?, ?)";
                 PreparedStatement ps2 = conn.prepareStatement(sql2, Statement.RETURN_GENERATED_KEYS);
                 ps2.setString(1, bookingCode);
-                ps2.setInt(2, guestId); // Vẫn giữ FK guest_id để tham chiếu nếu cần
+                ps2.setInt(2, guestId);
                 ps2.setString(3, checkIn);
                 ps2.setString(4, checkOut);
                 ps2.setDouble(5, tongTien);
@@ -67,6 +95,10 @@
                 ps2.setString(7, fullName);
                 ps2.setString(8, email);
                 ps2.setString(9, phone);
+                ps2.setString(10, idCard);
+                ps2.setInt(11, Integer.parseInt(adults != null ? adults : "1"));
+                ps2.setInt(12, Integer.parseInt(children != null ? children : "0"));
+                ps2.setString(13, paymentMethod);
                 ps2.executeUpdate();
                 ResultSet rs2 = ps2.getGeneratedKeys();
                 rs2.next();
@@ -131,11 +163,7 @@
                 String vnp_SecureHash = hmacSHA512(vnp_HashSecret, hashData.toString());
                 String paymentUrl = vnp_Url + "?" + query.toString() + "&vnp_SecureHash=" + vnp_SecureHash;
                 
-                // Debug console để yên tâm
-                System.out.println("--- KHOI TAO THANH TOAN ---");
-                System.out.println("Booking Code: " + bookingCode);
-                System.out.println("Payment URL Generated OK");
-                
+                // Chuyển sang trang thanh toán VNPAY (Bắt buộc)
                 response.sendRedirect(paymentUrl);
             }
             conn.close();

@@ -9,7 +9,9 @@
     String error = null;
     
     String fullName = "", email = "", phone = "", roomName = "", roomType = "", status = "", createdAt = "", checkIn = "", checkOut = "";
-    double totalAmount = 0;
+    String customerIdCard = "", paymentMethod = "", paymentStatus = "";
+    int numAdults = 1, numChildren = 0;
+    double totalAmount = 0, paidAmount = 0;
     
     if (bookingCode == null || guestPhone == null || bookingCode.isEmpty() || guestPhone.isEmpty()) {
         response.sendRedirect("invoice-lookup.jsp");
@@ -57,6 +59,13 @@
             checkIn = rs.getString("check_in_date");
             checkOut = rs.getString("check_out_date");
             bookingNotes = rs.getString("notes");
+            customerIdCard = rs.getString("customer_id_card");
+            paymentMethod = rs.getString("payment_method");
+            paymentStatus = rs.getString("payment_status");
+            numAdults = rs.getInt("num_adults");
+            numChildren = rs.getInt("num_children");
+            paidAmount = rs.getDouble("paid_amount");
+            totalAmount = rs.getDouble("total_amount");
             
             // Tính toán dịch vụ
             PreparedStatement psSvcCount = conn.prepareStatement("SELECT SUM(quantity * historical_price) as total_svc FROM booking_services WHERE booking_id = ?");
@@ -340,16 +349,20 @@
                             <div class="col-md-4 info-group">
                                 <div class="info-label">Khách hàng</div>
                                 <div class="info-value"><%= fullName %></div>
-                                <div class="text-muted small"><%= phone %></div>
+                                <div class="text-muted small">CCCD: <%= customerIdCard %></div>
+                                <div class="text-muted small">SĐT: <%= phone %></div>
                             </div>
                             <div class="col-md-4 info-group">
                                 <div class="info-label">Thời gian lưu trú</div>
                                 <div class="info-value"><%= checkIn %> <i class="bi bi-arrow-right mx-2 text-muted" style="font-size: 0.8rem;"></i> <%= checkOut %></div>
-                                <div class="text-muted small">Check-in: 14:00 | Check-out: 12:00</div>
+                                <div class="text-muted small">Số khách: <%= numAdults %> NL, <%= numChildren %> TE</div>
                             </div>
                             <div class="col-md-4 text-md-end info-group">
-                                <div class="info-label">Ngày lập hóa đơn</div>
-                                <div class="info-value"><%= createdAt %></div>
+                                <div class="info-label">Thanh toán</div>
+                                <div class="info-value"><%= "VNPAY".equals(paymentMethod) ? "Chuyển khoản VNPAY" : "Tiền mặt / Tại quầy" %></div>
+                                <div class="badge <%= "PAID".equals(paymentStatus) ? "bg-success" : "bg-danger" %>">
+                                    <%= "PAID".equals(paymentStatus) ? "Đã thanh toán" : "Chưa thanh toán" %>
+                                </div>
                             </div>
                         </div>
 
@@ -416,9 +429,18 @@
                             <div class="col-md-5">
                                 <div class="total-box">
                                     <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted small">Tạm tính:</span>
-                                        <span class="fw-500"><%= nf.format(totalAmount).replace("VNĐ","₫") %></span>
-                                    </div>
+                                    <span class="text-muted">Tổng cộng hóa đơn</span>
+                                    <span class="fw-bold"><%= nf.format(totalAmount).replace("VNĐ", "₫") %></span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Đã thanh toán (VNPAY/Cọc)</span>
+                                    <span class="text-success fw-bold">- <%= nf.format(paidAmount).replace("VNĐ", "₫") %></span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <span class="h5 mb-0">Còn lại phải trả (Balance)</span>
+                                    <span class="h5 mb-0 text-danger fw-bold"><%= nf.format(totalAmount - paidAmount).replace("VNĐ", "₫") %></span>
+                                </div>
                                     <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
                                         <span class="text-muted small">Thuế VAT (0%):</span>
                                         <span class="fw-500">0₫</span>

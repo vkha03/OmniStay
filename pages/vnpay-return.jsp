@@ -51,8 +51,8 @@
                 if(rsF.next()) {
                     int bookingId = rsF.getInt("id");
 
-                    // 3.2 Cập nhật trạng thái đơn hàng sang CONFIRMED
-                    String sqlUp = "UPDATE bookings SET status = 'CONFIRMED' WHERE id = ?";
+                    // 3.2 Cập nhật trạng thái đơn hàng sang CONFIRMED và thanh toán PAID, cập nhật số tiền đã trả
+                    String sqlUp = "UPDATE bookings SET status = 'CONFIRMED', payment_status = 'PAID', paid_amount = total_amount WHERE id = ?";
                     PreparedStatement psU = conn.prepareStatement(sqlUp);
                     psU.setInt(1, bookingId);
                     psU.executeUpdate();

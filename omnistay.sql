@@ -39,22 +39,24 @@ CREATE TABLE `bookings` (
   `created_at` datetime DEFAULT current_timestamp(),
   `customer_full_name` varchar(100) DEFAULT NULL,
   `customer_email` varchar(100) DEFAULT NULL,
-  `customer_phone` varchar(20) DEFAULT NULL
+  `customer_phone` varchar(20) DEFAULT NULL,
+  `customer_id_card` varchar(20) DEFAULT NULL,
+  `num_adults` int(11) DEFAULT 1,
+  `num_children` int(11) DEFAULT 0,
+  `payment_method` varchar(50) DEFAULT 'CASH',
+  `payment_status` varchar(50) DEFAULT 'UNPAID',
+  `paid_amount` decimal(15,0) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `bookings`
 --
 
-INSERT INTO `bookings` (`id`, `booking_code`, `guest_id`, `check_in_date`, `check_out_date`, `total_amount`, `notes`, `status`, `created_at`, `customer_full_name`, `customer_email`, `customer_phone`) VALUES
-(1, 'BKG2603001', 1, '2026-03-28', '2026-03-30', 7250000, 'Kỷ niệm ngày cưới, cần chuẩn bị hoa tươi', 'CHECKED_IN', '2026-03-25 10:00:00', 'Trần Minh Khoa', 'khoa.tran@example.com', '0901234567'),
-(2, 'BKG2603002', 2, '2026-04-05', '2026-04-07', 3200000, 'Xin phòng tầng cao', 'CONFIRMED', '2026-03-29 08:30:00', 'Nguyễn Thị Lan', 'lan.nguyen@example.com', '0987654321'),
-(3, 'BKG2603003', 4, '2026-03-20', '2026-03-22', 2000000, 'Xuất hóa đơn công ty', 'COMPLETED', '2026-03-15 14:20:00', 'Lê Văn Đạt', 'dat.le@example.com', '0933445566'),
-(4, 'BK758776', 5, '2026-05-07', '2026-05-23', 15200000, 'Cần phòng gấp', 'PENDING', '2026-05-07 18:35:58', 'Đỗ Văn Kha', 'dovankha0802@gmail.com', '0385226320'),
-(5, 'BK767420', 6, '2026-05-07', '2026-05-23', 15200000, 'Cần phòng gấp', 'CONFIRMED', '2026-05-07 18:36:07', 'Đỗ Văn Kha', 'dovankha0802@gmail.com', '0385226320'),
-(6, 'BK798855', 7, '2026-05-07', '2026-05-15', 25600000, '', 'CONFIRMED', '2026-05-07 20:16:38', 'do kha', 'dovankha0802@gmail.com', '0385226320'),
-(7, 'BK465573', 8, '2026-05-07', '2026-05-08', 950000, 'nhanh', 'CONFIRMED', '2026-05-07 20:27:45', 'do kha', 'dovankha0802@gmail.com', '0385226320'),
-(8, 'BK275907', 9, '2026-05-08', '2026-05-29', 19950000, '', 'PENDING', '2026-05-08 07:14:35', 'do kha', 'admin@gmail.com', '0385226320');
+INSERT INTO `bookings` (`id`, `booking_code`, `guest_id`, `check_in_date`, `check_out_date`, `total_amount`, `notes`, `status`, `created_at`, `customer_full_name`, `customer_email`, `customer_phone`, `customer_id_card`, `num_adults`, `num_children`, `payment_method`, `payment_status`, `paid_amount`) VALUES
+(1, 'BKG2603001', 1, '2026-03-28', '2026-03-30', 7250000, 'Kỷ niệm ngày cưới, cần chuẩn bị hoa tươi', 'CHECKED_IN', '2026-03-25 10:00:00', 'Trần Minh Khoa', 'khoa.tran@example.com', '0901234567', '079190001234', 2, 0, 'VNPAY', 'PAID', 7250000),
+(2, 'BKG2603002', 2, '2026-04-05', '2026-04-07', 3200000, 'Xin phòng tầng cao', 'CONFIRMED', '2026-03-29 08:30:00', 'Nguyễn Thị Lan', 'lan.nguyen@example.com', '0987654321', '079195005678', 2, 1, 'VNPAY', 'PAID', 3200000),
+(3, 'BKG2603003', 4, '2026-03-20', '2026-03-22', 2000000, 'Xuất hóa đơn công ty', 'COMPLETED', '2026-03-15 14:20:00', 'Lê Văn Đạt', 'dat.le@example.com', '0933445566', '079188009999', 1, 0, 'VNPAY', 'PAID', 2000000),
+(4, 'BK758776', 5, '2026-05-07', '2026-05-23', 15200000, 'Cần phòng gấp', 'PENDING', '2026-05-07 18:35:58', 'Đỗ Văn Kha', 'dovankha0802@gmail.com', '0385226320', '079200001111', 2, 0, 'VNPAY', 'UNPAID', 0);
 
 -- --------------------------------------------------------
 
@@ -76,11 +78,7 @@ INSERT INTO `booking_rooms` (`booking_id`, `room_id`, `historical_price`) VALUES
 (1, 11, 3200000),
 (2, 6, 1600000),
 (3, 1, 950000),
-(4, 1, 950000),
-(5, 1, 950000),
-(6, 10, 3200000),
-(7, 2, 950000),
-(8, 5, 950000);
+(4, 1, 950000);
 
 -- --------------------------------------------------------
 
@@ -139,23 +137,21 @@ CREATE TABLE `guests` (
   `id` int(11) NOT NULL,
   `full_name` varchar(100) NOT NULL,
   `phone_number` varchar(20) NOT NULL,
-  `email` varchar(100) DEFAULT NULL
+  `email` varchar(100) DEFAULT NULL,
+  `id_card` varchar(20) DEFAULT NULL,
+  `birth_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `guests`
 --
 
-INSERT INTO `guests` (`id`, `full_name`, `phone_number`, `email`) VALUES
-(1, 'Trần Minh Khoa', '0901234567', 'khoa.tran@example.com'),
-(2, 'Nguyễn Thị Lan', '0987654321', 'lan.nguyen@example.com'),
-(3, 'Phạm Hồng Anh', '0912345678', 'honganh.pham@example.com'),
-(4, 'Lê Văn Đạt', '0933445566', 'dat.le@example.com'),
-(5, 'Đỗ Văn Kha', '0385226320', 'dovankha0802@gmail.com'),
-(6, 'Đỗ Văn Kha', '0385226320', 'dovankha0802@gmail.com'),
-(7, 'do kha', '0385226320', 'dovankha0802@gmail.com'),
-(8, 'do kha', '0385226320', 'dovankha0802@gmail.com'),
-(9, 'do kha', '0385226320', 'admin@gmail.com');
+INSERT INTO `guests` (`id`, `full_name`, `phone_number`, `email`, `id_card`, `birth_date`) VALUES
+(1, 'Trần Minh Khoa', '0901234567', 'khoa.tran@example.com', '079190001234', '1990-01-01'),
+(2, 'Nguyễn Thị Lan', '0987654321', 'lan.nguyen@example.com', '079195005678', '1995-05-05'),
+(3, 'Phạm Hồng Anh', '0912345678', 'honganh.pham@example.com', '079192002468', '1992-02-02'),
+(4, 'Lê Văn Đạt', '0933445566', 'dat.le@example.com', '079188009999', '1988-12-12'),
+(5, 'Đỗ Văn Kha', '0385226320', 'dovankha0802@gmail.com', '079200001111', '2000-08-02');
 
 -- --------------------------------------------------------
 
