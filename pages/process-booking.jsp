@@ -56,14 +56,17 @@
 
                 // 4. LƯU BOOKING (TRẠNG THÁI PENDING)
                 String bookingCode = "BK" + (System.currentTimeMillis() % 1000000);
-                String sql2 = "INSERT INTO bookings (booking_code, guest_id, check_in_date, check_out_date, total_amount, notes, status) VALUES (?, ?, ?, ?, ?, ?, 'PENDING')";
+                String sql2 = "INSERT INTO bookings (booking_code, guest_id, check_in_date, check_out_date, total_amount, notes, status, customer_full_name, customer_email, customer_phone) VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)";
                 PreparedStatement ps2 = conn.prepareStatement(sql2, Statement.RETURN_GENERATED_KEYS);
                 ps2.setString(1, bookingCode);
-                ps2.setInt(2, guestId);
+                ps2.setInt(2, guestId); // Vẫn giữ FK guest_id để tham chiếu nếu cần
                 ps2.setString(3, checkIn);
                 ps2.setString(4, checkOut);
                 ps2.setDouble(5, tongTien);
                 ps2.setString(6, note);
+                ps2.setString(7, fullName);
+                ps2.setString(8, email);
+                ps2.setString(9, phone);
                 ps2.executeUpdate();
                 ResultSet rs2 = ps2.getGeneratedKeys();
                 rs2.next();

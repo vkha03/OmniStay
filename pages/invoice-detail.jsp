@@ -29,13 +29,12 @@
         Class.forName("com.mysql.cj.jdbc.Driver");
         conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
         
-        String sql = "SELECT b.*, g.id as g_id, g.full_name, g.email, g.phone_number, r.id as r_id, r.room_number, rt.type_name " +
+        String sql = "SELECT b.*, r.id as r_id, r.room_number, rt.type_name " +
                      "FROM bookings b " +
-                     "JOIN guests g ON b.guest_id = g.id " +
                      "JOIN booking_rooms br ON b.id = br.booking_id " +
                      "JOIN rooms r ON br.room_id = r.id " +
                      "JOIN room_types rt ON r.room_type_id = rt.id " +
-                     "WHERE b.booking_code = ? AND g.phone_number = ?";
+                     "WHERE b.booking_code = ? AND b.customer_phone = ?";
         
         PreparedStatement ps = conn.prepareStatement(sql);
         ps.setString(1, bookingCode);
@@ -45,11 +44,11 @@
         if (rs.next()) {
             found = true;
             bookingId = rs.getInt("id");
-            guestId = rs.getInt("g_id");
+            guestId = rs.getInt("guest_id");
             roomId = rs.getInt("r_id");
-            fullName = rs.getString("full_name");
-            email = rs.getString("email");
-            phone = rs.getString("phone_number");
+            fullName = rs.getString("customer_full_name");
+            email = rs.getString("customer_email");
+            phone = rs.getString("customer_phone");
             roomName = rs.getString("room_number");
             roomType = rs.getString("type_name");
             status = rs.getString("status");

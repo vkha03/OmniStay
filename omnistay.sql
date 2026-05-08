@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th5 07, 2026 lúc 03:12 PM
+-- Thời gian đã tạo: Th5 08, 2026 lúc 02:26 AM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
 
@@ -36,19 +36,25 @@ CREATE TABLE `bookings` (
   `total_amount` decimal(15,0) DEFAULT 0,
   `notes` text DEFAULT NULL,
   `status` varchar(50) DEFAULT 'PENDING' COMMENT 'PENDING, CONFIRMED, CHECKED_IN, COMPLETED, CANCELLED',
-  `created_at` datetime DEFAULT current_timestamp()
+  `created_at` datetime DEFAULT current_timestamp(),
+  `customer_full_name` varchar(100) DEFAULT NULL,
+  `customer_email` varchar(100) DEFAULT NULL,
+  `customer_phone` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `bookings`
 --
 
-INSERT INTO `bookings` (`id`, `booking_code`, `guest_id`, `check_in_date`, `check_out_date`, `total_amount`, `notes`, `status`, `created_at`) VALUES
-(1, 'BKG2603001', 1, '2026-03-28', '2026-03-30', 7250000, 'Kỷ niệm ngày cưới, cần chuẩn bị hoa tươi', 'CHECKED_IN', '2026-03-25 10:00:00'),
-(2, 'BKG2603002', 2, '2026-04-05', '2026-04-07', 3200000, 'Xin phòng tầng cao', 'CONFIRMED', '2026-03-29 08:30:00'),
-(3, 'BKG2603003', 4, '2026-03-20', '2026-03-22', 2000000, 'Xuất hóa đơn công ty', 'COMPLETED', '2026-03-15 14:20:00'),
-(4, 'BK758776', 5, '2026-05-07', '2026-05-23', 15200000, 'Cần phòng gấp', 'PENDING', '2026-05-07 18:35:58'),
-(5, 'BK767420', 6, '2026-05-07', '2026-05-23', 15200000, 'Cần phòng gấp', 'CONFIRMED', '2026-05-07 18:36:07');
+INSERT INTO `bookings` (`id`, `booking_code`, `guest_id`, `check_in_date`, `check_out_date`, `total_amount`, `notes`, `status`, `created_at`, `customer_full_name`, `customer_email`, `customer_phone`) VALUES
+(1, 'BKG2603001', 1, '2026-03-28', '2026-03-30', 7250000, 'Kỷ niệm ngày cưới, cần chuẩn bị hoa tươi', 'CHECKED_IN', '2026-03-25 10:00:00', 'Trần Minh Khoa', 'khoa.tran@example.com', '0901234567'),
+(2, 'BKG2603002', 2, '2026-04-05', '2026-04-07', 3200000, 'Xin phòng tầng cao', 'CONFIRMED', '2026-03-29 08:30:00', 'Nguyễn Thị Lan', 'lan.nguyen@example.com', '0987654321'),
+(3, 'BKG2603003', 4, '2026-03-20', '2026-03-22', 2000000, 'Xuất hóa đơn công ty', 'COMPLETED', '2026-03-15 14:20:00', 'Lê Văn Đạt', 'dat.le@example.com', '0933445566'),
+(4, 'BK758776', 5, '2026-05-07', '2026-05-23', 15200000, 'Cần phòng gấp', 'PENDING', '2026-05-07 18:35:58', 'Đỗ Văn Kha', 'dovankha0802@gmail.com', '0385226320'),
+(5, 'BK767420', 6, '2026-05-07', '2026-05-23', 15200000, 'Cần phòng gấp', 'CONFIRMED', '2026-05-07 18:36:07', 'Đỗ Văn Kha', 'dovankha0802@gmail.com', '0385226320'),
+(6, 'BK798855', 7, '2026-05-07', '2026-05-15', 25600000, '', 'CONFIRMED', '2026-05-07 20:16:38', 'do kha', 'dovankha0802@gmail.com', '0385226320'),
+(7, 'BK465573', 8, '2026-05-07', '2026-05-08', 950000, 'nhanh', 'CONFIRMED', '2026-05-07 20:27:45', 'do kha', 'dovankha0802@gmail.com', '0385226320'),
+(8, 'BK275907', 9, '2026-05-08', '2026-05-29', 19950000, '', 'PENDING', '2026-05-08 07:14:35', 'do kha', 'admin@gmail.com', '0385226320');
 
 -- --------------------------------------------------------
 
@@ -71,7 +77,10 @@ INSERT INTO `booking_rooms` (`booking_id`, `room_id`, `historical_price`) VALUES
 (2, 6, 1600000),
 (3, 1, 950000),
 (4, 1, 950000),
-(5, 1, 950000);
+(5, 1, 950000),
+(6, 10, 3200000),
+(7, 2, 950000),
+(8, 5, 950000);
 
 -- --------------------------------------------------------
 
@@ -143,7 +152,10 @@ INSERT INTO `guests` (`id`, `full_name`, `phone_number`, `email`) VALUES
 (3, 'Phạm Hồng Anh', '0912345678', 'honganh.pham@example.com'),
 (4, 'Lê Văn Đạt', '0933445566', 'dat.le@example.com'),
 (5, 'Đỗ Văn Kha', '0385226320', 'dovankha0802@gmail.com'),
-(6, 'Đỗ Văn Kha', '0385226320', 'dovankha0802@gmail.com');
+(6, 'Đỗ Văn Kha', '0385226320', 'dovankha0802@gmail.com'),
+(7, 'do kha', '0385226320', 'dovankha0802@gmail.com'),
+(8, 'do kha', '0385226320', 'dovankha0802@gmail.com'),
+(9, 'do kha', '0385226320', 'admin@gmail.com');
 
 -- --------------------------------------------------------
 
@@ -167,9 +179,9 @@ CREATE TABLE `reviews` (
 --
 
 INSERT INTO `reviews` (`id`, `guest_id`, `booking_id`, `room_id`, `rating`, `comment`, `status`, `created_at`) VALUES
-(1, 4, 3, 1, 5, 'Phòng sạch sẽ, nhân viên phục vụ rất chu đáo. View trung tâm thành phố rất đẹp!', 1, '2026-05-07 13:11:12'),
 (2, 1, 1, 11, 4, 'Phòng Suite cực kỳ sang trọng, nội thất tinh xảo. Tuy nhiên wifi hơi yếu một chút vào ban đêm.', 1, '2026-05-07 13:11:12'),
-(3, 2, 2, 6, 5, 'Không gian yên tĩnh, ban công hướng sông Hậu đón gió rất mát. Sẽ quay lại!', 1, '2026-05-07 13:11:12');
+(3, 2, 2, 6, 5, 'Không gian yên tĩnh, ban công hướng sông Hậu đón gió rất mát. Sẽ quay lại!', 1, '2026-05-07 13:11:12'),
+(4, 4, 3, 1, 5, 'ok đó', 1, '2026-05-07 14:09:57');
 
 -- --------------------------------------------------------
 
@@ -190,7 +202,7 @@ CREATE TABLE `rooms` (
 
 INSERT INTO `rooms` (`id`, `room_number`, `room_type_id`, `status`) VALUES
 (1, '101', 1, 'OCCUPIED'),
-(2, '102', 1, 'AVAILABLE'),
+(2, '102', 1, 'OCCUPIED'),
 (3, '103', 1, 'OCCUPIED'),
 (4, '104', 1, 'CLEANING'),
 (5, '105', 1, 'AVAILABLE'),
@@ -198,7 +210,7 @@ INSERT INTO `rooms` (`id`, `room_number`, `room_type_id`, `status`) VALUES
 (7, '202', 2, 'OCCUPIED'),
 (8, '203', 2, 'AVAILABLE'),
 (9, '204', 2, 'MAINTENANCE'),
-(10, '301', 3, 'AVAILABLE'),
+(10, '301', 3, 'OCCUPIED'),
 (11, '302', 3, 'OCCUPIED');
 
 -- --------------------------------------------------------
@@ -357,7 +369,7 @@ ALTER TABLE `staff`
 -- AUTO_INCREMENT cho bảng `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT cho bảng `booking_services`
@@ -375,7 +387,7 @@ ALTER TABLE `contacts`
 -- AUTO_INCREMENT cho bảng `guests`
 --
 ALTER TABLE `guests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT cho bảng `reviews`

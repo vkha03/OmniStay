@@ -1,9 +1,10 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
     <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
+    <%@ include file="../env-secrets.jsp" %>
         <%
     // ===== KIỂM TRA ĐÃ ĐĂNG NHẬP =====
     if (session.getAttribute("admin") != null && request.getParameter("action") == null) {
-        response.sendRedirect("dashboard.jsp");
+        response.sendRedirect("index.jsp");
         return;
     }
 
@@ -27,11 +28,7 @@
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
 
-            conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/omnistay",
-                "root",
-                "" // mật khẩu MySQL nếu có
-            );
+            conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
 
             String sql = "SELECT * FROM staff WHERE email=? AND password=?";
             ps = conn.prepareStatement(sql);
@@ -44,7 +41,7 @@
                 session.setAttribute("admin", rs.getString("email"));
                 session.setAttribute("role", rs.getString("role"));
 
-                response.sendRedirect("dashboard.jsp"); // sửa đúng tên file
+                response.sendRedirect("index.jsp"); // sửa đúng tên file
                 return;
             } else {
                 request.setAttribute("error", "Sai tài khoản hoặc mật khẩu!");

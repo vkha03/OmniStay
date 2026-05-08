@@ -3,6 +3,7 @@
 <%@ page import="java.sql.*" %>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.Locale" %>
+<%@ include file="../env-secrets.jsp" %>
 <%
     Connection conn = null;
     String dbError = null;
@@ -15,7 +16,7 @@
 
     try {
         Class.forName("com.mysql.cj.jdbc.Driver");
-        conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/omnistay", "root", "");
+        conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
         
         // Lấy tổng số phòng
         Statement st1 = conn.createStatement();

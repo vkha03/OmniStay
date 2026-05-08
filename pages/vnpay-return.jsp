@@ -76,9 +76,8 @@
                     message = "Cảm ơn bạn đã sử dụng dịch vụ của OmniStay. Phòng của bạn đã được xác nhận!";
 
                     // 4. LẤY THÔNG TIN HIỂN THỊ UI VÀ GỬI ZALO/EMAIL
-                    String sqlDetail = "SELECT b.booking_code, b.total_amount, b.check_in_date, b.check_out_date, g.full_name, g.phone_number, g.email, r.room_number " +
+                    String sqlDetail = "SELECT b.booking_code, b.total_amount, b.check_in_date, b.check_out_date, b.customer_full_name, b.customer_phone, b.customer_email, r.room_number " +
                                      "FROM bookings b " +
-                                     "JOIN guests g ON b.guest_id = g.id " +
                                      "JOIN booking_rooms br ON b.id = br.booking_id " +
                                      "JOIN rooms r ON br.room_id = r.id " +
                                      "WHERE b.id = ?";
@@ -86,9 +85,9 @@
                     psD.setInt(1, bookingId);
                     ResultSet rsD = psD.executeQuery();
                     if(rsD.next()) {
-                        uiGuestName = rsD.getString("full_name");
-                        uiGuestPhone = rsD.getString("phone_number");
-                        uiGuestEmail = rsD.getString("email");
+                        uiGuestName = rsD.getString("customer_full_name");
+                        uiGuestPhone = rsD.getString("customer_phone");
+                        uiGuestEmail = rsD.getString("customer_email");
                         uiRoomNumber = rsD.getString("room_number");
                         uiAmount = rsD.getDouble("total_amount");
                         String checkIn = rsD.getString("check_in_date");

@@ -3,10 +3,11 @@
 <%
     // Trang này chỉ cho phép ADMIN truy cập
     if (!"ADMIN".equals((String)session.getAttribute("role"))) {
-        out.println("<script>alert('Bạn không có quyền truy cập vào trang quản lý nhân sự!'); window.location.href='dashboard.jsp';</script>");
+        out.println("<script>alert('Bạn không có quyền truy cập vào trang quản lý nhân sự!'); window.location.href='index.jsp';</script>");
         return;
     }
 %>
+<%@ include file="../env-secrets.jsp" %>
 <%@ page import="java.sql.*" %>
 <%
     Connection conn = null;
@@ -16,7 +17,7 @@
 
     try {
         Class.forName("com.mysql.cj.jdbc.Driver");
-        conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/omnistay", "root", "");
+        conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
 
         // 1. XỬ LÝ THÊM NHÂN VIÊN (Đã fix lỗi bắt POST)
         if("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("name") != null){
