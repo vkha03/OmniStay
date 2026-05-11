@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tra cứu hóa đơn — OmniStay Hotel</title>
+    <link rel="icon" type="image/png" href="<%=request.getContextPath()%>/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -32,7 +33,7 @@
                 rgba(10, 40, 33, 0.90) 0%,
                 rgba(20, 85, 70, 0.78) 50%,
                 rgba(30, 110, 90, 0.68) 100%
-            ), url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1600&q=80') center/cover no-repeat;
+            ), url('<%=request.getContextPath()%>/images/hero/hotel-exterior.jpg') center/cover no-repeat;
             background-attachment: fixed;
             padding: 10rem 0 5rem;
             position: relative;

@@ -4,6 +4,8 @@
     String activeNav = "index";
     if (currentURI.contains("rooms.jsp") || currentURI.contains("room-detail.jsp")) {
         activeNav = "rooms";
+    } else if (currentURI.contains("about.jsp")) {
+        activeNav = "about";
     } else if (currentURI.contains("dichvu.jsp")) {
         activeNav = "dichvu";
     } else if (currentURI.contains("contact.jsp")) {
@@ -120,17 +122,11 @@
 <nav class="navbar navbar-expand-lg fixed-top navbar-custom" id="mainNav">
   <div class="container">
     <a
-      class="navbar-brand font-display fs-4 fw-normal text-white"
+      class="navbar-brand d-flex align-items-center gap-2"
       href="<%=request.getContextPath()%>/index.jsp"
     >
-      Omni<span
-        style="
-          color: var(--accent, #d4a847);
-          font-weight: 600;
-          text-shadow: 0 0 8px rgba(212, 168, 71, 0.5);
-        "
-        >Stay</span
-      >
+      <img src="<%=request.getContextPath()%>/images/logo.png" alt="OmniStay Logo" style="height: 38px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);" />
+      <span class="font-display fs-4 fw-normal text-white">Omni<span style="color: var(--accent, #d4a847); font-weight: 600; text-shadow: 0 0 8px rgba(212, 168, 71, 0.5);">Stay</span></span>
     </a>
 
     <button
@@ -160,6 +156,9 @@
         </li>
         <li class="nav-item">
           <a class="nav-link nav-link-custom <%= activeNav.equals("contact") ? "active" : "" %>" href="<%=request.getContextPath()%>/pages/contact.jsp">Liên hệ</a>
+        </li>
+          <li class="nav-item">
+          <a class="nav-link nav-link-custom <%= activeNav.equals("about") ? "active" : "" %>" href="<%=request.getContextPath()%>/pages/about.jsp">Về chúng tôi</a>
         </li>
       </ul>
 

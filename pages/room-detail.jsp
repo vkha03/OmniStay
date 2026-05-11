@@ -16,8 +16,14 @@
     double price = 0;
     int maxOccupancy = 0;
     String typeId = request.getParameter("id");
-    // GẮN LINK HÌNH CỨNG (Không cần lấy từ DB)
-    String imgURL = "https://pix8.agoda.net/hotelImages/902/-1/9e98e4e28acb9561e2d69f0f7dd2c706.jpg?ce=0&s=1024x";
+    // Mảng hình ảnh Gallery để khách hàng xem chi tiết phòng
+    String[] gallery = {
+        "https://images.unsplash.com/photo-1611892440504-42a792e24d32?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1566665797739-1674de7a421a?q=80&w=1000&auto=format&fit=crop"
+    };
+    String imgURL = gallery[0]; // Hình đầu tiên làm Banner
 
     // 2. CHẠY SQL LẤY THÔNG TIN LOẠI PHÒNG
     if(conn != null) {
@@ -48,6 +54,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chọn phòng <%= type_name %> — OmniStay</title>
+    <link rel="icon" type="image/png" href="<%=request.getContextPath()%>/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -132,7 +139,30 @@
                 
                 <div class="col-lg-4">
                     <div class="type-summary-card">
-                        <img src="<%= imgURL %>" alt="<%= type_name %>" class="type-summary-img">
+                        <!-- TRÌNH DIỄN HÌNH ẢNH (CAROUSEL) -->
+                        <div id="roomGalleryCarousel" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-indicators">
+                                <% for(int i = 0; i < gallery.length; i++) { %>
+                                    <button type="button" data-bs-target="#roomGalleryCarousel" data-bs-slide-to="<%= i %>" class="<%= i == 0 ? "active" : "" %>" aria-current="<%= i == 0 ? "true" : "false" %>"></button>
+                                <% } %>
+                            </div>
+                            <div class="carousel-inner">
+                                <% for(int i = 0; i < gallery.length; i++) { %>
+                                    <div class="carousel-item <%= i == 0 ? "active" : "" %>">
+                                        <img src="<%= gallery[i] %>" class="d-block w-100 type-summary-img" alt="Hình ảnh <%= type_name %>">
+                                    </div>
+                                <% } %>
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#roomGalleryCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Trước</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#roomGalleryCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Sau</span>
+                            </button>
+                        </div>
+                        <!-- KẾT THÚC CAROUSEL -->
                         <div class="p-4">
                             <span class="badge bg-light text-dark border mb-3">Thông tin hạng phòng</span>
                             <h3 class="font-display fw-normal" style="color: var(--primary);"><%= type_name %></h3>

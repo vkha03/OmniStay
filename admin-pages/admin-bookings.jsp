@@ -222,60 +222,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Hóa đơn — OmniStay Admin</title>
+    <link rel="icon" type="image/png" href="<%=request.getContextPath()%>/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-    
-    <style>
-        :root { --primary: #1a6b5a; --primary-dark: #124a3e; --accent: #d4a847; --bg-light: #f5f8f7; --border: #e8e2d9; --text-main: #2c3e50; }
-        body { font-family: 'Outfit', sans-serif; background-color: var(--bg-light); color: var(--text-main); overflow-x: hidden; margin: 0; }
-        .font-display { font-family: "Playfair Display", serif; }
-        
-        /* ─── SIDEBAR FIXED (Copy chuẩn 100% từ admin-staff) ─── */
-        .sidebar { width: 260px; background: var(--primary-dark); min-height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; padding-top: 1.5rem; box-shadow: 4px 0 20px rgba(0,0,0,0.05); }
-        .sidebar .brand { padding: 0 1.5rem 2rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 1rem; }
-        .sidebar .brand a { font-size: 1.6rem; letter-spacing: 1px; color: #fff !important; text-decoration: none; }
-        .sidebar .brand span { color: var(--accent); font-weight: 600; }
-        
-        .nav-sidebar .nav-link { color: rgba(255,255,255,0.7) !important; padding: 0.8rem 1.5rem; margin: 0.2rem 1rem; border-radius: 8px; transition: all 0.3s; display: flex; align-items: center; font-weight: 400; text-decoration: none; }
-        .nav-sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
-        .nav-sidebar .nav-link:hover, .nav-sidebar .nav-link.active { color: #fff !important; background: rgba(255,255,255,0.1); }
-        .nav-sidebar .nav-link.active { background: var(--primary) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
-        /* ─── MAIN CONTENT ─── */
-        .main-content { margin-left: 260px; padding: 2rem; min-height: 100vh; }
-        .table-custom { background: #fff; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); padding: 1.5rem; }
-        .table-custom th { background-color: #f8f9fa; color: #6c757d; font-size: 0.7rem; text-transform: uppercase; padding: 1rem; border-bottom: 2px solid #edf2f9; }
-        .table-custom td { padding: 1.2rem 1rem; vertical-align: middle; border-bottom: 1px solid #edf2f9; font-size: 0.85rem; }
-        
-        .st-badge { padding: 0.4rem 0.8rem; border-radius: 50px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
-        .st-pending { background: #fff3cd; color: #856404; }
-        .st-confirmed { background: #cce5ff; color: #004085; }
-        .st-checked_in { background: #d4edda; color: #155724; }
-        .st-completed { background: #e2e3e5; color: #383d41; }
-        .st-cancelled { background: #f8d7da; color: #721c24; }
-        
-        .action-btn { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: 0.2s; color: #666; cursor: pointer; border: 1px solid transparent; }
-        .action-btn:hover { background: var(--bg-light); border-color: var(--border); }
-        .modal-content { border-radius: 20px; border: none; }
-    </style>
+    <link rel="stylesheet" href="admin-theme.css">
 </head>
 <body>
     <%@ include file="../layouts/sidebar-admin.jsp" %>
     <main class="main-content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h2 class="font-display fw-normal mb-1">Quản lý Hóa đơn</h2>
-                <p class="text-muted mb-0" style="font-size: 0.9rem;">Hệ thống quản lý lưu trú và hóa đơn OmniStay.</p>
+        <div class="page-header">
+            <div class="d-flex align-items-center">
+                <div class="page-title-icon"><i class="bi bi-calendar-check"></i></div>
+                <div>
+                    <h2 class="font-display fw-normal mb-1">Quản lý Đơn đặt phòng & Hóa đơn</h2>
+                    <p class="text-muted mb-0">Hệ thống quản lý lưu trú và tài chính của OmniStay.</p>
+                </div>
             </div>
-            <button class="btn text-white rounded-pill px-4" style="background: var(--primary);" data-bs-toggle="modal" data-bs-target="#addBookingModal">
+            <button class="btn btn-primary-gradient rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addBookingModal">
                 <i class="bi bi-plus-lg me-1"></i> Lập hóa đơn mới
             </button>
         </div>
 
         <% if (thongBao != null) { %>
-            <div class="alert alert-<%= loaiThongBao %> border-0 shadow-sm mb-4" style="border-radius: 12px;">
+            <div class="alert alert-<%= loaiThongBao %> shadow-sm mb-4">
                 <i class="bi bi-info-circle-fill me-2"></i> <%= thongBao %>
             </div>
         <% } %>
@@ -286,16 +257,16 @@
         %>
 
         <!-- Filter Bar -->
-        <form action="admin-bookings.jsp" method="GET" class="bg-white p-3 rounded-4 border mb-4 shadow-sm" style="border-color: var(--border) !important;">
+        <form action="admin-bookings.jsp" method="GET" class="filter-bar">
             <div class="row g-3 align-items-center">
                 <div class="col-md-5">
                     <div class="input-group">
-                        <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
-                        <input type="text" name="search" class="form-control border-0 bg-light" placeholder="Tìm tên khách, SĐT, CCCD hoặc mã đơn..." value="<%= (search != null) ? search : "" %>">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" class="form-control" placeholder="Tìm tên khách, SĐT, CCCD hoặc mã đơn..." value="<%= (search != null) ? search : "" %>">
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <select name="statusFilter" class="form-select border-0 bg-light">
+                    <select name="statusFilter" class="form-select">
                         <option value="">Tất cả trạng thái</option>
                         <option value="PENDING" <%= "PENDING".equals(statusFilter) ? "selected" : "" %>>Chờ xử lý</option>
                         <option value="CONFIRMED" <%= "CONFIRMED".equals(statusFilter) ? "selected" : "" %>>Đã xác nhận</option>
@@ -305,7 +276,7 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <button type="submit" class="btn text-white w-100" style="background: var(--primary); border-radius: 10px;">Lọc dữ liệu</button>
+                    <button type="submit" class="btn btn-primary-gradient w-100">Lọc dữ liệu</button>
                 </div>
                 <div class="col-md-2 text-end">
                     <a href="admin-bookings.jsp" class="btn btn-light w-100 border rounded-pill text-muted small">Xóa lọc</a>
@@ -313,9 +284,9 @@
             </div>
         </form>
 
-        <div class="table-custom">
+        <div class="table-custom p-4">
             <div class="table-responsive">
-                <table id="bookingTable" class="table table-hover mb-0">
+                <table id="bookingTable" class="table table-hover mb-0 w-100">
                     <thead>
                         <tr>
                             <th>Hóa đơn</th>
@@ -326,7 +297,7 @@
                             <th>Còn lại</th>
                             <th>Thanh toán</th>
                             <th>Trạng thái</th>
-                            <th class="text-end"></th>
+                            <th class="text-end">Hành động</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -373,27 +344,27 @@
                                         String notes = rs.getString("notes") != null ? rs.getString("notes") : "";
                         %>
                         <tr>
-                            <td><span class="fw-bold text-primary"><%= code %></span></td>
+                            <td><span class="fw-bold" style="color: var(--primary);"><%= code %></span></td>
                             <td><div class="fw-600"><%= name %></div><div class="text-muted small"><%= idCard %></div></td>
                             <td><span class="badge bg-light text-dark border fw-normal mb-1">P.<%= roomNB %></span><br><small class="text-muted"><%= sdf.format(checkIn) %> - <%= sdf.format(checkOut) %></small></td>
-                            <td><div class="fw-600"><%= nf.format(total).replace("VNĐ", "₫") %></div></td>
+                            <td><div class="fw-600 font-display text-dark" style="font-size: 1.05rem;"><%= nf.format(total).replace("VNĐ", "₫") %></div></td>
                             <td><div class="text-success"><%= nf.format(paid).replace("VNĐ", "₫") %></div></td>
                             <td><div class="<%= (total-paid) > 0 ? "text-danger fw-bold" : "text-muted" %>"><%= nf.format(total-paid).replace("VNĐ", "₫") %></div></td>
-                            <td><span class="<%= rs.getString("payment_status").equals("PAID") ? "text-success" : "text-danger" %> fw-bold"><%= rs.getString("payment_status") %></span></td>
+                            <td><span class="<%= rs.getString("payment_status").equals("PAID") ? "text-success" : "text-danger" %> fw-bold small"><%= rs.getString("payment_status").equals("PAID") ? "ĐÃ THANH TOÁN" : "CHƯA THANH TOÁN" %></span></td>
                             <td>
                                 <% 
-                                    String stClass = "st-pending"; String stText = "Chờ";
-                                    if(status.equals("CONFIRMED")) { stClass = "st-confirmed"; stText = "Xác nhận"; }
-                                    else if(status.equals("CHECKED_IN")) { stClass = "st-checked_in"; stText = "Đang ở"; }
-                                    else if(status.equals("COMPLETED")) { stClass = "st-completed"; stText = "Xong"; }
-                                    else if(status.equals("CANCELLED")) { stClass = "st-cancelled"; stText = "Hủy"; }
+                                    String stClass = "st-pending"; String stText = "Chờ xử lý";
+                                    if(status.equals("CONFIRMED")) { stClass = "st-confirmed"; stText = "Đã xác nhận"; }
+                                    else if(status.equals("CHECKED_IN")) { stClass = "st-checked_in"; stText = "Đang lưu trú"; }
+                                    else if(status.equals("COMPLETED")) { stClass = "st-completed"; stText = "Hoàn tất"; }
+                                    else if(status.equals("CANCELLED")) { stClass = "st-cancelled"; stText = "Đã hủy"; }
                                 %>
                                 <span class="st-badge <%= stClass %>"><%= stText %></span>
                             </td>
                             <td class="text-end">
                                 <div class="dropdown">
-                                    <button class="action-btn dropdown-toggle no-caret" data-bs-toggle="dropdown"><i class="bi bi-three-dots-vertical"></i></button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px; font-size: 0.85rem;">
+                                    <button class="action-btn dropdown-toggle no-caret border-0 bg-transparent" data-bs-toggle="dropdown"><i class="bi bi-three-dots-vertical"></i></button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="border-radius: 12px; font-size: 0.85rem; border: 1px solid var(--border);">
                                         <li><a class="dropdown-item py-2" href="javascript:void(0)" onclick="openEditModal(<%=id%>, '<%=name%>', '<%=phone%>', '<%=idCard%>', <%=roomId%>, '<%=checkIn%>', '<%=checkOut%>', '<%=notes%>', <%=total%>, <%=paid%>)"><i class="bi bi-pencil-square me-2 text-primary"></i>Quản lý & Sửa hóa đơn</a></li>
                                         <% if(status.equals("CONFIRMED")) { %>
                                             <li><a class="dropdown-item py-2" href="admin-bookings.jsp?action=updateStatus&newStatus=CHECKED_IN&id=<%=id%>"><i class="bi bi-box-arrow-in-right me-2 text-success"></i>Check-in khách</a></li>
@@ -417,9 +388,9 @@
     <!-- Modal Sửa hóa đơn -->
     <div class="modal fade" id="editBookingModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content shadow-lg">
-                <div class="modal-header border-0 px-4 pt-4">
-                    <h5 class="modal-title font-display fw-bold">Chỉnh sửa hóa đơn</h5>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-display fw-bold" style="color: var(--primary);">Chỉnh sửa hóa đơn</h5>
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="admin-bookings.jsp" method="POST" onsubmit="return validateBookingForm(this)">
@@ -427,20 +398,20 @@
                     <input type="hidden" name="id" id="editId">
                     <input type="hidden" name="oldRoomId" id="oldRoomId">
                     <div class="modal-body px-4">
-                        <div class="mb-3"><label class="form-label small fw-bold">Họ và tên khách</label><input type="text" name="fullName" id="editName" class="form-control" required></div>
-                        <div class="row mb-3"><div class="col-6"><label class="form-label small fw-bold">Số điện thoại</label><input type="text" name="phone" id="editPhone" class="form-control" required></div><div class="col-6"><label class="form-label small fw-bold">CCCD/Passport</label><input type="text" name="idCard" id="editIdCard" class="form-control" required></div></div>
-                        <div class="mb-3"><label class="form-label small fw-bold">Phòng lưu trú</label>
+                        <div class="mb-3"><label class="form-label">Họ và tên khách</label><input type="text" name="fullName" id="editName" class="form-control" required></div>
+                        <div class="row mb-3"><div class="col-6"><label class="form-label">Số điện thoại</label><input type="text" name="phone" id="editPhone" class="form-control" required></div><div class="col-6"><label class="form-label">CCCD/Passport</label><input type="text" name="idCard" id="editIdCard" class="form-control" required></div></div>
+                        <div class="mb-3"><label class="form-label">Phòng lưu trú</label>
                             <select name="roomId" id="editRoomId" class="form-select" required>
                                 <% try { PreparedStatement psR = conn.prepareStatement("SELECT r.id, r.room_number, rt.type_name FROM rooms r JOIN room_types rt ON r.room_type_id = rt.id WHERE r.status = 'AVAILABLE' OR r.status = 'OCCUPIED'"); ResultSet rsR = psR.executeQuery(); while(rsR.next()){ %>
                                 <option value="<%= rsR.getInt("id") %>">P.<%= rsR.getString("room_number") %> - <%= translateType.apply(rsR.getString("type_name")) %></option>
                                 <% } } catch(Exception e){} %>
                             </select></div>
                         <div class="row mb-3">
-                            <div class="col-6"><label class="form-label small fw-bold">Ngày nhận</label><input type="date" name="checkIn" id="editCheckIn" class="form-control" required></div>
-                            <div class="col-6"><label class="form-label small fw-bold">Ngày trả</label><input type="date" name="checkOut" id="editCheckOut" class="form-control" required></div>
+                            <div class="col-6"><label class="form-label">Ngày nhận</label><input type="date" name="checkIn" id="editCheckIn" class="form-control" required></div>
+                            <div class="col-6"><label class="form-label">Ngày trả</label><input type="date" name="checkOut" id="editCheckOut" class="form-control" required></div>
                         </div>
                         <div class="p-3 bg-light rounded-4 mb-3 border">
-                            <label class="form-label small fw-bold text-primary">Điều chỉnh Tài chính</label>
+                            <label class="form-label fw-bold text-primary">Điều chỉnh Tài chính</label>
                             <div class="d-flex gap-3 mb-2">
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="adjType" value="none" id="adjNone" checked>
@@ -448,27 +419,27 @@
                                 </div>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="adjType" value="increase" id="adjPlus">
-                                    <label class="form-check-label small text-danger" for="adjPlus">Tăng tổng tiền (+)</label>
+                                    <label class="form-check-label small text-danger" for="adjPlus">Tăng (+)</label>
                                 </div>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="adjType" value="decrease" id="adjMinus">
-                                    <label class="form-check-label small text-success" for="adjMinus">Giảm tổng tiền (-)</label>
+                                    <label class="form-check-label small text-success" for="adjMinus">Giảm (-)</label>
                                 </div>
                             </div>
                             <input type="number" name="adjAmount" class="form-control form-control-sm" placeholder="Nhập số tiền điều chỉnh (₫)..." value="0">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-bold text-success">Số tiền khách đã trả (₫)</label>
+                            <label class="form-label text-success fw-bold">Số tiền khách đã trả (₫)</label>
                             <input type="number" name="paidAmount" id="editPaidAmount" class="form-control fw-bold text-success" required>
-                            <div class="small text-muted mt-1">Tổng bill hiện tại: <span id="displayTotal" class="fw-bold"></span></div>
+                            <div class="small text-muted mt-1">Tổng bill hiện tại: <span id="displayTotal" class="fw-bold text-dark"></span></div>
                         </div>
                         <div class="mb-0">
-                            <label class="form-label small fw-bold">Ghi chú bổ sung</label>
+                            <label class="form-label">Ghi chú bổ sung</label>
                             <textarea name="notes" id="editNotes" class="form-control" rows="2" placeholder="Nhập nội dung cần lưu ý thêm..."></textarea>
                             <div class="small text-muted mt-1">Nội dung này sẽ được tự động nối vào sau ghi chú cũ.</div>
                         </div>
                     </div>
-                    <div class="modal-footer border-0 px-4 pb-4"><button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn text-white rounded-pill px-4" style="background: var(--primary);">Lưu thay đổi</button></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn btn-primary-gradient px-4">Lưu thay đổi</button></div>
                 </form>
             </div>
         </div>
@@ -477,34 +448,34 @@
     <!-- Modal Lập hóa đơn mới -->
     <div class="modal fade" id="addBookingModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content shadow-lg">
-                <div class="modal-header border-0 px-4 pt-4"><h5 class="modal-title font-display fw-bold">Lập hóa đơn mới</h5><button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button></div>
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title font-display fw-bold" style="color: var(--primary);">Lập hóa đơn mới</h5><button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button></div>
                 <form action="admin-bookings.jsp" method="POST" onsubmit="return validateBookingForm(this)">
                     <input type="hidden" name="action" value="addBooking">
                     <div class="modal-body px-4"><div class="row g-3">
-                        <div class="col-md-6"><label class="form-label small fw-bold">Họ và tên</label><input type="text" name="fullName" class="form-control" required></div>
-                        <div class="col-md-6"><label class="form-label small fw-bold">Số điện thoại</label><input type="text" name="phone" class="form-control" required></div>
-                        <div class="col-md-6"><label class="form-label small fw-bold">Email</label><input type="email" name="email" class="form-control"></div>
-                        <div class="col-md-6"><label class="form-label small fw-bold">Số CCCD</label><input type="text" name="idCard" class="form-control" required></div>
-                        <div class="col-md-4"><label class="form-label small fw-bold">Phòng</label><select name="roomId" class="form-select">
+                        <div class="col-md-6"><label class="form-label">Họ và tên</label><input type="text" name="fullName" class="form-control" required></div>
+                        <div class="col-md-6"><label class="form-label">Số điện thoại</label><input type="text" name="phone" class="form-control" required></div>
+                        <div class="col-md-6"><label class="form-label">Email</label><input type="email" name="email" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label">Số CCCD</label><input type="text" name="idCard" class="form-control" required></div>
+                        <div class="col-md-4"><label class="form-label">Phòng</label><select name="roomId" class="form-select">
                             <% try { PreparedStatement psR = conn.prepareStatement("SELECT r.id, r.room_number, rt.type_name FROM rooms r JOIN room_types rt ON r.room_type_id = rt.id WHERE r.status = 'AVAILABLE'"); ResultSet rsR = psR.executeQuery(); while(rsR.next()){ %>
                             <option value="<%= rsR.getInt("id") %>">P.<%= rsR.getString("room_number") %> - <%= translateType.apply(rsR.getString("type_name")) %></option>
                             <% } } catch(Exception e){} %>
                         </select></div>
-                        <div class="col-md-4"><label class="form-label small fw-bold">Nhận</label><input type="date" name="checkIn" class="form-control" value="<%= new java.sql.Date(System.currentTimeMillis()) %>" min="<%= new java.sql.Date(System.currentTimeMillis()) %>"></div>
-                        <div class="col-md-4"><label class="form-label small fw-bold">Trả</label><input type="date" name="checkOut" class="form-control"></div>
-                        <div class="col-md-4"><label class="form-label small fw-bold text-danger">Tiền cộng thêm (₫)</label><input type="number" name="extraAmount" class="form-control" value="0" min="0"></div>
+                        <div class="col-md-4"><label class="form-label">Nhận</label><input type="date" name="checkIn" class="form-control" value="<%= new java.sql.Date(System.currentTimeMillis()) %>" min="<%= new java.sql.Date(System.currentTimeMillis()) %>"></div>
+                        <div class="col-md-4"><label class="form-label">Trả</label><input type="date" name="checkOut" class="form-control" required></div>
+                        <div class="col-md-4"><label class="form-label fw-bold text-danger">Tiền cộng thêm (₫)</label><input type="number" name="extraAmount" class="form-control" value="0" min="0"></div>
                         <div class="col-12 mt-3">
-                            <label class="form-label small fw-bold text-success">Dịch vụ</label>
-                            <div class="row g-2 p-3 bg-light rounded-4" style="max-height: 150px; overflow-y: auto;">
+                            <label class="form-label fw-bold text-success">Dịch vụ đính kèm</label>
+                            <div class="row g-2 p-3 bg-light rounded-4" style="max-height: 150px; overflow-y: auto; border: 1px solid var(--border);">
                                 <% try { PreparedStatement psS = conn.prepareStatement("SELECT * FROM services"); ResultSet rsS = psS.executeQuery(); while(rsS.next()) { int sid = rsS.getInt("id"); %>
                                 <div class="col-md-6 d-flex align-items-center justify-content-between border-bottom pb-2 mb-2"><div class="form-check"><input class="form-check-input" type="checkbox" name="services" value="<%= sid %>" id="sv_<%= sid %>"><label class="form-check-label small" for="sv_<%= sid %>"><%= rsS.getString("service_name") %></label></div><input type="number" name="qty_<%= sid %>" class="form-control form-control-sm w-25" value="1" min="1"></div>
                                 <% } } catch(Exception e){} %>
                             </div>
                         </div>
-                        <div class="col-12"><label class="form-label small fw-bold">Ghi chú hóa đơn</label><textarea name="notes" class="form-control" rows="2" placeholder="Nhập ghi chú tại đây..."></textarea></div>
+                        <div class="col-12"><label class="form-label">Ghi chú hóa đơn</label><textarea name="notes" class="form-control" rows="2" placeholder="Nhập ghi chú tại đây..."></textarea></div>
                     </div></div>
-                    <div class="modal-footer border-0 px-4 pb-4"><button type="submit" class="btn text-white rounded-pill px-4" style="background: var(--primary);">Xác nhận</button></div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-primary-gradient px-4">Xác nhận tạo đơn</button></div>
                 </form>
             </div>
         </div>
@@ -515,7 +486,25 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script>
-        $(document).ready(function() { $('#bookingTable').DataTable({ "pageLength": 10, "lengthChange": false, "ordering": false, "searching": false }); });
+        $(document).ready(function() { 
+            $('#bookingTable').DataTable({ 
+                "pageLength": 10, 
+                "lengthChange": false, 
+                "ordering": false, 
+                "searching": false,
+                "language": {
+                    "processing": "Đang xử lý...",
+                    "lengthMenu": "Hiển thị _MENU_ mục",
+                    "zeroRecords": "Không tìm thấy hóa đơn nào phù hợp",
+                    "info": "Hiển thị _START_ - _END_ trong tổng số _TOTAL_ hóa đơn",
+                    "infoEmpty": "Hiển thị 0 - 0 trong tổng số 0 hóa đơn",
+                    "infoFiltered": "(lọc từ _MAX_ hóa đơn)",
+                    "search": "Tìm kiếm nhanh:",
+                    "emptyTable": "Chưa có dữ liệu hóa đơn trong hệ thống",
+                    "paginate": { "first": "Đầu", "previous": "Trước", "next": "Sau", "last": "Cuối" }
+                }
+            }); 
+        });
         
         function validateBookingForm(form) {
             const checkIn = new Date(form.checkIn.value);

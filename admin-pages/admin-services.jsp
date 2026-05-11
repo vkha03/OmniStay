@@ -61,66 +61,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Dịch vụ — OmniStay Admin</title>
+    <link rel="icon" type="image/png" href="<%=request.getContextPath()%>/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-    
-    <style>
-        :root {
-            --primary: #1a6b5a;
-            --primary-dark: #124a3e;
-            --accent: #d4a847;
-            --bg-light: #f5f8f7;
-            --border: #e8e2d9;
-            --text-main: #2c3e50;
-        }
-        body { font-family: 'Outfit', sans-serif; background-color: var(--bg-light); color: var(--text-main); overflow-x: hidden; margin: 0; }
-        .font-display { font-family: "Playfair Display", serif; }
-        
-        .sidebar { width: 260px; background: var(--primary-dark); min-height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; padding-top: 1.5rem; box-shadow: 4px 0 20px rgba(0,0,0,0.05); }
-        .sidebar .brand { padding: 0 1.5rem 2rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 1rem; }
-        .sidebar .brand a { font-size: 1.6rem; letter-spacing: 1px; color: #fff !important; text-decoration: none; }
-        .sidebar .brand span { color: var(--accent); font-weight: 600; }
-        
-        .nav-sidebar .nav-link { color: rgba(255,255,255,0.7) !important; padding: 0.8rem 1.5rem; margin: 0.2rem 1rem; border-radius: 8px; transition: all 0.3s; display: flex; align-items: center; font-weight: 400; text-decoration: none; }
-        .nav-sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
-        .nav-sidebar .nav-link:hover, .nav-sidebar .nav-link.active { color: #fff !important; background: rgba(255,255,255,0.1); }
-        .nav-sidebar .nav-link.active { background: var(--primary) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
-        .main-content { margin-left: 260px; padding: 2rem; min-height: 100vh; }
-        .table-custom { background: #fff; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); overflow: hidden; padding: 1.5rem; }
-        .table-custom th { background-color: #f8f9fa; color: #6c757d; font-weight: 500; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; padding: 1rem 1.5rem; border-bottom: 2px solid #edf2f9; }
-        .table-custom td { padding: 1.2rem 1.5rem; vertical-align: middle; color: #495057; font-size: 0.9rem; border-bottom: 1px solid #edf2f9; }
-        
-        .svc-icon { width: 40px; height: 40px; background: rgba(212, 168, 71, 0.1); color: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 600; margin-right: 12px; }
-        .price-tag { font-family: 'Playfair Display', serif; font-weight: 600; color: var(--primary); font-size: 1.1rem; }
-
-        .action-btn { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: 0.2s; color: #666; text-decoration: none; border: 1px solid transparent; cursor: pointer; }
-        .action-btn:hover { background: var(--bg-light); color: var(--primary); border-color: var(--border); }
-        
-        .modal-content { border-radius: 20px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .modal-header { border-bottom: 1px solid #eee; padding: 1.5rem 2rem; }
-        .form-control, .form-select { border-radius: 10px; padding: 0.7rem 1rem; border: 1px solid #ddd; }
-        .form-control:focus { box-shadow: 0 0 0 4px rgba(26, 107, 90, 0.1); border-color: var(--primary); }
-    </style>
+    <link rel="stylesheet" href="admin-theme.css">
 </head>
 <body>
     <%@ include file="../layouts/sidebar-admin.jsp" %>
     
     <main class="main-content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h2 class="font-display fw-normal mb-1">Dịch vụ bổ sung</h2>
-                <p class="text-muted mb-0" style="font-size: 0.9rem;">Quản lý danh mục sản phẩm và dịch vụ tiện ích của khách sạn.</p>
+        <div class="page-header">
+            <div class="d-flex align-items-center">
+                <div class="page-title-icon"><i class="bi bi-cup-hot"></i></div>
+                <div>
+                    <h2 class="font-display fw-normal mb-1">Dịch vụ bổ sung</h2>
+                    <p class="text-muted mb-0">Quản lý danh mục sản phẩm và dịch vụ tiện ích của khách sạn.</p>
+                </div>
             </div>
-            <button class="btn text-white rounded-pill px-4" style="background: var(--primary);" data-bs-toggle="modal" data-bs-target="#addServiceModal">
+            <button class="btn btn-primary-gradient rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addServiceModal">
                 <i class="bi bi-plus-lg me-1"></i> Thêm dịch vụ
             </button>
         </div>
 
         <% if (thongBao != null) { %>
-            <div class="alert alert-<%= loaiThongBao %> alert-dismissible fade show border-0 mb-4 shadow-sm" style="border-radius: 12px;">
+            <div class="alert alert-<%= loaiThongBao %> alert-dismissible fade show shadow-sm mb-4">
                 <i class="bi <%= loaiThongBao.equals("success") ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill" %> me-2"></i> <%= thongBao %>
                 <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert"></button>
             </div>
@@ -131,16 +97,16 @@
         %>
 
         <!-- Filter Bar -->
-        <form action="admin-services.jsp" method="GET" class="bg-white p-3 rounded-4 border mb-4 shadow-sm" style="border-color: var(--border) !important;">
+        <form action="admin-services.jsp" method="GET" class="filter-bar">
             <div class="row g-3 align-items-center">
                 <div class="col-md-8">
                     <div class="input-group">
-                        <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
-                        <input type="text" name="serviceSearch" class="form-control border-0 bg-light" placeholder="Tìm theo tên dịch vụ hoặc sản phẩm..." value="<%= (serviceSearch != null) ? serviceSearch : "" %>">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="serviceSearch" class="form-control" placeholder="Tìm theo tên dịch vụ hoặc sản phẩm..." value="<%= (serviceSearch != null) ? serviceSearch : "" %>">
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <button type="submit" class="btn text-white w-100" style="background: var(--primary); border-radius: 10px;">Tìm kiếm</button>
+                    <button type="submit" class="btn btn-primary-gradient w-100">Tìm kiếm</button>
                 </div>
                 <div class="col-md-2 text-end">
                     <a href="admin-services.jsp" class="btn btn-light w-100 border rounded-pill text-muted small">Xóa lọc</a>
@@ -148,9 +114,9 @@
             </div>
         </form>
 
-        <div class="table-custom">
+        <div class="table-custom p-4">
             <div class="table-responsive">
-                <table id="serviceTable" class="table table-hover align-middle mb-0">
+                <table id="serviceTable" class="table table-hover align-middle mb-0 w-100">
                     <thead>
                         <tr>
                             <th>Tên dịch vụ</th>
@@ -191,13 +157,13 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="svc-icon"><i class="bi <%= icon %>"></i></div>
-                                    <div class="fw-500 text-dark"><%= name %></div>
+                                    <div class="fw-500 text-dark" style="font-size: 1rem;"><%= name %></div>
                                 </div>
                             </td>
                             <td><span class="badge bg-light text-muted border fw-normal px-3 py-2"><%= unit %></span></td>
                             <td><span class="price-tag"><%= nf.format(price).replace("VNĐ", "₫") %></span></td>
                             <td class="text-end">
-                                <a class="action-btn" onclick="openEditModal(<%= id %>, '<%= name %>', <%= price %>, '<%= unit %>')" title="Sửa"><i class="bi bi-pencil-square"></i></a>
+                                <a class="action-btn" onclick="openEditModal(<%= id %>, '<%= name %>', <%= price %>, '<%= unit %>')" title="Sửa"><i class="bi bi-pencil-square text-primary"></i></a>
                                 <form action="admin-services.jsp" method="POST" style="display:inline;" onsubmit="return confirm('Xóa dịch vụ này?')">
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="serviceId" value="<%= id %>">
@@ -222,30 +188,30 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title font-display fw-bold">Thêm dịch vụ mới</h5>
+                    <h5 class="modal-title font-display fw-bold" style="color: var(--primary);">Thêm dịch vụ mới</h5>
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="admin-services.jsp" method="POST">
                     <input type="hidden" name="action" value="add">
-                    <div class="modal-body">
+                    <div class="modal-body p-4">
                         <div class="mb-3">
-                            <label class="form-label small fw-500">Tên dịch vụ / Sản phẩm</label>
+                            <label class="form-label">Tên dịch vụ / Sản phẩm</label>
                             <input type="text" name="serviceName" class="form-control" placeholder="Ví dụ: Giặt ủi cao cấp" required>
                         </div>
                         <div class="row">
                             <div class="col-md-7 mb-3">
-                                <label class="form-label small fw-500">Đơn giá (VNĐ)</label>
+                                <label class="form-label">Đơn giá (VNĐ)</label>
                                 <input type="number" name="price" class="form-control" placeholder="50000" required>
                             </div>
                             <div class="col-md-5 mb-3">
-                                <label class="form-label small fw-500">Đơn vị tính</label>
+                                <label class="form-label">Đơn vị tính</label>
                                 <input type="text" name="unit" class="form-control" placeholder="Chai / Suất / Giờ" required>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer border-0 px-4 pb-4">
+                    <div class="modal-footer">
                         <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn text-white rounded-pill px-4" style="background: var(--primary);">Lưu dịch vụ</button>
+                        <button type="submit" class="btn btn-primary-gradient px-4">Lưu dịch vụ</button>
                     </div>
                 </form>
             </div>
@@ -257,31 +223,31 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title font-display fw-bold">Chỉnh sửa dịch vụ</h5>
+                    <h5 class="modal-title font-display fw-bold" style="color: var(--primary);">Chỉnh sửa dịch vụ</h5>
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="admin-services.jsp" method="POST">
                     <input type="hidden" name="action" value="edit">
                     <input type="hidden" name="serviceId" id="editServiceId">
-                    <div class="modal-body">
+                    <div class="modal-body p-4">
                         <div class="mb-3">
-                            <label class="form-label small fw-500">Tên dịch vụ / Sản phẩm</label>
+                            <label class="form-label">Tên dịch vụ / Sản phẩm</label>
                             <input type="text" name="serviceName" id="editServiceName" class="form-control" required>
                         </div>
                         <div class="row">
                             <div class="col-md-7 mb-3">
-                                <label class="form-label small fw-500">Đơn giá (VNĐ)</label>
+                                <label class="form-label">Đơn giá (VNĐ)</label>
                                 <input type="number" name="price" id="editPrice" class="form-control" required>
                             </div>
                             <div class="col-md-5 mb-3">
-                                <label class="form-label small fw-500">Đơn vị tính</label>
+                                <label class="form-label">Đơn vị tính</label>
                                 <input type="text" name="unit" id="editUnit" class="form-control" required>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer border-0 px-4 pb-4">
+                    <div class="modal-footer">
                         <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn text-white rounded-pill px-4" style="background: var(--primary);">Cập nhật</button>
+                        <button type="submit" class="btn btn-primary-gradient px-4">Cập nhật</button>
                     </div>
                 </form>
             </div>
@@ -301,7 +267,10 @@
                 "searching": false,
                 "ordering": false,
                 "language": {
-                    "paginate": { "previous": "<i class='bi bi-chevron-left'></i>", "next": "<i class='bi bi-chevron-right'></i>" }
+                    "zeroRecords": "Không tìm thấy dịch vụ nào",
+                    "info": "Đang xem _START_ đến _END_ trong tổng số _TOTAL_ dịch vụ",
+                    "infoEmpty": "Không có dữ liệu",
+                    "paginate": { "first": "Đầu", "previous": "Trước", "next": "Sau", "last": "Cuối" }
                 }
             });
         });

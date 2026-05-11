@@ -94,8 +94,9 @@ pageEncoding="UTF-8"%>
   <div class="container mt-3">
     <div class="row g-4 mb-5">
       <div class="col-lg-4">
-        <div class="font-display fs-3 fw-bold text-white mb-3 footer-brand">
-          Omni<span style="color: var(--accent, #d4a847)">Stay</span>
+        <div class="font-display fs-3 fw-bold text-white mb-3 footer-brand d-flex align-items-center gap-2">
+          <img src="<%=request.getContextPath()%>/images/logo.png" alt="Logo" style="height: 40px; border-radius: 6px;" />
+          <div>Omni<span style="color: var(--accent, #d4a847)">Stay</span></div>
         </div>
         <p class="footer-desc mb-4">
           Khách sạn 5 sao tại trung tâm TP. Cần Thơ — nơi nghỉ dưỡng lý tưởng

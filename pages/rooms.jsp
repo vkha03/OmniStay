@@ -40,6 +40,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Phòng & Suite — OmniStay Hotel</title>
+    <link rel="icon" type="image/png" href="<%=request.getContextPath()%>/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -84,7 +85,7 @@
           rgba(10, 40, 33, 0.90) 0%,
           rgba(20, 85, 70, 0.78) 50%,
           rgba(30, 110, 90, 0.68) 100%
-        ), url('https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1600&q=80') center/cover no-repeat;
+        ), url('<%=request.getContextPath()%>/images/hero/hotel-room-hero.jpg') center/cover no-repeat;
         background-attachment: fixed;
         padding: 10rem 0 5rem;
         position: relative;
@@ -236,9 +237,20 @@
               <label class="form-label" style="font-size: 0.72rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em">Loại phòng</label>
               <select name="type" class="form-select">
                 <option value="all" <%= filterType.equals("all") ? "selected" : "" %>>Tất cả các loại</option>
-                <option value="standard" <%= filterType.equals("standard") ? "selected" : "" %>>Tiêu chuẩn (Standard)</option>
-                <option value="deluxe" <%= filterType.equals("deluxe") ? "selected" : "" %>>Sang trọng (Deluxe)</option>
-                <option value="premium" <%= filterType.equals("premium") ? "selected" : "" %>>Cao cấp (Premium)</option>
+                <%
+                    if(conn != null) {
+                        try {
+                            PreparedStatement pst = conn.prepareStatement("SELECT type_name FROM room_types ORDER BY id ASC");
+                            ResultSet rst = pst.executeQuery();
+                            while(rst.next()) {
+                                String tName = rst.getString("type_name");
+                                String selected = filterType.equalsIgnoreCase(tName) ? "selected" : "";
+                                out.print("<option value='" + tName + "' " + selected + ">" + tName + "</option>");
+                            }
+                            rst.close(); pst.close();
+                        } catch(Exception e) {}
+                    }
+                %>
               </select>
             </div>
             <div class="col-md-3">
@@ -307,11 +319,11 @@
                         String imgURL = rs.getString("image_url");
                         
                         if(imgURL == null || imgURL.isEmpty()){
-                            imgURL = "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&q=80";
+                            imgURL = request.getContextPath() + "/images/hero/hotel-room-hero.jpg";
                         }
           %>
           
-          <div class="col-md-6 col-lg-4">
+          <div class="col-md-6 col-lg-3">
             <div class="room-card card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-white">
               <div class="overflow-hidden position-relative">
                 <img src="<%= imgURL %>" class="room-img w-100" alt="Room Image" />

@@ -81,69 +81,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Nhân viên — OmniStay Admin</title>
+    <link rel="icon" type="image/png" href="<%=request.getContextPath()%>/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-    
-    <style>
-        :root {
-            --primary: #1a6b5a;
-            --primary-dark: #124a3e;
-            --accent: #d4a847;
-            --bg-light: #f5f8f7;
-            --border: #e8e2d9;
-            --text-main: #2c3e50;
-        }
-        body { font-family: 'Outfit', sans-serif; background-color: var(--bg-light); color: var(--text-main); overflow-x: hidden; margin: 0; }
-        .font-display { font-family: "Playfair Display", serif; }
-        
-        .sidebar { width: 260px; background: var(--primary-dark); min-height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; padding-top: 1.5rem; box-shadow: 4px 0 20px rgba(0,0,0,0.05); }
-        .sidebar .brand { padding: 0 1.5rem 2rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 1rem; }
-        .sidebar .brand a { font-size: 1.6rem; letter-spacing: 1px; color: #fff !important; text-decoration: none; }
-        .sidebar .brand span { color: var(--accent); font-weight: 600; }
-        
-        .nav-sidebar .nav-link { color: rgba(255,255,255,0.7) !important; padding: 0.8rem 1.5rem; margin: 0.2rem 1rem; border-radius: 8px; transition: all 0.3s; display: flex; align-items: center; font-weight: 400; text-decoration: none; }
-        .nav-sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
-        .nav-sidebar .nav-link:hover, .nav-sidebar .nav-link.active { color: #fff !important; background: rgba(255,255,255,0.1); }
-        .nav-sidebar .nav-link.active { background: var(--primary) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
-        .main-content { margin-left: 260px; padding: 2rem; min-height: 100vh; }
-        .table-custom { background: #fff; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); overflow: hidden; padding: 1.5rem; }
-        .table-custom th { background-color: #f8f9fa; color: #6c757d; font-weight: 500; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; padding: 1rem 1.5rem; border-bottom: 2px solid #edf2f9; }
-        .table-custom td { padding: 1.2rem 1.5rem; vertical-align: middle; color: #495057; font-size: 0.9rem; border-bottom: 1px solid #edf2f9; }
-        
-        .staff-avatar { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 600; margin-right: 12px; }
-        .badge-role { padding: 0.5rem 1rem; border-radius: 50px; font-size: 0.75rem; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
-        .badge-admin { background: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.2); }
-        .badge-receptionist { background: rgba(26, 107, 90, 0.1); color: var(--primary); border: 1px solid rgba(26, 107, 90, 0.2); }
-        
-        .action-btn { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: 0.2s; color: #666; text-decoration: none; border: 1px solid transparent; cursor: pointer; }
-        .action-btn:hover { background: var(--bg-light); color: var(--primary); border-color: var(--border); }
-        
-        .modal-content { border-radius: 20px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .modal-header { border-bottom: 1px solid #eee; padding: 1.5rem 2rem; }
-        .modal-body { padding: 2rem; }
-        .form-control, .form-select { border-radius: 10px; padding: 0.7rem 1rem; border: 1px solid #ddd; }
-        .form-control:focus { box-shadow: 0 0 0 4px rgba(26, 107, 90, 0.1); border-color: var(--primary); }
-    </style>
+    <link rel="stylesheet" href="admin-theme.css">
 </head>
 <body>
     <%@ include file="../layouts/sidebar-admin.jsp" %>
     
     <main class="main-content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h2 class="font-display fw-normal mb-1">Quản lý Nhân viên</h2>
-                <p class="text-muted mb-0" style="font-size: 0.9rem;">Thao tác thêm, sửa, xóa nhân viên ngay trên hệ thống.</p>
+        <div class="page-header">
+            <div class="d-flex align-items-center">
+                <div class="page-title-icon"><i class="bi bi-person-badge"></i></div>
+                <div>
+                    <h2 class="font-display fw-normal mb-1">Quản lý Nhân viên</h2>
+                    <p class="text-muted mb-0">Thao tác thêm, sửa, xóa nhân viên ngay trên hệ thống.</p>
+                </div>
             </div>
-            <button class="btn text-white rounded-pill px-4" style="background: var(--primary);" data-bs-toggle="modal" data-bs-target="#addStaffModal">
-                <i class="bi bi-plus-lg me-1"></i> Thêm nhân viên
+            <button class="btn btn-primary-gradient rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addStaffModal">
+                <i class="bi bi-person-plus me-1"></i> Thêm nhân viên
             </button>
         </div>
 
         <% if (thongBao != null) { %>
-            <div class="alert alert-<%= loaiThongBao %> alert-dismissible fade show border-0 mb-4 shadow-sm" style="border-radius: 12px;">
+            <div class="alert alert-<%= loaiThongBao %> alert-dismissible fade show shadow-sm mb-4">
                 <i class="bi <%= loaiThongBao.equals("success") ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill" %> me-2"></i> <%= thongBao %>
                 <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert"></button>
             </div>
@@ -154,16 +117,16 @@
         %>
 
         <!-- Filter Bar -->
-        <form action="admin-staff.jsp" method="GET" class="bg-white p-3 rounded-4 border mb-4 shadow-sm" style="border-color: var(--border) !important;">
+        <form action="admin-staff.jsp" method="GET" class="filter-bar">
             <div class="row g-3 align-items-center">
                 <div class="col-md-8">
                     <div class="input-group">
-                        <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
-                        <input type="text" name="staffSearch" class="form-control border-0 bg-light" placeholder="Tìm theo tên hoặc email nhân viên..." value="<%= (staffSearch != null) ? staffSearch : "" %>">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="staffSearch" class="form-control" placeholder="Tìm theo tên hoặc email nhân viên..." value="<%= (staffSearch != null) ? staffSearch : "" %>">
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <button type="submit" class="btn text-white w-100" style="background: var(--primary); border-radius: 10px;">Tìm kiếm</button>
+                    <button type="submit" class="btn btn-primary-gradient w-100">Tìm kiếm</button>
                 </div>
                 <div class="col-md-2 text-end">
                     <a href="admin-staff.jsp" class="btn btn-light w-100 border rounded-pill text-muted small">Xóa lọc</a>
@@ -171,9 +134,9 @@
             </div>
         </form>
 
-        <div class="table-custom">
+        <div class="table-custom p-4">
             <div class="table-responsive">
-                <table id="staffTable" class="table table-hover align-middle mb-0">
+                <table id="staffTable" class="table table-hover align-middle mb-0 w-100">
                     <thead>
                         <tr>
                             <th>Nhân viên</th>
@@ -211,25 +174,30 @@
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <div class="staff-avatar" style="background: <%= role.equals("ADMIN") ? "rgba(220, 53, 69, 0.1)" : "rgba(26, 107, 90, 0.1)" %>; color: <%= role.equals("ADMIN") ? "#dc3545" : "#1a6b5a" %>">
+                                    <div class="guest-avatar" style="background: <%= role.equals("ADMIN") ? "rgba(220, 53, 69, 0.1)" : "rgba(26, 107, 90, 0.1)" %>; color: <%= role.equals("ADMIN") ? "#dc3545" : "var(--primary)" %>">
                                         <%= initials %>
                                     </div>
                                     <div>
-                                        <div class="fw-500 text-dark"><%= name %></div>
+                                        <div class="fw-500 text-dark" style="font-size: 1rem;"><%= name %></div>
                                         <div class="text-muted small">#STF-<%= id %></div>
                                     </div>
                                 </div>
                             </td>
-                            <td><div class="small"><i class="bi bi-envelope me-2 text-muted"></i><%= email %></div></td>
+                            <td><div class="text-muted"><i class="bi bi-envelope me-2"></i><%= email %></div></td>
                             <td>
-                                <span class="badge-role <%= role.equals("ADMIN") ? "badge-admin" : "badge-receptionist" %>">
-                                    <i class="bi <%= role.equals("ADMIN") ? "bi-shield-lock" : "bi-person-workspace" %>"></i> 
-                                    <%= role.equals("ADMIN") ? "Quản trị viên" : "Lễ tân" %>
-                                </span>
+                                <% if(role.equals("ADMIN")) { %>
+                                    <span class="badge rounded-pill" style="background: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.2); padding: 0.4rem 0.8rem; font-weight: 500;">
+                                        <i class="bi bi-shield-lock me-1"></i> Quản trị viên
+                                    </span>
+                                <% } else { %>
+                                    <span class="badge rounded-pill" style="background: rgba(26, 107, 90, 0.1); color: var(--primary); border: 1px solid rgba(26, 107, 90, 0.2); padding: 0.4rem 0.8rem; font-weight: 500;">
+                                        <i class="bi bi-person-workspace me-1"></i> Lễ tân
+                                    </span>
+                                <% } %>
                             </td>
                             <td><div class="small text-muted"><%= createdAt != null ? sdf.format(createdAt) : "N/A" %></div></td>
                             <td class="text-end">
-                                <a class="action-btn" onclick="openEditModal(<%= id %>, '<%= name %>', '<%= email %>', '<%= role %>')" title="Sửa"><i class="bi bi-pencil-square"></i></a>
+                                <a class="action-btn" onclick="openEditModal(<%= id %>, '<%= name %>', '<%= email %>', '<%= role %>')" title="Sửa"><i class="bi bi-pencil-square text-primary"></i></a>
                                 <% if(id != 1) { %>
                                     <form action="admin-staff.jsp" method="POST" style="display:inline;" onsubmit="return confirm('Thu hồi tài khoản này?')">
                                         <input type="hidden" name="action" value="delete">
@@ -256,35 +224,35 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title font-display fw-bold">Thêm nhân viên mới</h5>
+                    <h5 class="modal-title font-display fw-bold" style="color: var(--primary);">Thêm nhân viên mới</h5>
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="admin-staff.jsp" method="POST">
                     <input type="hidden" name="action" value="add">
-                    <div class="modal-body">
+                    <div class="modal-body p-4">
                         <div class="mb-3">
-                            <label class="form-label small fw-500">Họ và tên</label>
+                            <label class="form-label">Họ và tên</label>
                             <input type="text" name="fullName" class="form-control" placeholder="Nhập tên nhân viên" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-500">Email đăng nhập</label>
+                            <label class="form-label">Email đăng nhập</label>
                             <input type="email" name="email" class="form-control" placeholder="example@omnistay.vn" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-500">Mật khẩu</label>
+                            <label class="form-label">Mật khẩu</label>
                             <input type="password" name="password" class="form-control" placeholder="••••••••" required>
                         </div>
                         <div class="mb-0">
-                            <label class="form-label small fw-500">Quyền hạn</label>
+                            <label class="form-label">Quyền hạn</label>
                             <select name="role" class="form-select">
                                 <option value="RECEPTIONIST">Lễ tân (Receptionist)</option>
                                 <option value="ADMIN">Quản trị viên (Admin)</option>
                             </select>
                         </div>
                     </div>
-                    <div class="modal-footer border-0 px-4 pb-4">
+                    <div class="modal-footer">
                         <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn text-white rounded-pill px-4" style="background: var(--primary);">Lưu thông tin</button>
+                        <button type="submit" class="btn btn-primary-gradient px-4">Lưu thông tin</button>
                     </div>
                 </form>
             </div>
@@ -296,36 +264,36 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title font-display fw-bold">Chỉnh sửa nhân viên</h5>
+                    <h5 class="modal-title font-display fw-bold" style="color: var(--primary);">Chỉnh sửa nhân viên</h5>
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="admin-staff.jsp" method="POST">
                     <input type="hidden" name="action" value="edit">
                     <input type="hidden" name="staffId" id="editStaffId">
-                    <div class="modal-body">
+                    <div class="modal-body p-4">
                         <div class="mb-3">
-                            <label class="form-label small fw-500">Họ và tên</label>
+                            <label class="form-label">Họ và tên</label>
                             <input type="text" name="fullName" id="editFullName" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-500">Email đăng nhập</label>
+                            <label class="form-label">Email đăng nhập</label>
                             <input type="email" name="email" id="editEmail" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-500">Mật khẩu mới (Để trống nếu không đổi)</label>
+                            <label class="form-label">Mật khẩu mới (Để trống nếu không đổi)</label>
                             <input type="password" name="password" class="form-control" placeholder="••••••••">
                         </div>
                         <div class="mb-0">
-                            <label class="form-label small fw-500">Quyền hạn</label>
+                            <label class="form-label">Quyền hạn</label>
                             <select name="role" id="editRole" class="form-select">
                                 <option value="RECEPTIONIST">Lễ tân (Receptionist)</option>
                                 <option value="ADMIN">Quản trị viên (Admin)</option>
                             </select>
                         </div>
                     </div>
-                    <div class="modal-footer border-0 px-4 pb-4">
+                    <div class="modal-footer">
                         <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn text-white rounded-pill px-4" style="background: var(--primary);">Cập nhật</button>
+                        <button type="submit" class="btn btn-primary-gradient px-4">Cập nhật</button>
                     </div>
                 </form>
             </div>
@@ -345,7 +313,10 @@
                 "searching": false,
                 "ordering": false,
                 "language": {
-                    "paginate": { "previous": "<i class='bi bi-chevron-left'></i>", "next": "<i class='bi bi-chevron-right'></i>" }
+                    "zeroRecords": "Không tìm thấy nhân viên nào",
+                    "info": "Đang xem _START_ đến _END_ trong tổng số _TOTAL_ nhân viên",
+                    "infoEmpty": "Không có dữ liệu",
+                    "paginate": { "first": "Đầu", "previous": "Trước", "next": "Sau", "last": "Cuối" }
                 }
             });
         });

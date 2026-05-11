@@ -21,6 +21,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OmniStay — Luxury Hotel</title>
+    <link rel="icon" type="image/png" href="<%=request.getContextPath()%>/images/logo.png">
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -86,7 +87,7 @@
           rgba(10, 40, 33, 0.90) 0%,
           rgba(20, 85, 70, 0.78) 50%,
           rgba(30, 110, 90, 0.68) 100%
-        ), url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1600&q=80') center/cover no-repeat;
+        ), url('<%=request.getContextPath()%>/images/hero/hotel-exterior.jpg') center/cover no-repeat;
         background-attachment: fixed;
         position: relative;
       }
@@ -479,14 +480,31 @@
               >
             </div>
             <div class="hero-stats d-flex gap-4 mt-5">
+              <%
+                int totalRooms = 128;
+                double avgRating = 4.9;
+                if(conn != null) {
+                    try {
+                        PreparedStatement ps1 = conn.prepareStatement("SELECT COUNT(*) FROM rooms");
+                        ResultSet rs1 = ps1.executeQuery();
+                        if(rs1.next()) totalRooms = rs1.getInt(1);
+                        rs1.close(); ps1.close();
+
+                        PreparedStatement ps2 = conn.prepareStatement("SELECT ROUND(AVG(rating), 1) FROM reviews WHERE status = 1");
+                        ResultSet rs2 = ps2.executeQuery();
+                        if(rs2.next() && rs2.getObject(1) != null) avgRating = rs2.getDouble(1);
+                        rs2.close(); ps2.close();
+                    } catch(Exception e) {}
+                }
+              %>
               <div>
-                <div class="font-display text-white fw-normal stat-number">128</div>
+                <div class="font-display text-white fw-normal stat-number"><%= totalRooms %></div>
                 <div class="stat-label">Phòng nghỉ</div>
               </div>
               <div class="stat-divider"></div>
               <div>
                 <div class="font-display text-white fw-normal stat-number">
-                  4.9<span style="font-size: 1rem; color: var(--accent)">★</span>
+                  <%= avgRating %><span style="font-size: 1rem; color: var(--accent)">★</span>
                 </div>
                 <div class="stat-label">Đánh giá</div>
               </div>
@@ -499,7 +517,7 @@
           </div>
           <div class="col-lg-6 text-center position-relative pb-4">
             <img
-              src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&q=80"
+              src="<%=request.getContextPath()%>/images/rooms/room-suite.jpg"
               alt="Presidential Suite"
               class="hero-img w-100"
             />
@@ -609,10 +627,19 @@
                 >
                 <select name="type" class="booking-input form-select">
                   <option value="all">Tất cả loại phòng</option>
-                  <option value="standard">Standard</option>
-                  <option value="deluxe">Deluxe</option>
-                  <option value="suite">Superior Suite</option>
-                  <option value="presidential">Presidential Suite</option>
+                  <%
+                    if(conn != null) {
+                        try {
+                            PreparedStatement pst = conn.prepareStatement("SELECT type_name FROM room_types ORDER BY id ASC");
+                            ResultSet rst = pst.executeQuery();
+                            while(rst.next()) {
+                                String tName = rst.getString("type_name");
+                                out.print("<option value='" + tName + "'>" + tName + "</option>");
+                            }
+                            rst.close(); pst.close();
+                        } catch(Exception e) {}
+                    }
+                  %>
                 </select>
               </div>
               <div class="col-md-2 col-sm-6">
@@ -689,7 +716,7 @@
             <div class="row g-3">
               <div class="col-8">
                 <img
-                  src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=600&q=80"
+                  src="<%=request.getContextPath()%>/images/hero/hotel-exterior.jpg"
                   class="w-100 rounded-4 object-fit-cover"
                   style="height: 300px"
                   alt="Lobby"
@@ -697,7 +724,7 @@
               </div>
               <div class="col-4 d-flex flex-column gap-3">
                 <img
-                  src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=300&q=80"
+                  src="<%=request.getContextPath()%>/images/rooms/room-deluxe.jpg"
                   class="w-100 rounded-4 object-fit-cover"
                   style="height: 140px"
                   alt="Pool"
@@ -742,7 +769,7 @@
             >
               OmniStay không chỉ là một khách sạn, chúng tôi là biểu tượng của
               sự thịnh vượng vùng Tây Đô. Với ngôn ngữ kiến trúc tối giản đương
-              đại, OmniStay mang đến 128 không gian lưu trú được thiết kế để
+              đại, OmniStay mang đến <%= totalRooms %> không gian lưu trú được thiết kế để
               đánh thức mọi giác quan của giới thượng lưu.
             </p>
             <p
@@ -760,7 +787,7 @@
                   class="font-display"
                   style="font-size: 2rem; color: var(--primary)"
                 >
-                  128
+                  <%= totalRooms %>
                 </div>
                 <div
                   style="
@@ -858,7 +885,7 @@
                   String img = rs.getString("image_url");
                   double price = rs.getDouble("base_price");
           %>
-          <div class="col-md-6 col-lg-4">
+          <div class="col-md-6 col-lg-3">
             <div class="room-card card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-white">
               <div class="overflow-hidden">
                 <img src="<%= img %>" class="room-img w-100" style="transition: transform 0.5s; height: 240px; object-fit: cover;" 
@@ -996,189 +1023,52 @@ if(conn != null){
       </div>
     </section>
 
-    <!-- ═══ DINING ═══ -->
-    <section id="dining" style="padding: 5rem 0; background: var(--light-bg)">
+    <!-- ═══ ARCHITECTURE ═══ -->
+    <section id="architecture" style="padding: 6rem 0; background: var(--light-bg)">
       <div class="container">
-        <div class="row align-items-end mb-5">
-          <div class="col">
-            <p class="section-tag">Ẩm thực</p>
-            <h2
-              class="font-display fw-normal mt-1"
-              style="font-size: clamp(1.8rem, 3vw, 2.8rem)"
-            >
-              Nghệ thuật ẩm thực
+        <div class="row align-items-center g-5">
+          <div class="col-lg-6 order-lg-2">
+            <p class="section-tag mb-2">Nghệ thuật & Không gian</p>
+            <h2 class="font-display fw-normal mb-4" style="font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.1">
+              Bản giao hưởng của <br/><em style="color: var(--accent)">Kiến trúc Đông Dương</em>
             </h2>
-            <div class="divider mt-2"></div>
-          </div>
-        </div>
-        <div class="row g-4">
-          <div class="col-lg-5">
-            <div
-              class="card border-0 rounded-4 overflow-hidden shadow-sm h-100"
-            >
-              <div class="overflow-hidden">
-                <img
-                  src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80"
-                  class="w-100 object-fit-cover"
-                  style="height: 260px; transition: transform 0.5s"
-                  onmouseover="this.style.transform = 'scale(1.04)'"
-                  onmouseout="this.style.transform = 'scale(1)'"
-                />
-              </div>
-              <div class="card-body p-4">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                  <span
-                    class="badge rounded-pill"
-                    style="
-                      background: rgba(212, 168, 71, 0.12);
-                      color: #a07820;
-                      font-size: 0.65rem;
-                    "
-                    >NHÀ HÀNG CHÍNH</span
-                  >
-                  <span class="text-muted" style="font-size: 0.75rem"
-                    >Tầng 2 · 06:00 – 23:00</span
-                  >
+            <p class="text-muted mb-4" style="font-size: 0.95rem; line-height: 1.8">
+              Lấy cảm hứng từ nét đẹp hoài cổ của kiến trúc Indochine pha lẫn sự tinh giản của phong cách đương đại, OmniStay là một kiệt tác nghệ thuật giữa lòng thủ phủ miền Tây. Từng đường nét vòm cửa, gạch bông thủ công cho đến ánh sáng tự nhiên đều được tính toán tỉ mỉ để tạo nên không gian nghỉ dưỡng tĩnh lặng và sang trọng tuyệt đối.
+            </p>
+            <div class="row g-4 mt-2">
+              <div class="col-sm-6">
+                <div class="d-flex gap-3">
+                  <div class="flex-shrink-0" style="color: var(--primary); font-size: 1.8rem"><i class="bi bi-palette"></i></div>
+                  <div>
+                    <h6 class="font-display mb-1 fw-bold">Thiết kế độc bản</h6>
+                    <p class="text-muted mb-0" style="font-size: 0.8rem">Không gian được chế tác riêng biệt, tôn vinh văn hóa bản địa.</p>
+                  </div>
                 </div>
-                <h5 class="font-display fw-normal mb-2">The Verdant Kitchen</h5>
-                <p
-                  class="text-muted mb-3"
-                  style="font-size: 0.85rem; line-height: 1.75"
-                >
-                  Thực đơn Signature đương đại được chế tác bởi bếp trưởng từ
-                  khách sạn 5 sao quốc tế. Trải nghiệm bữa sáng thượng hạng giữa
-                  không gian kiến trúc tối giản và thanh lịch.
-                </p>
-                <div
-                  class="d-flex gap-3 flex-wrap"
-                  style="font-size: 0.78rem; color: #888"
-                >
-                  <span><i class="bi bi-people me-1"></i>120 chỗ ngồi</span>
-                  <span><i class="bi bi-globe me-1"></i>Ẩm thực Quốc tế</span>
-                  <span><i class="bi bi-suit-heart me-1"></i>Lãng mạn</span>
+              </div>
+              <div class="col-sm-6">
+                <div class="d-flex gap-3">
+                  <div class="flex-shrink-0" style="color: var(--primary); font-size: 1.8rem"><i class="bi bi-brightness-high"></i></div>
+                  <div>
+                    <h6 class="font-display mb-1 fw-bold">Ánh sáng tự nhiên</h6>
+                    <p class="text-muted mb-0" style="font-size: 0.8rem">100% phòng nghỉ đều có ban công hoặc cửa kính tràn viền.</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="col-lg-7">
-            <div class="row g-4">
-              <div class="col-sm-6">
-                <div
-                  class="card border-0 rounded-4 overflow-hidden shadow-sm h-100"
-                >
-                  <div class="overflow-hidden">
-                    <img
-                      src="https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=500&q=80"
-                      class="w-100 object-fit-cover"
-                      style="height: 180px; transition: transform 0.5s"
-                      onmouseover="this.style.transform = 'scale(1.04)'"
-                      onmouseout="this.style.transform = 'scale(1)'"
-                    />
-                  </div>
-                  <div class="card-body p-3">
-                    <span
-                      class="badge rounded-pill mb-2"
-                      style="
-                        background: rgba(26, 107, 90, 0.1);
-                        color: var(--primary);
-                        font-size: 0.65rem;
-                      "
-                      >COCKTAIL BAR</span
-                    >
-                    <h6 class="font-display fw-normal mb-1">Jade Lounge</h6>
-                    <p
-                      class="text-muted mb-2"
-                      style="font-size: 0.78rem; line-height: 1.6"
-                    >
-                      Hơn 200 loại cocktail thủ công và whisky nhập khẩu. Nhạc
-                      live mỗi tối thứ 6 – thứ 7.
-                    </p>
-                    <div style="font-size: 0.72rem; color: #aaa">
-                      <i class="bi bi-clock me-1"></i>17:00 – 02:00
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-sm-6">
-                <div
-                  class="card border-0 rounded-4 overflow-hidden shadow-sm h-100"
-                >
-                  <div class="overflow-hidden">
-                    <img
-                      src="https://images.unsplash.com/photo-1559329007-40df8a9345d8?w=500&q=80"
-                      class="w-100 object-fit-cover"
-                      style="height: 180px; transition: transform 0.5s"
-                      onmouseover="this.style.transform = 'scale(1.04)'"
-                      onmouseout="this.style.transform = 'scale(1)'"
-                    />
-                  </div>
-                  <div class="card-body p-3">
-                    <span
-                      class="badge rounded-pill mb-2"
-                      style="
-                        background: rgba(212, 168, 71, 0.15);
-                        color: #a07820;
-                        font-size: 0.65rem;
-                      "
-                      >ROOFTOP</span
-                    >
-                    <h6 class="font-display fw-normal mb-1">Sky 15 Bar</h6>
-                    <p
-                      class="text-muted mb-2"
-                      style="font-size: 0.78rem; line-height: 1.6"
-                    >
-                      Tận hưởng ly Signature Cocktail trong không gian âm nhạc
-                      Chill-out. Tầm nhìn panorama vô cực ôm trọn nhịp sống
-                      thịnh vượng của Cần Thơ hiện đại.
-                    </p>
-                    <div style="font-size: 0.72rem; color: #aaa">
-                      <i class="bi bi-clock me-1"></i>16:00 – 00:00
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-12">
-                <div
-                  class="rounded-4 d-flex align-items-center gap-4 p-3"
-                  style="
-                    background: linear-gradient(
-                      90deg,
-                      var(--primary-dark),
-                      var(--primary)
-                    );
-                  "
-                >
-                  <div
-                    class="amenity-icon flex-shrink-0"
-                    style="background: rgba(255, 255, 255, 0.15); color: #fff"
-                  >
-                    <i class="bi bi-cup-straw"></i>
-                  </div>
-                  <div class="flex-grow-1">
-                    <div class="text-white fw-500" style="font-size: 0.88rem">
-                      Afternoon Tea
-                    </div>
-                    <div class="text-white-50" style="font-size: 0.78rem">
-                      Thứ 7 & Chủ nhật · 14:00 – 17:00 · Tại The Verdant Kitchen
-                    </div>
-                  </div>
-                  <a
-                    href="#booking"
-                    class="btn btn-sm rounded-pill px-3 text-dark flex-shrink-0"
-                    style="
-                      background: var(--accent);
-                      font-size: 0.75rem;
-                      white-space: nowrap;
-                    "
-                    >Đặt bàn</a
-                  >
-                </div>
+          <div class="col-lg-6 order-lg-1">
+            <div class="position-relative">
+              <img src="<%=request.getContextPath()%>/images/rooms/room-architecture.jpg" alt="Architecture" class="w-100 rounded-4 shadow-lg" style="height: 500px; object-fit: cover;" />
+              <div class="position-absolute bg-white rounded-4 shadow p-4 text-center" style="bottom: -30px; right: -30px; width: 200px; border: 1px solid var(--border)">
+                <div class="font-display" style="font-size: 2.5rem; color: var(--accent); line-height: 1">100%</div>
+                <div class="text-uppercase fw-bold mt-1" style="font-size: 0.65rem; letter-spacing: 2px; color: var(--primary)">Vật liệu tự nhiên</div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </section>
+
 
     <!-- ═══ GALLERY ═══ -->
     <section id="gallery" class="py-5">
@@ -1196,202 +1086,95 @@ if(conn != null){
         <div class="row g-3">
           <div class="col-md-6">
             <div class="gallery-item" style="height: 320px">
-              <img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&q=80" class="w-100 h-100 object-fit-cover" alt="Lobby" />
+              <img src="<%=request.getContextPath()%>/images/hero/hotel-exterior.jpg" class="w-100 h-100 object-fit-cover" alt="Lobby" />
             </div>
           </div>
           <div class="col-md-3">
             <div class="gallery-item mb-3" style="height: 152px">
-              <img src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="Pool" />
+              <img src="<%=request.getContextPath()%>/images/rooms/room-deluxe.jpg" class="w-100 h-100 object-fit-cover" alt="Pool" />
             </div>
             <div class="gallery-item" style="height: 152px">
-              <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="Restaurant" />
+              <img src="<%=request.getContextPath()%>/images/services/service-restaurant.jpg" class="w-100 h-100 object-fit-cover" alt="Restaurant" />
             </div>
           </div>
           <div class="col-md-3">
             <div class="gallery-item mb-3" style="height: 152px">
-              <img src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="Spa" />
+              <img src="<%=request.getContextPath()%>/images/services/service-spa-2.jpg" class="w-100 h-100 object-fit-cover" alt="Spa" />
             </div>
             <div class="gallery-item" style="height: 152px">
-              <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="River view" />
+              <img src="<%=request.getContextPath()%>/images/hero/hotel-aerial.jpg" class="w-100 h-100 object-fit-cover" alt="River view" />
             </div>
           </div>
           <div class="col-md-3">
             <div class="gallery-item" style="height: 200px">
-              <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="Room" />
+              <img src="<%=request.getContextPath()%>/images/hero/hotel-room-hero.jpg" class="w-100 h-100 object-fit-cover" alt="Room" />
             </div>
           </div>
           <div class="col-md-3">
             <div class="gallery-item" style="height: 200px">
-              <img src="https://images.unsplash.com/photo-1559329007-40df8a9345d8?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="Bar" />
+              <img src="<%=request.getContextPath()%>/images/services/service-bar.jpg" class="w-100 h-100 object-fit-cover" alt="Bar" />
             </div>
           </div>
           <div class="col-md-3">
             <div class="gallery-item" style="height: 200px">
-              <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="Suite" />
+              <img src="<%=request.getContextPath()%>/images/rooms/room-premium.jpg" class="w-100 h-100 object-fit-cover" alt="Suite" />
             </div>
           </div>
           <div class="col-md-3">
             <div class="gallery-item" style="height: 200px">
-              <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80" class="w-100 h-100 object-fit-cover" alt="Deluxe" />
+              <img src="<%=request.getContextPath()%>/images/rooms/room-deluxe-2.jpg" class="w-100 h-100 object-fit-cover" alt="Deluxe" />
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ═══ SPECIAL OFFERS ═══ -->
-    <section id="offers" style="padding: 5rem 0; background: var(--light-bg)">
+    <!-- ═══ BOOKING PROCESS ═══ -->
+    <section id="digital-experience" style="padding: 6rem 0; background: #fff">
       <div class="container">
-        <div class="row align-items-end mb-5">
-          <div class="col">
-            <p class="section-tag">Ưu đãi</p>
-            <h2
-              class="font-display fw-normal mt-1"
-              style="font-size: clamp(1.8rem, 3vw, 2.8rem)"
-            >
-              Gói đặc biệt
-            </h2>
-            <div class="divider mt-2"></div>
-          </div>
+        <div class="text-center mb-5">
+          <p class="section-tag mb-2">Trải nghiệm số hóa</p>
+          <h2 class="font-display fw-normal mb-3" style="font-size: clamp(2rem, 4vw, 3.2rem)">
+            Đặt phòng thông minh & An toàn
+          </h2>
+          <p class="text-muted mx-auto" style="max-width: 600px; font-size: 0.95rem; line-height: 1.6">
+            Hệ thống OmniStay được tích hợp nền tảng thanh toán trực tuyến hiện đại, mang đến cho bạn sự tiện lợi, minh bạch và bảo mật tuyệt đối trong mỗi giao dịch.
+          </p>
+          <div class="divider mx-auto mt-4"></div>
         </div>
-        <div class="row g-4">
+        
+        <div class="row g-4 mt-2">
           <div class="col-md-4">
-            <div
-              class="offer-card card border-0 rounded-4 overflow-hidden shadow-sm h-100"
-            >
-              <div class="overflow-hidden position-relative">
-                <img
-                  src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=600&q=80"
-                  class="offer-img w-100"
-                  alt="Early Bird"
-                />
-                <span class="offer-badge">Giảm 20%</span>
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center" style="background: rgba(26, 107, 90, 0.03); transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-10px)'" onmouseout="this.style.transform='translateY(0)'">
+              <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4 shadow" style="width: 80px; height: 80px; background: #fff; border: 2px solid var(--accent); font-size: 2rem; color: var(--primary)">
+                1
               </div>
-              <div class="card-body p-4">
-                <h5 class="font-display fw-normal mb-2">
-                  Đặt sớm — Early Bird
-                </h5>
-                <p
-                  class="text-muted mb-3"
-                  style="font-size: 0.85rem; line-height: 1.7"
-                >
-                  Đặt phòng trước 7 ngày nhận ngay ưu đãi 20%, bao gồm bữa sáng
-                  miễn phí và check-in sớm từ 11:00.
-                </p>
-                <ul class="list-unstyled mb-3" style="font-size: 0.82rem">
-                  <li class="mb-1">
-                    <i class="bi bi-check2 me-2 text-success"></i>Bữa sáng
-                    buffet cho 2 người
-                  </li>
-                  <li class="mb-1">
-                    <i class="bi bi-check2 me-2 text-success"></i>Check-in sớm
-                    11:00
-                  </li>
-                  <li class="mb-1">
-                    <i class="bi bi-check2 me-2 text-success"></i>Huỷ miễn phí
-                    trước 48h
-                  </li>
-                </ul>
-                <a
-                  href="#booking"
-                  class="btn rounded-pill px-4 text-white w-100"
-                  style="background: var(--primary); font-size: 0.82rem"
-                  >Đặt gói này</a
-                >
-              </div>
+              <h5 class="font-display fw-bold mb-3">Chọn phòng linh hoạt</h5>
+              <p class="text-muted" style="font-size: 0.85rem">Hệ thống hiển thị trạng thái phòng trống thời gian thực. Bạn có thể dễ dàng lọc và chọn đúng căn phòng ưa thích của mình.</p>
             </div>
           </div>
           <div class="col-md-4">
-            <div
-              class="offer-card card border-0 rounded-4 overflow-hidden shadow-sm h-100"
-            >
-              <div class="overflow-hidden position-relative">
-                <img
-                  src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&q=80"
-                  class="offer-img w-100"
-                  alt="Spa Package"
-                />
-                <span class="offer-badge">Gói mới</span>
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center" style="background: rgba(26, 107, 90, 0.03); transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-10px)'" onmouseout="this.style.transform='translateY(0)'">
+              <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4 shadow" style="width: 80px; height: 80px; background: #fff; border: 2px solid var(--accent); font-size: 2rem; color: var(--primary)">
+                2
               </div>
-              <div class="card-body p-4">
-                <h5 class="font-display fw-normal mb-2">Gói Spa & Relax</h5>
-                <p
-                  class="text-muted mb-3"
-                  style="font-size: 0.85rem; line-height: 1.7"
-                >
-                  2 đêm lưu trú kèm 2 buổi spa thư giãn cao cấp. Chăm sóc sức
-                  khoẻ toàn diện trong từng khoảnh khắc.
-                </p>
-                <ul class="list-unstyled mb-3" style="font-size: 0.82rem">
-                  <li class="mb-1">
-                    <i class="bi bi-check2 me-2 text-success"></i>2 buổi spa 90
-                    phút / người
-                  </li>
-                  <li class="mb-1">
-                    <i class="bi bi-check2 me-2 text-success"></i>Trà chiều tại
-                    Jade Lounge
-                  </li>
-                  <li class="mb-1">
-                    <i class="bi bi-check2 me-2 text-success"></i>Welcome
-                    amenities
-                  </li>
-                </ul>
-                <a
-                  href="#booking"
-                  class="btn rounded-pill px-4 text-white w-100"
-                  style="background: var(--primary); font-size: 0.82rem"
-                  >Đặt gói này</a
-                >
-              </div>
+              <h5 class="font-display fw-bold mb-3">Thanh toán VNPAY</h5>
+              <p class="text-muted" style="font-size: 0.85rem">Tích hợp cổng thanh toán quốc gia VNPAY. Giao dịch mã hóa SSL an toàn, hỗ trợ quét mã QR, thẻ ATM và thẻ tín dụng.</p>
             </div>
           </div>
           <div class="col-md-4">
-            <div
-              class="offer-card card border-0 rounded-4 overflow-hidden shadow-sm h-100"
-            >
-              <div class="overflow-hidden position-relative">
-                <img
-                  src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80"
-                  class="offer-img w-100"
-                  alt="Romance"
-                />
-                <span class="offer-badge">Phổ biến</span>
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center" style="background: rgba(26, 107, 90, 0.03); transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-10px)'" onmouseout="this.style.transform='translateY(0)'">
+              <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4 shadow" style="width: 80px; height: 80px; background: #fff; border: 2px solid var(--accent); font-size: 2rem; color: var(--primary)">
+                3
               </div>
-              <div class="card-body p-4">
-                <h5 class="font-display fw-normal mb-2">Gói Lãng Mạn</h5>
-                <p
-                  class="text-muted mb-3"
-                  style="font-size: 0.85rem; line-height: 1.7"
-                >
-                  Dành cho các cặp đôi — bữa tối candlelight, champagne phòng và
-                  hoa tươi đón khách.
-                </p>
-                <ul class="list-unstyled mb-3" style="font-size: 0.82rem">
-                  <li class="mb-1">
-                    <i class="bi bi-check2 me-2 text-success"></i>Bữa tối set
-                    menu cho 2 người
-                  </li>
-                  <li class="mb-1">
-                    <i class="bi bi-check2 me-2 text-success"></i>Champagne &
-                    hoa tươi phòng
-                  </li>
-                  <li class="mb-1">
-                    <i class="bi bi-check2 me-2 text-success"></i>Late check-out
-                    14:00
-                  </li>
-                </ul>
-                <a
-                  href="#booking"
-                  class="btn rounded-pill px-4 text-white w-100"
-                  style="background: var(--primary); font-size: 0.82rem"
-                  >Đặt gói này</a
-                >
-              </div>
+              <h5 class="font-display fw-bold mb-3">Nhận phòng tức thì</h5>
+              <p class="text-muted" style="font-size: 0.85rem">Sau khi thanh toán thành công, hóa đơn điện tử sẽ được gửi ngay về Email. Quá trình check-in tại quầy chỉ mất chưa đầy 1 phút.</p>
             </div>
           </div>
         </div>
       </div>
     </section>
+
 
     <!-- ═══ WHY US ═══ -->
     <section style="padding: 5rem 0">
@@ -1473,7 +1256,7 @@ if(conn != null){
             <div class="row g-3">
               <div class="col-6">
                 <img
-                  src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&q=80"
+                  src="<%=request.getContextPath()%>/images/hero/hotel-aerial.jpg"
                   class="w-100 rounded-4 object-fit-cover"
                   style="height: 230px"
                   alt="Pool"
@@ -1481,7 +1264,7 @@ if(conn != null){
               </div>
               <div class="col-6 pt-4">
                 <img
-                  src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=500&q=80"
+                  src="<%=request.getContextPath()%>/images/rooms/room-deluxe.jpg"
                   class="w-100 rounded-4 object-fit-cover"
                   style="height: 230px"
                   alt="Infinity"
@@ -1560,6 +1343,81 @@ if(conn != null){
       </div>
     </section>
 
+    <!-- ═══ REVIEWS ═══ -->
+    <section id="reviews" class="py-5" style="background: #fff;">
+      <div class="container py-4">
+        <div class="text-center mb-5">
+          <p class="section-tag">Khách hàng nói gì</p>
+          <h2 class="font-display fw-normal mt-1" style="font-size: clamp(1.8rem, 3vw, 2.8rem)">
+            Đánh giá thực tế
+          </h2>
+          <div class="divider mx-auto mt-2"></div>
+        </div>
+        <div class="row g-4 justify-content-center">
+          <%
+            if(conn != null){
+              try {
+                String reviewSql = "SELECT r.*, g.full_name FROM reviews r JOIN guests g ON r.guest_id = g.id WHERE r.status = 1 AND r.rating >= 4 ORDER BY r.created_at DESC LIMIT 3";
+                PreparedStatement psReview = conn.prepareStatement(reviewSql);
+                ResultSet rsReview = psReview.executeQuery();
+                
+                String[] bgColors = {"var(--primary)", "var(--accent)", "#1a6b5a", "#d4a847"};
+                int revIdx = 0;
+                
+                boolean hasDbReviews = false;
+                while(rsReview.next()){
+                  hasDbReviews = true;
+                  String guestName = rsReview.getString("full_name");
+                  String comment = rsReview.getString("comment");
+                  int rating = rsReview.getInt("rating");
+                  Timestamp createdAt = rsReview.getTimestamp("created_at");
+                  String initial = guestName.substring(0, 1).toUpperCase() + (guestName.contains(" ") ? guestName.split(" ")[guestName.split(" ").length-1].substring(0,1).toUpperCase() : "");
+          %>
+          <div class="col-md-4">
+            <div class="review-card bg-white rounded-4 p-4 shadow-sm h-100 d-flex flex-column" style="border: 1px solid var(--border)">
+              <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="star fs-5">
+                  <% for(int i=0; i<5; i++) { %>
+                    <%= (i < rating) ? "★" : "☆" %>
+                  <% } %>
+                </span>
+              </div>
+              <p class="mb-4 flex-grow-1" style="font-size: 0.88rem; line-height: 1.75; color: #444; font-style: italic;">
+                "<%= comment %>"
+              </p>
+              <div class="d-flex align-items-center gap-3 mt-auto">
+                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width: 42px; height: 42px; background: <%= bgColors[revIdx % bgColors.length] %>; font-size: 0.9rem;">
+                  <%= initial %>
+                </div>
+                <div>
+                  <div class="fw-bold" style="font-size: 0.85rem; color: var(--primary)">
+                    <%= guestName %>
+                  </div>
+                  <div class="text-muted" style="font-size: 0.75rem">
+                    Khách lưu trú · <%= new java.text.SimpleDateFormat("MM/yyyy").format(createdAt) %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <%
+                  revIdx++;
+                }
+                rsReview.close();
+                psReview.close();
+                
+                if(!hasDbReviews) {
+                  out.println("<div class='col-12 text-center py-4'><p class='text-muted'>Đang cập nhật những đánh giá mới nhất...</p></div>");
+                }
+              } catch(Exception e) {
+                out.println("<div class='col-12 text-center text-danger'>Lỗi tải đánh giá: " + e.getMessage() + "</div>");
+              }
+            }
+          %>
+        </div>
+      </div>
+    </section>
+
     <!-- ═══ LOCATION ═══ -->
     <section id="location" style="padding: 5rem 0; background: var(--light-bg)">
       <div class="container">
@@ -1577,47 +1435,16 @@ if(conn != null){
         </div>
         <div class="row g-5 align-items-center">
           <div class="col-lg-7">
-            <div
-              class="rounded-4 overflow-hidden shadow-sm position-relative"
-              style="height: 380px"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1508780709619-79562169bc64?w=900&q=60"
-                class="w-100 h-100 object-fit-cover"
-                style="opacity: 0.4"
-                alt="HCMC"
-              />
-              <div
-                style="
-                  position: absolute;
-                  top: 50%;
-                  left: 50%;
-                  transform: translate(-50%, -60%);
-                "
-              >
-                <div class="d-flex flex-column align-items-center">
-                  <div
-                    class="rounded-circle d-flex align-items-center justify-content-center text-white shadow"
-                    style="
-                      width: 52px;
-                      height: 52px;
-                      background: var(--primary);
-                      font-size: 1.3rem;
-                    "
-                  >
-                    <i class="bi bi-building"></i>
-                  </div>
-                  <div
-                    class="rounded-3 bg-white shadow mt-2 px-3 py-2 text-center"
-                    style="font-size: 0.75rem; min-width: 140px"
-                  >
-                    <div class="fw-500">OmniStay Hotel</div>
-                    <div class="text-muted" style="font-size: 0.7rem">
-                      12 Lê Lợi, Quận 1
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div class="rounded-4 overflow-hidden shadow-sm" style="height: 380px">
+              <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3928.793339178906!2d105.785025!3d10.033908!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31a062a046c82737%3A0xc07c3c2603db02!2zQuG6v24gTmluaCBLaeG7gXU!5e0!3m2!1svi!2s!4v1715312345678!5m2!1svi!2s" 
+                width="100%" 
+                height="100%" 
+                style="border:0;" 
+                allowfullscreen="" 
+                loading="lazy" 
+                referrerpolicy="no-referrer-when-downgrade">
+              </iframe>
             </div>
           </div>
           <div class="col-lg-5">
@@ -1727,237 +1554,40 @@ if(conn != null){
       </div>
     </section>
 
-    <!-- ═══ REVIEWS ═══ -->
-    <section id="reviews" class="py-5">
-      <div class="container py-4">
-        <div class="text-center mb-5">
-          <p class="section-tag">Khách hàng nói gì</p>
-          <h2
-            class="font-display fw-normal mt-1"
-            style="font-size: clamp(1.8rem, 3vw, 2.8rem)"
-          >
-            Đánh giá thực tế
-          </h2>
-          <div class="divider mx-auto mt-2"></div>
-        </div>
-        <div class="row g-4">
-          <%
-            if(conn != null){
-              try {
-                String reviewSql = "SELECT r.*, g.full_name FROM reviews r JOIN guests g ON r.guest_id = g.id WHERE r.status = 1 ORDER BY r.created_at DESC LIMIT 3";
-                PreparedStatement psReview = conn.prepareStatement(reviewSql);
-                ResultSet rsReview = psReview.executeQuery();
-                
-                String[] avatars = {"NT", "TM", "PH", "LK", "HA"};
-                String[] bgColors = {"var(--primary)", "var(--accent)", "#6c757d", "#1a6b5a", "#d4a847"};
-                int revIdx = 0;
-                
-                boolean hasDbReviews = false;
-                while(rsReview.next()){
-                  hasDbReviews = true;
-                  String guestName = rsReview.getString("full_name");
-                  String comment = rsReview.getString("comment");
-                  int rating = rsReview.getInt("rating");
-                  Timestamp createdAt = rsReview.getTimestamp("created_at");
-                  String initial = guestName.substring(0, 1).toUpperCase() + (guestName.contains(" ") ? guestName.split(" ")[guestName.split(" ").length-1].substring(0,1).toUpperCase() : "");
-                  
-                  // Simple platform tags for variety
-                  String[] platforms = {"Booking.com", "TripAdvisor", "Google", "Agoda"};
-                  String platform = platforms[revIdx % platforms.length];
-          %>
-          <div class="col-md-4">
-            <div class="review-card bg-white rounded-4 p-4 shadow-sm h-100">
-              <div class="d-flex align-items-center gap-2 mb-3">
-                <span class="star">
-                  <% for(int i=0; i<5; i++) { %>
-                    <%= (i < rating) ? "★" : "☆" %>
-                  <% } %>
-                </span>
-                <span
-                  class="badge rounded-pill"
-                  style="
-                    background: rgba(26, 107, 90, 0.08);
-                    color: var(--primary);
-                    font-size: 0.62rem;
-                  "
-                  ><%= platform %></span
-                >
-              </div>
-              <p
-                class="mb-3"
-                style="font-size: 0.88rem; line-height: 1.75; color: #444"
-              >
-                "<%= comment %>"
-              </p>
-              <div class="d-flex align-items-center gap-3">
-                <div
-                  class="rounded-circle d-flex align-items-center justify-content-center text-white fw-500"
-                  style="
-                    width: 40px;
-                    height: 40px;
-                    background: <%= bgColors[revIdx % bgColors.length] %>;
-                    font-size: 0.85rem;
-                    flex-shrink: 0;
-                  "
-                >
-                  <%= initial %>
-                </div>
-                <div>
-                  <div class="fw-500" style="font-size: 0.85rem">
-                    <%= guestName %>
-                  </div>
-                  <div class="text-muted" style="font-size: 0.75rem">
-                    Đã ở · <%= new java.text.SimpleDateFormat("MM/yyyy").format(createdAt) %>
-                  </div>
-                </div>
-              </div>
-            </div>
+    <!-- ═══ AI CONCIERGE ═══ -->
+    <section id="ai-concierge" class="text-white position-relative py-5" style="background: linear-gradient(135deg, var(--primary-dark), var(--primary)); overflow: hidden;">
+      <div style="position: absolute; top: -50%; left: -10%; width: 500px; height: 500px; background: radial-gradient(circle, rgba(212,168,71,0.15) 0%, transparent 70%);"></div>
+      <div style="position: absolute; bottom: -50%; right: -10%; width: 600px; height: 600px; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);"></div>
+      
+      <div class="container py-5 position-relative z-1">
+        <div class="row align-items-center g-5">
+          <div class="col-lg-6 text-center text-lg-start">
+            <span class="badge rounded-pill mb-3 px-3 py-2" style="background: rgba(212,168,71,0.2); color: var(--accent); border: 1px solid rgba(212,168,71,0.4); font-size: 0.75rem; letter-spacing: 1px;">CÔNG NGHỆ ĐỘT PHÁ</span>
+            <h2 class="font-display fw-normal mb-4" style="font-size: clamp(2rem, 4vw, 3.2rem)">
+              Trợ lý ảo <em style="color: var(--accent)">OmniAI</em>
+            </h2>
+            <p class="mb-4 text-white-50" style="font-size: 1rem; line-height: 1.8; max-width: 500px; margin: 0 auto; margin-lg-0: 0;">
+              Lần đầu tiên tại Việt Nam, trải nghiệm dịch vụ chăm sóc khách hàng 24/7 thông qua bộ não nhân tạo tiên tiến, tích hợp trực tiếp trên nền tảng khách sạn.
+            </p>
+            <ul class="list-unstyled text-start d-inline-block mx-auto mx-lg-0 mb-4" style="font-size: 0.9rem">
+              <li class="mb-3 d-flex align-items-center"><i class="bi bi-lightning-charge-fill text-warning me-3 fs-5"></i> Giải đáp thông tin khách sạn lập tức</li>
+              <li class="mb-3 d-flex align-items-center"><i class="bi bi-clock-history text-warning me-3 fs-5"></i> Trực tuyến hỗ trợ suốt ngày đêm</li>
+              <li class="mb-0 d-flex align-items-center"><i class="bi bi-globe text-warning me-3 fs-5"></i> Giao tiếp thông minh như một lễ tân thực thụ</li>
+            </ul>
+            <br>
+            <button onclick="OmniChat.toggle()" class="btn btn-outline-light rounded-pill px-5 py-3 mt-2 fw-bold" style="border-width: 2px;">
+              Trò chuyện ngay <i class="bi bi-robot ms-2"></i>
+            </button>
           </div>
-          <%
-                  revIdx++;
-                }
-                rsReview.close();
-                psReview.close();
-                
-                if(!hasDbReviews) {
-                  // Fallback to static if no reviews in DB (though we saw some in SQL)
-                  out.println("<div class='col-12 text-center py-4'><p class='text-muted'>Đang cập nhật những đánh giá mới nhất...</p></div>");
-                }
-              } catch(Exception e) {
-                out.println("<div class='col-12 text-center text-danger'>Lỗi tải đánh giá: " + e.getMessage() + "</div>");
-              }
-            }
-          %>
-        </div>
-        <!-- Rating breakdown -->
-        <div class="row justify-content-center mt-5">
-          <div class="col-lg-8">
-            <div class="bg-white rounded-4 p-4 shadow-sm">
-              <div class="row align-items-center g-4">
-                <div
-                  class="col-md-3 text-center"
-                  style="border-right: 1px solid var(--border)"
-                >
-                  <div
-                    class="font-display"
-                    style="
-                      font-size: 3.5rem;
-                      color: var(--primary);
-                      line-height: 1;
-                    "
-                  >
-                    4.9
-                  </div>
-                  <div class="star fs-5 mb-1">★★★★★</div>
-                  <div class="text-muted" style="font-size: 0.72rem">
-                    2.400+ đánh giá
-                  </div>
-                </div>
-                <div class="col-md-9">
-                  <div class="row g-2">
-                    <div class="col-12 d-flex align-items-center gap-3">
-                      <span style="font-size: 0.78rem; min-width: 80px"
-                        >Dịch vụ</span
-                      >
-                      <div class="progress flex-grow-1" style="height: 6px">
-                        <div
-                          class="progress-bar"
-                          style="width: 98%; background: var(--primary)"
-                        ></div>
-                      </div>
-                      <span
-                        style="
-                          font-size: 0.78rem;
-                          color: var(--primary);
-                          min-width: 26px;
-                        "
-                        >4.9</span
-                      >
-                    </div>
-                    <div class="col-12 d-flex align-items-center gap-3">
-                      <span style="font-size: 0.78rem; min-width: 80px"
-                        >Phòng nghỉ</span
-                      >
-                      <div class="progress flex-grow-1" style="height: 6px">
-                        <div
-                          class="progress-bar"
-                          style="width: 96%; background: var(--primary)"
-                        ></div>
-                      </div>
-                      <span
-                        style="
-                          font-size: 0.78rem;
-                          color: var(--primary);
-                          min-width: 26px;
-                        "
-                        >4.8</span
-                      >
-                    </div>
-                    <div class="col-12 d-flex align-items-center gap-3">
-                      <span style="font-size: 0.78rem; min-width: 80px"
-                        >Vị trí</span
-                      >
-                      <div class="progress flex-grow-1" style="height: 6px">
-                        <div
-                          class="progress-bar"
-                          style="width: 100%; background: var(--primary)"
-                        ></div>
-                      </div>
-                      <span
-                        style="
-                          font-size: 0.78rem;
-                          color: var(--primary);
-                          min-width: 26px;
-                        "
-                        >5.0</span
-                      >
-                    </div>
-                    <div class="col-12 d-flex align-items-center gap-3">
-                      <span style="font-size: 0.78rem; min-width: 80px"
-                        >Ẩm thực</span
-                      >
-                      <div class="progress flex-grow-1" style="height: 6px">
-                        <div
-                          class="progress-bar"
-                          style="width: 94%; background: var(--primary)"
-                        ></div>
-                      </div>
-                      <span
-                        style="
-                          font-size: 0.78rem;
-                          color: var(--primary);
-                          min-width: 26px;
-                        "
-                        >4.7</span
-                      >
-                    </div>
-                    <div class="col-12 d-flex align-items-center gap-3">
-                      <span style="font-size: 0.78rem; min-width: 80px"
-                        >Sạch sẽ</span
-                      >
-                      <div class="progress flex-grow-1" style="height: 6px">
-                        <div
-                          class="progress-bar"
-                          style="width: 98%; background: var(--primary)"
-                        ></div>
-                      </div>
-                      <span
-                        style="
-                          font-size: 0.78rem;
-                          color: var(--primary);
-                          min-width: 26px;
-                        "
-                        >4.9</span
-                      >
-                    </div>
-                  </div>
-                  <div class="mt-3 text-muted" style="font-size: 0.75rem">
-                    <i
-                      class="bi bi-patch-check-fill me-1"
-                      style="color: var(--accent)"
-                    ></i>
-                    Tổng hợp từ Google · Booking.com · TripAdvisor · Agoda
-                  </div>
+          <div class="col-lg-6 position-relative">
+            <div class="mx-auto" style="max-width: 350px; position: relative;">
+              <div class="position-absolute" style="top: 10%; right: -10%; width: 100px; height: 100px; background: rgba(212,168,71,0.3); filter: blur(20px); border-radius: 50%;"></div>
+              <img src="<%=request.getContextPath()%>/images/hero/hotel-room-hero.jpg" class="w-100 rounded-4 shadow-lg" style="border: 2px solid rgba(255,255,255,0.2);" alt="AI Concierge">
+              <div class="position-absolute bg-white rounded-4 shadow-lg p-3 d-flex align-items-start gap-3" style="bottom: -20px; left: -40px; width: 280px; animation: float 4s ease-in-out infinite;">
+                <div class="rounded-circle text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px; background: var(--primary)"><i class="bi bi-stars"></i></div>
+                <div>
+                  <div class="text-dark fw-bold mb-1" style="font-size: 0.8rem;">OmniAI</div>
+                  <div class="text-muted" style="font-size: 0.75rem; line-height: 1.4;">Xin chào! Tôi có thể giúp gì cho kỳ nghỉ của bạn tại OmniStay?</div>
                 </div>
               </div>
             </div>
@@ -1965,6 +1595,7 @@ if(conn != null){
         </div>
       </div>
     </section>
+
 
     <!-- ═══ FAQ ═══ -->
     <section style="padding: 5rem 0; background: var(--light-bg)">
@@ -2145,7 +1776,7 @@ if(conn != null){
           135deg,
           rgba(19, 79, 67, 0.92),
           rgba(26, 107, 90, 0.88)
-        ), url('https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=1400&q=80') center/cover no-repeat;
+        ), url('<%=request.getContextPath()%>/images/rooms/room-deluxe.jpg') center/cover no-repeat;
         background-attachment: fixed;
       "
     >

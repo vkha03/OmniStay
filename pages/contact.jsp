@@ -142,6 +142,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liên Hệ & Hỗ Trợ Khách Hàng — OmniStay</title>
+    <link rel="icon" type="image/png" href="<%=request.getContextPath()%>/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -183,7 +184,7 @@
                 rgba(10, 40, 33, 0.90) 0%,
                 rgba(20, 85, 70, 0.78) 50%,
                 rgba(30, 110, 90, 0.70) 100%
-            ), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&q=80') center/cover no-repeat;
+            ), url('<%=request.getContextPath()%>/images/hero/hotel-aerial.jpg') center/cover no-repeat;
             background-attachment: fixed;
             padding: 160px 0 120px 0;
             border-bottom: 5px solid var(--accent);
@@ -478,7 +479,7 @@
                             <div class="p-4 bg-primary-theme text-white rounded-4 text-center">
                                 <h5 class="font-display text-accent mb-2">Trợ lý ảo OmniAI</h5>
                                 <p class="small opacity-75 mb-3">Trao đổi trực tiếp với AI để nhận câu trả lời ngay lập tức.</p>
-                                <button class="btn btn-outline-light rounded-pill btn-sm px-4" onclick="toggleOmniChat()">Bắt đầu Chat <i class="bi bi-chat-dots ms-1"></i></button>
+                                <button class="btn btn-outline-light rounded-pill btn-sm px-4" onclick="OmniChat.toggle()">Bắt đầu Chat <i class="bi bi-chat-dots ms-1"></i></button>
                             </div>
                         </div>
                     </div>

@@ -5,10 +5,58 @@
 <%
     Connection conn = null;
     String dbError = null;
-    try{
+    try {
         Class.forName("com.mysql.cj.jdbc.Driver");
         conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
-    }catch(Exception e){
+        
+        // --- XỬ LÝ POST ACTION (ADD / EDIT / DELETE) ---
+        if("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("action") != null) {
+            String action = request.getParameter("action");
+            if(action.equals("addRoom")) {
+                int room_NB = Integer.parseInt(request.getParameter("room_NB"));
+                String status = request.getParameter("status");
+                String room_type = request.getParameter("room_type_id");
+                
+                String addSQL = "INSERT INTO rooms (room_number, status, room_type_id) VALUES (?,?,?)";
+                PreparedStatement psADD = conn.prepareStatement(addSQL);
+                psADD.setInt(1, room_NB);
+                psADD.setString(2, status);
+                psADD.setInt(3, Integer.parseInt(room_type));
+                psADD.executeUpdate();
+                psADD.close();
+                session.setAttribute("thongBao", "Thêm phòng mới thành công!");
+                response.sendRedirect("admin-rooms.jsp");
+                return;
+            } else if(action.equals("editRoom")) {
+                String ID = request.getParameter("id"); 
+                int roomNB = Integer.parseInt(request.getParameter("room_NB"));
+                String status = request.getParameter("status");
+                String roomType = request.getParameter("room_type_id"); 
+                
+                String sql = "UPDATE rooms SET room_number = ?, status = ?, room_type_id = ? WHERE id = ?";
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setInt(1, roomNB);
+                ps.setString(2, status);
+                ps.setInt(3, Integer.parseInt(roomType)); 
+                ps.setString(4, ID); 
+                ps.executeUpdate();
+                ps.close();    
+                session.setAttribute("thongBao", "Cập nhật phòng thành công!");
+                response.sendRedirect("admin-rooms.jsp");
+                return; 
+            } else if(action.equals("deleteRoom")) {
+                String ID = request.getParameter("id");
+                String sql = "DELETE FROM rooms WHERE id = ?";
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setString(1, ID);
+                ps.executeUpdate();
+                ps.close();
+                session.setAttribute("thongBao", "Đã xóa phòng khỏi hệ thống!");
+                response.sendRedirect("admin-rooms.jsp");
+                return;
+            }
+        }
+    } catch(Exception e) {
         dbError = e.getMessage();
     }
     NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
@@ -30,138 +78,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Phòng — OmniStay Admin</title>
+    <link rel="icon" type="image/png" href="<%=request.getContextPath()%>/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-    
-    <style>
-        :root {
-            --primary: #1a6b5a;
-            --primary-dark: #124a3e;
-            --accent: #d4a847;
-            --bg-light: #f5f8f7;
-            --border: #e8e2d9;
-            --text-main: #2c3e50;
-        }
-        body { font-family: 'Outfit', sans-serif; background-color: var(--bg-light); color: var(--text-main); overflow-x: hidden; }
-        .font-display { font-family: "Playfair Display", serif; }
-        
-        /* ─── SIDEBAR ─── */
-        .sidebar { width: 260px; background: var(--primary-dark); min-height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; padding-top: 1.5rem; box-shadow: 4px 0 20px rgba(0,0,0,0.05); }
-        .sidebar .brand { padding: 0 1.5rem 2rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 1rem; }
-        .sidebar .brand a { font-size: 1.6rem; letter-spacing: 1px; }
-        .sidebar .brand span { color: var(--accent); font-weight: 600; }
-        .nav-sidebar .nav-link { color: rgba(255,255,255,0.7); padding: 0.8rem 1.5rem; margin: 0.2rem 1rem; border-radius: 8px; transition: all 0.3s; display: flex; align-items: center; font-weight: 400; }
-        .nav-sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
-        .nav-sidebar .nav-link:hover, .nav-sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,0.1); }
-        .nav-sidebar .nav-link.active { background: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
-        /* ─── MAIN CONTENT ─── */
-        .main-content { margin-left: 260px; padding: 2rem; }
-        
-        /* ─── TABLE CHUNG ─── */
-        .table-custom { background: #fff; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); overflow: hidden; padding: 1.5rem; }
-        .table-custom th { background-color: #f8f9fa; color: #6c757d; font-weight: 500; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; padding: 1rem 1.5rem; border-bottom: 2px solid #edf2f9; }
-        .table-custom td { padding: 1.2rem 1.5rem; vertical-align: middle; color: #495057; font-size: 0.9rem; border-bottom: 1px solid #edf2f9; }
-        .table-custom tbody tr:hover { background-color: #f8f9fa; }
-        .table-custom tr:last-child td { border-bottom: none; }
-        .action-btn { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: 0.2s; }
-        .action-btn:hover { background: var(--bg-light); }
-        
-        /* ─── DATATABLES CSS ĐỘC QUYỀN (BO TRÒN & SANG TRỌNG) ─── */
-        .dataTables_wrapper .row { align-items: center; margin-bottom: 1rem; }
-        
-        /* Ô Tìm kiếm */
-        div.dataTables_filter { text-align: right; margin-bottom: 1.5rem; }
-        div.dataTables_filter label { font-weight: 500; color: var(--text-main); font-size: 0.9rem; }
-        div.dataTables_filter input { 
-            border: 1px solid var(--border); 
-            border-radius: 50px; /* Bo tròn như viên thuốc */
-            padding: 0.4rem 1.2rem; 
-            margin-left: 0.8rem;
-            outline: none; 
-            transition: 0.3s;
-            background-color: var(--bg-light);
-        }
-        div.dataTables_filter input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(26, 107, 90, 0.1); background-color: #fff; }
-
-        /* Nút Phân trang */
-        .dataTables_wrapper .pagination { margin-top: 1rem; gap: 0.4rem; justify-content: flex-end; }
-        .dataTables_wrapper .pagination .page-item .page-link {
-            border: none;
-            background: transparent;
-            color: var(--text-main);
-            border-radius: 50%; /* Nút hình tròn */
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .dataTables_wrapper .pagination .page-item.active .page-link {
-            background-color: var(--primary) !important;
-            color: white !important;
-            box-shadow: 0 4px 10px rgba(26, 107, 90, 0.3);
-        }
-        .dataTables_wrapper .pagination .page-item:not(.active):not(.disabled) .page-link:hover {
-            background-color: rgba(26, 107, 90, 0.1);
-            color: var(--primary);
-            transform: translateY(-2px);
-        }
-        .dataTables_wrapper .pagination .page-item.disabled .page-link { opacity: 0.4; }
-        
-        /* Nút Previous/Next dạng viên thuốc */
-        .dataTables_wrapper .pagination .page-item.previous .page-link,
-        .dataTables_wrapper .pagination .page-item.next .page-link {
-            width: auto;
-            border-radius: 50px;
-            padding: 0 1.2rem;
-            font-size: 0.85rem;
-        }
-    </style>
+    <link rel="stylesheet" href="admin-theme.css">
 </head>
 <body>
     <%@ include file="../layouts/sidebar-admin.jsp" %>
     <main class="main-content">
         
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h2 class="font-display fw-normal mb-1">Danh sách Phòng nghỉ</h2>
-                <p class="text-muted mb-0" style="font-size: 0.9rem;">Quản lý thông tin, giá cả và trạng thái của toàn bộ hệ thống phòng.</p>
+        <div class="page-header">
+            <div class="d-flex align-items-center">
+                <div class="page-title-icon"><i class="bi bi-door-open"></i></div>
+                <div>
+                    <h2 class="font-display fw-normal mb-1">Danh sách Phòng nghỉ</h2>
+                    <p class="text-muted mb-0">Quản lý thông tin, giá cả và trạng thái của toàn bộ hệ thống phòng.</p>
+                </div>
             </div>
             <% if ("ADMIN".equals(adminRole)) { %>
-            <div class="d-flex align-items-center gap-3">
-                <a href="admin-room-add.jsp" class="btn text-white fw-500 rounded-pill px-4" style="background: var(--primary); font-size: 0.85rem;">
-                    <i class="bi bi-plus-lg me-1"></i> Thêm phòng mới
-                </a>
-            </div>
+            <button class="btn btn-primary-gradient rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addRoomModal">
+                <i class="bi bi-plus-lg me-1"></i> Thêm phòng mới
+            </button>
             <% } %>
-        </div>	
+        </div>
 
         <%
             String loaiphong = request.getParameter("loaiphong");
             String trangthai = request.getParameter("trangthai");
         %>
 
-        <form action="admin-rooms.jsp" method="GET" class="bg-white p-3 rounded-4 border mb-4 d-flex justify-content-end align-items-center" style="border-color: var(--border) !important;">
+        <form action="admin-rooms.jsp" method="GET" class="filter-bar d-flex justify-content-end align-items-center">
             <div class="d-flex gap-2">
-                <select name="loaiphong" class="form-select border-0 bg-light rounded-3" style="font-size: 0.85rem; width: 160px;">
+                <select name="loaiphong" class="form-select" style="width: 160px;">
                     <option value="" <%= (loaiphong == null || loaiphong.isEmpty()) ? "selected" : "" %> >Tất cả loại phòng</option>
                     <option value="Standard" <%= "Standard".equals(loaiphong) ? "selected" : "" %>>Tiêu chuẩn</option>
                     <option value="Deluxe" <%= "Deluxe".equals(loaiphong) ? "selected" : "" %>>Sang trọng</option>
                     <option value="Premium" <%= "Premium".equals(loaiphong) ? "selected" : "" %>>Cao cấp</option>
                 </select>
-                <select name="trangthai" class="form-select border-0 bg-light rounded-3" style="font-size: 0.85rem; width: 150px;">
+                <select name="trangthai" class="form-select" style="width: 150px;">
                     <option value="" <%= (trangthai == null || trangthai.isEmpty()) ? "selected" : "" %>>Tất cả trạng thái</option>
                     <option value="AVAILABLE" <%= "AVAILABLE".equals(trangthai) ? "selected" : "" %>>Sẵn sàng</option>
                     <option value="OCCUPIED" <%= "OCCUPIED".equals(trangthai) ? "selected" : "" %>>Đang có khách</option>
                     <option value="CLEANING" <%= "CLEANING".equals(trangthai) ? "selected" : "" %>>Đang dọn dẹp</option>
                     <option value="MAINTENANCE" <%= "MAINTENANCE".equals(trangthai) ? "selected" : "" %>>Bảo trì</option>
                 </select>
-                <button type="submit" class="btn text-white px-4" style="background: var(--primary); border-radius: 8px;">Lọc</button>
+                <button type="submit" class="btn btn-primary-gradient px-4">Lọc</button>
             </div>
         </form>
 
@@ -169,7 +132,7 @@
             String msg = (String) session.getAttribute("thongBao");
             if (msg != null) {
         %>
-            <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert" style="border-radius: 12px; background-color: #d1e7dd; color: #0f5132;">
+            <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
                 <i class="bi bi-check-circle-fill me-2"></i> <strong>Thành công!</strong> <%= msg %>
                 <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -178,7 +141,59 @@
             }
         %>
 
-        <div class="table-custom">
+        <!-- Room Status Map -->
+        <div class="table-card mb-5">
+            <div class="d-flex justify-content-between align-items-center p-4 border-bottom flex-wrap gap-3">
+                <div>
+                    <h5 class="fw-bold mb-1 text-dark">Sơ đồ trạng thái phòng</h5>
+                    <p class="text-muted mb-0 small">Tổng quan tình trạng phòng nghỉ thời điểm hiện tại.</p>
+                </div>
+                <div class="d-flex gap-4 flex-wrap">
+                    <div class="legend-item"><span class="legend-dot" style="background: #bbf7d0;"></span> Sẵn sàng</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: #fecaca;"></span> Có khách</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: #fef3c7;"></span> Đang dọn</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: #e2e8f0;"></span> Bảo trì</div>
+                </div>
+            </div>
+            
+            <div class="room-grid">
+                <%
+                    if(conn != null) {
+                        try {
+                            String sqlRoomsMap = "SELECT r.*, rt.type_name FROM rooms r LEFT JOIN room_types rt ON r.room_type_id = rt.id ORDER BY r.room_number ASC";
+                            Statement stRoomsMap = conn.createStatement();
+                            ResultSet rsRoomsMap = stRoomsMap.executeQuery(sqlRoomsMap);
+                            
+                            while(rsRoomsMap.next()) {
+                                String rStatus = rsRoomsMap.getString("status");
+                                if (rStatus == null) rStatus = "AVAILABLE";
+                                rStatus = rStatus.trim().toUpperCase();
+                                
+                                String rClass = "status-available";
+                                if("OCCUPIED".equals(rStatus)) rClass = "status-occupied";
+                                else if("CLEANING".equals(rStatus)) rClass = "status-cleaning";
+                                else if("MAINTENANCE".equals(rStatus)) rClass = "status-maintenance";
+                                
+                                String tNameMap = rsRoomsMap.getString("type_name");
+                                if (tNameMap == null) tNameMap = "Chưa thiết lập";
+                                else tNameMap = translateType.apply(tNameMap);
+                %>
+                <a href="#roomTable" class="room-item">
+                    <div class="room-box <%= rClass %>">
+                        <div class="room-no"><%= rsRoomsMap.getString("room_number") %></div>
+                        <div class="room-type text-truncate w-100"><%= tNameMap %></div>
+                    </div>
+                </a>
+                <%
+                            }
+                            rsRoomsMap.close(); stRoomsMap.close();
+                        } catch(Exception e) { out.println("Lỗi tải sơ đồ phòng: " + e.getMessage()); }
+                    }
+                %>
+            </div>
+        </div>
+
+        <div class="table-custom" style="padding: 1.5rem;">
             <div class="table-responsive">
                 <table id="roomTable" class="table table-hover align-middle mb-0 w-100">
                     <thead>
@@ -197,7 +212,7 @@
                         <%
                         if(conn!=null){
                             try{	
-                                // 1. XỬ LÝ ĐỔI TRẠNG THÁI
+                                // 1. XỬ LÝ ĐỔI TRẠNG THÁI (Inline)
                                 String updateId = request.getParameter("updateId");
                                 String newStatus = request.getParameter("newStatus");
 
@@ -227,20 +242,21 @@
                                 	double price = rs.getDouble("base_price");
                                 	int people = rs.getInt("max_occupancy");
                                 	String typeName = rs.getString("type_name");
+                                    int typeId = rs.getInt("room_type_id");
                         %>
                         <tr>
                             <td class="text-center fw-500 text-muted"><%= roomsNB %></td> 
-                            <td><div class="fw-500 font-display" style="font-size: 1.1rem; color: var(--primary);"><%= translateType.apply(typeName) %></div></td>
+                            <td><div class="fw-500 font-display" style="font-size: 1.05rem; color: var(--primary);"><%= translateType.apply(typeName) %></div></td>
                             <td><span class="badge bg-light text-dark border fw-normal"><i class="bi bi-people me-1"></i><%= people %> Người lớn</span></td>
-                            <td class="font-display fw-600" style="color: var(--primary); font-size: 1.1rem;">
-                                <%= nf.format(price).replace("VNĐ", "₫") %> <span class="text-muted fw-normal" style="font-size: 0.75rem;">/ đêm</span>
+                            <td class="font-display fw-600" style="color: var(--primary); font-size: 1.05rem;">
+                                <%= nf.format(price).replace("VNĐ", "₫") %> <span class="text-muted fw-normal" style="font-size: 0.72rem;">/ đêm</span>
                             </td>
                           	<td>
                                 <form action="admin-rooms.jsp" method="GET" style="margin: 0;">
                                     <input type="hidden" name="updateId" value="<%= id %>">
                                     <input type="hidden" name="loaiphong" value="<%= loaiphong != null ? loaiphong : "" %>">
                                     <input type="hidden" name="trangthai" value="<%= trangthai != null ? trangthai : "" %>">
-                                    <select name="newStatus" class="form-select form-select-sm shadow-none" onchange="this.form.submit()" style="border-radius: 8px; width: 140px; cursor: pointer; border-color: var(--border);">
+                                    <select name="newStatus" class="form-select form-select-sm shadow-none" onchange="this.form.submit()" style="width: 140px; cursor: pointer;">
                                         <option value="AVAILABLE" <%= "AVAILABLE".equals(status) ? "selected" : "" %>>Sẵn sàng</option>
                                         <option value="OCCUPIED" <%= "OCCUPIED".equals(status) ? "selected" : "" %>>Đang có khách</option>
                                         <option value="CLEANING" <%= "CLEANING".equals(status) ? "selected" : "" %>>Đang dọn dẹp</option>
@@ -248,11 +264,14 @@
                                     </select>
                                 </form>
                             </td>
-                            </td>
                             <% if ("ADMIN".equals(adminRole)) { %>
                             <td class="text-end">
-                                <a href="admin-room-edit.jsp?id=<%=id %>" class="action-btn text-primary" title="Chỉnh sửa"><i class="bi bi-pencil-square"></i></a>
-                                <a href="admin-room-delete.jsp?id=<%=id %>" onclick="return confirm('Bạn có chắc muốn xóa phòng này?')" class="action-btn text-danger" title="Xóa"><i class="bi bi-trash3"></i></a>
+                                <a onclick="openEditModal(<%= id %>, <%= roomsNB %>, <%= typeId %>, '<%= status %>')" class="action-btn" title="Chỉnh sửa"><i class="bi bi-pencil-square text-primary"></i></a>
+                                <form action="admin-rooms.jsp" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn xóa phòng này?')">
+                                    <input type="hidden" name="action" value="deleteRoom">
+                                    <input type="hidden" name="id" value="<%= id %>">
+                                    <button type="submit" class="action-btn" style="border:none; background:none;"><i class="bi bi-trash3 text-danger"></i></button>
+                                </form>
                             </td>
                             <% } %>
                         </tr>
@@ -268,20 +287,175 @@
         </div>
     </main>
 
+    <!-- Modal Thêm Phòng -->
+    <div class="modal fade" id="addRoomModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-display fw-bold" style="color: var(--primary);">Thêm phòng mới</h5>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="admin-rooms.jsp" method="POST">
+                    <input type="hidden" name="action" value="addRoom">
+                    <div class="modal-body p-4">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-600 text-muted small text-uppercase">Số phòng mới</label>
+                                <input type="text" name="room_NB" class="form-control" placeholder="Ví dụ: 401" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-600 text-muted small text-uppercase">Trạng thái ban đầu</label>
+                                <select name="status" class="form-select">
+                                    <option value="AVAILABLE">Sẵn sàng</option>
+                                    <option value="OCCUPIED">Đang có khách</option>
+                                    <option value="MAINTENANCE">Bảo trì</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-600 text-muted small text-uppercase">Loại phòng</label>
+                            <select name="room_type_id" id="add_roomType" class="form-select" onchange="doiLoaiPhongAdd()" required>
+                                <option value="1">Tiêu chuẩn (Standard)</option>
+                                <option value="2">Sang trọng (Deluxe)</option>
+                                <option value="3">Cao cấp (Premium)</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-5">
+                                <label class="form-label fw-600 text-muted small text-uppercase">Sức chứa</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-people"></i></span>
+                                    <input type="text" id="add_oNguoi" class="form-control bg-light" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label fw-600 text-muted small text-uppercase">Giá niêm yết mặc định</label>
+                                <div class="input-group">
+                                    <input type="text" id="add_oGia" class="form-control bg-light text-primary fw-bold" readonly>
+                                    <span class="input-group-text bg-light">VNĐ / đêm</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary-gradient rounded-pill px-4">Tạo phòng ngay</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Sửa Phòng -->
+    <div class="modal fade" id="editRoomModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-display fw-bold" style="color: var(--primary);">Chỉnh sửa Phòng</h5>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="admin-rooms.jsp" method="POST">
+                    <input type="hidden" name="action" value="editRoom">
+                    <input type="hidden" name="id" id="editRoomId">
+                    <div class="modal-body p-4">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-600 text-muted small text-uppercase">Số phòng</label>
+                                <input type="text" name="room_NB" id="editRoomNB" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-600 text-muted small text-uppercase">Trạng thái</label>
+                                <select name="status" id="editStatus" class="form-select">
+                                    <option value="AVAILABLE">Sẵn sàng</option>
+                                    <option value="OCCUPIED">Đang có khách</option>
+                                    <option value="MAINTENANCE">Bảo trì</option>
+                                    <option value="CLEANING">Đang dọn dẹp</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-600 text-muted small text-uppercase">Loại phòng</label>
+                            <select name="room_type_id" id="edit_roomType" class="form-select" onchange="doiLoaiPhongEdit()" required>
+                                <option value="1">Tiêu chuẩn (Standard)</option>
+                                <option value="2">Sang trọng (Deluxe)</option>
+                                <option value="3">Cao cấp (Premium)</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-5">
+                                <label class="form-label fw-600 text-muted small text-uppercase">Sức chứa</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-people"></i></span>
+                                    <input type="text" id="edit_oNguoi" class="form-control bg-light" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label fw-600 text-muted small text-uppercase">Giá niêm yết</label>
+                                <div class="input-group">
+                                    <input type="text" id="edit_oGia" class="form-control bg-light text-primary fw-bold" readonly>
+                                    <span class="input-group-text bg-light">VNĐ / đêm</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary-gradient rounded-pill px-4">Lưu thay đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
     <script>
-        $(document).ready(function() { // khi web đã load xong thì sẽ chạy js
+        const dataLoaiPhong = {
+            "1": { nguoi: "2", gia: 950000 },
+            "2": { nguoi: "2", gia: 1600000 },
+            "3": { nguoi: "3", gia: 3200000 }
+        };
+
+        function doiLoaiPhongAdd() {
+            let maLoai = document.getElementById("add_roomType").value;
+            let thongTin = dataLoaiPhong[maLoai];
+            if(thongTin) {
+                document.getElementById("add_oNguoi").value = thongTin.nguoi;
+                document.getElementById("add_oGia").value = new Intl.NumberFormat('vi-VN').format(thongTin.gia);
+            }
+        }
+
+        function doiLoaiPhongEdit() {
+            let maLoai = document.getElementById("edit_roomType").value;
+            let thongTin = dataLoaiPhong[maLoai];
+            if(thongTin) {
+                document.getElementById("edit_oNguoi").value = thongTin.nguoi;
+                document.getElementById("edit_oGia").value = new Intl.NumberFormat('vi-VN').format(thongTin.gia);
+            }
+        }
+
+        function openEditModal(id, number, typeId, status) {
+            document.getElementById('editRoomId').value = id;
+            document.getElementById('editRoomNB').value = number;
+            document.getElementById('edit_roomType').value = typeId;
+            document.getElementById('editStatus').value = status;
+            doiLoaiPhongEdit();
+            var editModal = new bootstrap.Modal(document.getElementById('editRoomModal'));
+            editModal.show();
+        }
+
+        $(document).ready(function() {
+            doiLoaiPhongAdd(); // Khởi tạo giá trị mặc định cho Modal Add
+
             $('#roomTable').DataTable({
-                "pageLength": 10,        // giới hạn 10 bảng      
-                "lengthChange": false,   // Ẩn nút chọn hiển thị 10/25/50 dòng
-                "ordering": false,       // Tắt chức năng tự sắp xếp của Datatables (vì DB đã tự ORDER BY room_number rồi) 
-             	"searching": false,       // ẩn tìm kiếm
+                "pageLength": 10,
+                "lengthChange": false,
+                "ordering": false,
+                "searching": false,
                 "language": {
-                    // DỊCH TRỰC TIẾP TẠI ĐÂY (KHÔNG CẦN TẢI FILE NỮA ĐỂ TRÁNH LỖI MẠNG)
                     "processing": "Đang xử lý...",
                     "lengthMenu": "Hiển thị _MENU_ mục",
                     "zeroRecords": "Không tìm thấy phòng nào phù hợp",

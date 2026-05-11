@@ -40,62 +40,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Đánh giá — OmniStay Admin</title>
+    <link rel="icon" type="image/png" href="<%=request.getContextPath()%>/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-    
-    <style>
-        :root {
-            --primary: #1a6b5a;
-            --primary-dark: #124a3e;
-            --accent: #d4a847;
-            --bg-light: #f5f8f7;
-            --border: #e8e2d9;
-            --text-main: #2c3e50;
-        }
-        body { font-family: 'Outfit', sans-serif; background-color: var(--bg-light); color: var(--text-main); overflow-x: hidden; margin: 0; }
-        .font-display { font-family: "Playfair Display", serif; }
-        
-        .sidebar { width: 260px; background: var(--primary-dark); min-height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; padding-top: 1.5rem; box-shadow: 4px 0 20px rgba(0,0,0,0.05); }
-        .sidebar .brand { padding: 0 1.5rem 2rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 1rem; }
-        .sidebar .brand a { font-size: 1.6rem; letter-spacing: 1px; color: #fff !important; text-decoration: none; }
-        .sidebar .brand span { color: var(--accent); font-weight: 600; }
-        
-        .nav-sidebar .nav-link { color: rgba(255,255,255,0.7) !important; padding: 0.8rem 1.5rem; margin: 0.2rem 1rem; border-radius: 8px; transition: all 0.3s; display: flex; align-items: center; font-weight: 400; text-decoration: none; }
-        .nav-sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
-        .nav-sidebar .nav-link:hover, .nav-sidebar .nav-link.active { color: #fff !important; background: rgba(255,255,255,0.1); }
-        .nav-sidebar .nav-link.active { background: var(--primary) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
-        .main-content { margin-left: 260px; padding: 2rem; min-height: 100vh; }
-        .table-custom { background: #fff; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); overflow: hidden; padding: 1.5rem; }
-        .table-custom th { background-color: #f8f9fa; color: #6c757d; font-weight: 500; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; padding: 1rem 1.5rem; border-bottom: 2px solid #edf2f9; }
-        .table-custom td { padding: 1.2rem 1.5rem; vertical-align: middle; color: #495057; font-size: 0.9rem; border-bottom: 1px solid #edf2f9; }
-        
-        .star-rating { color: #ffc107; font-size: 0.85rem; }
-        .action-btn { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: 0.2s; color: #666; text-decoration: none; border: 1px solid transparent; cursor: pointer; }
-        .action-btn:hover { background: var(--bg-light); color: var(--primary); border-color: var(--border); }
-        
-        .badge-visible { background: rgba(26, 107, 90, 0.1); color: var(--primary); }
-        .badge-hidden { background: #f8f9fa; color: #6c757d; border: 1px solid #eee; }
-    </style>
+    <link rel="stylesheet" href="admin-theme.css">
 </head>
 <body>
     <%@ include file="../layouts/sidebar-admin.jsp" %>
     
     <main class="main-content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h2 class="font-display fw-normal mb-1">Đánh giá khách hàng</h2>
-                <p class="text-muted mb-0" style="font-size: 0.9rem;">Xem và kiểm duyệt các phản hồi từ khách hàng.</p>
+        <div class="page-header">
+            <div class="d-flex align-items-center">
+                <div class="page-title-icon"><i class="bi bi-star"></i></div>
+                <div>
+                    <h2 class="font-display fw-normal mb-1">Đánh giá khách hàng</h2>
+                    <p class="text-muted mb-0">Xem và kiểm duyệt các phản hồi từ khách hàng sau khi lưu trú.</p>
+                </div>
             </div>
-            <button class="btn btn-outline-secondary rounded-pill px-4" style="font-size: 0.85rem;" onclick="location.reload()">
+            <button class="btn btn-outline-secondary rounded-pill px-4" onclick="location.reload()">
                 <i class="bi bi-arrow-clockwise me-1"></i> Làm mới
             </button>
         </div>
 
         <% if (thongBao != null) { %>
-            <div class="alert alert-success alert-dismissible fade show border-0 mb-4 shadow-sm" style="border-radius: 12px;">
+            <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4">
                 <i class="bi bi-check-circle-fill me-2"></i> <%= thongBao %>
                 <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert"></button>
             </div>
@@ -106,16 +76,16 @@
         %>
 
         <!-- Filter Bar -->
-        <form action="admin-reviews.jsp" method="GET" class="bg-white p-3 rounded-4 border mb-4 shadow-sm" style="border-color: var(--border) !important;">
+        <form action="admin-reviews.jsp" method="GET" class="filter-bar">
             <div class="row g-3 align-items-center">
                 <div class="col-md-8">
                     <div class="input-group">
-                        <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
-                        <input type="text" name="reviewSearch" class="form-control border-0 bg-light" placeholder="Tìm theo tên khách hoặc nội dung đánh giá..." value="<%= (reviewSearch != null) ? reviewSearch : "" %>">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="reviewSearch" class="form-control" placeholder="Tìm theo tên khách hoặc nội dung đánh giá..." value="<%= (reviewSearch != null) ? reviewSearch : "" %>">
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <button type="submit" class="btn text-white w-100" style="background: var(--primary); border-radius: 10px;">Tìm kiếm</button>
+                    <button type="submit" class="btn btn-primary-gradient w-100">Tìm kiếm</button>
                 </div>
                 <div class="col-md-2 text-end">
                     <a href="admin-reviews.jsp" class="btn btn-light w-100 border rounded-pill text-muted small">Xóa lọc</a>
@@ -123,9 +93,9 @@
             </div>
         </form>
 
-        <div class="table-custom">
+        <div class="table-custom p-4">
             <div class="table-responsive">
-                <table id="reviewTable" class="table table-hover align-middle mb-0">
+                <table id="reviewTable" class="table table-hover align-middle mb-0 w-100">
                     <thead>
                         <tr>
                             <th>Khách hàng</th>
@@ -168,15 +138,15 @@
                         %>
                         <tr style="<%= status == 0 ? "opacity: 0.6;" : "" %>">
                             <td><div class="fw-600 text-dark"><%= name %></div><div class="text-muted small"><%= sdf.format(createdAt) %></div></td>
-                            <td><span class="badge bg-light text-dark border fw-normal">P.<%= roomNB %></span></td>
+                            <td><span class="badge bg-light text-dark border fw-normal py-1 px-2"><i class="bi bi-door-closed text-primary me-1"></i>P.<%= roomNB %></span></td>
                             <td>
                                 <div class="star-rating">
                                     <% for(int i=0; i<5; i++) { %>
-                                        <i class="bi <%= i < rating ? "bi-star-fill" : "bi-star" %>"></i>
+                                        <i class="bi <%= i < rating ? "bi-star-fill text-warning" : "bi-star text-muted" %>"></i>
                                     <% } %>
                                 </div>
                             </td>
-                            <td><div class="text-muted small" style="max-width: 250px;"><%= comment %></div></td>
+                            <td><div class="text-dark small" style="max-width: 280px;"><%= comment %></div></td>
                             <td>
                                 <span class="badge rounded-pill px-3 py-2 <%= status == 1 ? "badge-visible" : "badge-hidden" %>">
                                     <i class="bi <%= status == 1 ? "bi-eye-fill" : "bi-eye-slash" %> me-1"></i>
@@ -224,7 +194,10 @@
                 "searching": false,
                 "ordering": false,
                 "language": {
-                    "paginate": { "previous": "<i class='bi bi-chevron-left'></i>", "next": "<i class='bi bi-chevron-right'></i>" }
+                    "zeroRecords": "Không tìm thấy đánh giá nào",
+                    "info": "Đang xem _START_ đến _END_ trong tổng số _TOTAL_ đánh giá",
+                    "infoEmpty": "Không có dữ liệu",
+                    "paginate": { "first": "Đầu", "previous": "Trước", "next": "Sau", "last": "Cuối" }
                 }
             });
         });

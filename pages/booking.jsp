@@ -6,7 +6,7 @@
     String roomId = request.getParameter("room_id");
     String roomType = "";
     double price = 0;
-    String imgURL = "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1600&q=80"; // Hình nền mặc định cho trang đặt phòng
+    String imgURL = request.getContextPath() + "/images/hero/hotel-pool-hero.jpg"; // Hình nền mặc định cho trang đặt phòng
 
     Connection conn = null;
     try {
@@ -42,6 +42,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hoàn tất đặt phòng — OmniStay</title>
+    <link rel="icon" type="image/png" href="<%=request.getContextPath()%>/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />

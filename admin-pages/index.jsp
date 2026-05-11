@@ -143,228 +143,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản trị Hệ thống — OmniStay</title>
+    <link rel="icon" type="image/png" href="<%=request.getContextPath()%>/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin-theme.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <style>
-        :root {
-            --primary: #1a6b5a;
-            --primary-dark: #124a3e;
-            --accent: #d4a847;
-            --bg-light: #f5f8f7;
-            --text-main: #2c3e50;
-        }
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--bg-light);
-            color: var(--text-main);
-            overflow-x: hidden;
-        }
-        .font-display { font-family: "Playfair Display", serif; }
-        
-        /* Sidebar Styles */
-        .sidebar {
-            width: 260px;
-            background: var(--primary-dark);
-            min-height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-            padding-top: 1.5rem;
-            box-shadow: 4px 0 20px rgba(0,0,0,0.05);
-        }
-        .sidebar .brand {
-            padding: 0 1.5rem 2rem;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            margin-bottom: 1rem;
-        }
-        .sidebar .brand a {
-            font-size: 1.6rem;
-            letter-spacing: 1px;
-        }
-        .sidebar .brand span {
-            color: var(--accent);
-            font-weight: 600;
-        }
-        .nav-sidebar .nav-link {
-            color: rgba(255,255,255,0.7);
-            padding: 0.8rem 1.5rem;
-            margin: 0.2rem 1rem;
-            border-radius: 8px;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            font-weight: 400;
-        }
-        .nav-sidebar .nav-link i {
-            margin-right: 12px;
-            font-size: 1.1rem;
-        }
-        .nav-sidebar .nav-link:hover, .nav-sidebar .nav-link.active {
-            color: #fff;
-            background: rgba(255,255,255,0.1);
-        }
-        .nav-sidebar .nav-link.active {
-            background: var(--primary);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        /* Main Content */
-        .main-content {
-            margin-left: 260px;
-            padding: 2rem;
-        }
-        
-        /* Dashboard Cards */
-        .stat-card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 1.8rem;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
-            transition: all 0.3s ease;
-            height: 100%;
-            cursor: pointer;
-            text-decoration: none;
-            display: block;
-        }
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            border-color: var(--accent);
-        }
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            background: rgba(255,255,255,0.2);
-            color: #fff;
-        }
-
-        /* Gradient Cards */
-        .card-grad-revenue { background: linear-gradient(135deg, #1a6b5a 0%, #124a3e 100%); color: #fff !important; }
-        .card-grad-booking { background: linear-gradient(135deg, #d4a847 0%, #b08d3a 100%); color: #fff !important; }
-        .card-grad-rooms { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: #fff !important; }
-        .card-grad-contacts { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: #fff !important; }
-        
-        .stat-card.card-grad-revenue .text-muted, .stat-card.card-grad-booking .text-muted, 
-        .stat-card.card-grad-rooms .text-muted, .stat-card.card-grad-contacts .text-muted {
-            color: rgba(255,255,255,0.8) !important;
-        }
-        .stat-card.card-grad-revenue h3, .stat-card.card-grad-revenue h4, 
-        .stat-card.card-grad-booking h3, .stat-card.card-grad-rooms h3, .stat-card.card-grad-contacts h3 {
-            color: #fff !important;
-        }
-        
-        /* Table Styles */
-        .table-card {
-            background: #fff;
-            border-radius: 16px;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
-            overflow: hidden;
-        }
-        .table-custom th {
-            background-color: #f8f9fa;
-            color: #6c757d;
-            font-weight: 500;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            padding: 1rem 1.5rem;
-            border-bottom: 2px solid #edf2f9;
-        }
-        .table-custom td {
-            padding: 1rem 1.5rem;
-            vertical-align: middle;
-            color: #495057;
-            font-size: 0.9rem;
-            border-bottom: 1px solid #edf2f9;
-        }
-        .table-custom tbody tr:hover {
-            background-color: #f8f9fa;
-        }
-        .status-badge {
-            padding: 0.4rem 0.8rem;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        /* Room Map Styles */
-        .room-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 1.5rem;
-            padding: 1.5rem;
-        }
-        .room-item {
-            text-decoration: none;
-            color: inherit;
-        }
-        .room-box {
-            background: #fff;
-            border-radius: 16px;
-            padding: 1.2rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            height: 110px;
-        }
-        .room-box:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.08);
-        }
-        .room-box .room-no { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
-        .room-box .room-type { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; font-weight: 500; text-align: center; }
-        
-        .room-box.status-available { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
-        .room-box.status-occupied { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
-        .room-box.status-cleaning { background: #fffbeb; color: #92400e; border-color: #fef3c7; }
-        .room-box.status-maintenance { background: #f8fafc; color: #475569; border-color: #e2e8f0; }
-
-        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #64748b; font-weight: 500; }
-        .legend-dot { width: 12px; height: 12px; border-radius: 4px; }
-
-        /* Quick Stats List */
-        .quick-stat-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 1rem;
-            border-radius: 12px;
-            background: #f8f9fa;
-            margin-bottom: 1rem;
-            transition: all 0.3s;
-            border: 1px solid transparent;
-        }
-        .quick-stat-item:hover {
-            background: #fff;
-            border-color: var(--accent);
-            transform: translateX(5px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        .quick-stat-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
-    </style>
 </head>
 <body>
 
@@ -374,27 +158,18 @@
     <!-- MAIN CONTENT -->
     <div class="main-content">
         <!-- Topbar -->
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+        <div class="topbar">
             <div>
                 <h3 class="font-display fw-bold text-dark mb-1">Tổng quan hệ thống</h3>
                 <p class="text-muted mb-0" style="font-size: 0.85rem">Chào mừng trở lại, trang tổng quan hoạt động OmniStay.</p>
             </div>
             <div class="d-flex align-items-center gap-3">
-                <div class="dropdown">
-                    <button class="btn btn-light position-relative border-0 shadow-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                        <i class="bi bi-bell"></i>
-                        <% if(newContacts > 0) { %>
-                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                            <span class="visually-hidden">Tín hiệu mới</span>
-                        </span>
-                        <% } %>
-                    </button>
-                </div>
-                <div class="d-flex align-items-center gap-2 px-3 py-2 bg-white rounded-pill shadow-sm border">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-weight: 600;">
+
+                <div class="topbar-user">
+                    <div class="topbar-avatar">
                         <%= (adminEmail != null && !adminEmail.isEmpty()) ? adminEmail.substring(0, 1).toUpperCase() : "A" %>
                     </div>
-                    <span class="fw-500" style="font-size: 0.85rem;"><%= adminEmail %></span>
+                    <span class="fw-500"><%= adminEmail %></span>
                 </div>
             </div>
         </div>
@@ -407,7 +182,7 @@
 
         <!-- Top 4 Main KPIs -->
         <div class="row g-4 mb-4">
-            <div class="col-xl-3 col-md-6">
+            <div class="col-xl-3 col-md-6 fade-in-up fade-in-up-1">
                 <a href="admin-bookings.jsp" class="stat-card card-grad-revenue">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div class="stat-icon">
@@ -415,12 +190,12 @@
                         </div>
                         <span class="badge bg-white bg-opacity-25 text-white">Tháng này</span>
                     </div>
-                    <p class="text-muted mb-1 text-uppercase fw-500" style="font-size: 0.75rem;">Doanh thu</p>
+                    <p class="text-muted mb-1 text-uppercase fw-500" style="font-size: 0.72rem;">Doanh thu</p>
                     <h3 class="fw-bold mb-0"><%= nf.format(monthRevenue).replace("VNĐ","") %><small style="font-size: 0.6em; opacity: 0.8"> đ</small></h3>
                 </a>
             </div>
             
-            <div class="col-xl-3 col-md-6">
+            <div class="col-xl-3 col-md-6 fade-in-up fade-in-up-2">
                 <a href="admin-bookings.jsp" class="stat-card card-grad-booking">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div class="stat-icon">
@@ -428,12 +203,12 @@
                         </div>
                         <span class="badge bg-white bg-opacity-25 text-white">Hôm nay: <%= todayBookings %></span>
                     </div>
-                    <p class="text-muted mb-1 text-uppercase fw-500" style="font-size: 0.75rem;">Đơn đặt phòng mới</p>
+                    <p class="text-muted mb-1 text-uppercase fw-500" style="font-size: 0.72rem;">Đơn đặt phòng mới</p>
                     <h3 class="fw-bold mb-0"><%= monthBookings %></h3>
                 </a>
             </div>
             
-            <div class="col-xl-3 col-md-6">
+            <div class="col-xl-3 col-md-6 fade-in-up fade-in-up-3">
                 <a href="admin-rooms.jsp" class="stat-card card-grad-rooms">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div class="stat-icon">
@@ -441,12 +216,12 @@
                         </div>
                         <span class="badge bg-white bg-opacity-25 text-white">Sẵn sàng</span>
                     </div>
-                    <p class="text-muted mb-1 text-uppercase fw-500" style="font-size: 0.75rem;">Phòng trống / Tổng</p>
+                    <p class="text-muted mb-1 text-uppercase fw-500" style="font-size: 0.72rem;">Phòng trống / Tổng</p>
                     <h3 class="fw-bold mb-0"><%= availableRooms %> / <%= totalRooms %></h3>
                 </a>
             </div>
             
-            <div class="col-xl-3 col-md-6">
+            <div class="col-xl-3 col-md-6 fade-in-up fade-in-up-4">
                 <a href="admin-contacts.jsp" class="stat-card card-grad-contacts">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div class="stat-icon">
@@ -458,7 +233,7 @@
                         <span class="badge bg-white bg-opacity-25 text-white">0 mới</span>
                         <% } %>
                     </div>
-                    <p class="text-muted mb-1 text-uppercase fw-500" style="font-size: 0.75rem;">Liên hệ chưa đọc</p>
+                    <p class="text-muted mb-1 text-uppercase fw-500" style="font-size: 0.72rem;">Liên hệ chưa đọc</p>
                     <h3 class="fw-bold mb-0"><%= newContacts %></h3>
                 </a>
             </div>
@@ -471,8 +246,7 @@
                 <!-- Revenue Chart -->
                 <div class="table-card p-4 mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="fw-bold mb-0">Xu hướng doanh thu (7 ngày qua)</h5>
-                        <i class="bi bi-graph-up-arrow text-success"></i>
+                        <h5 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow text-success me-2"></i>Xu hướng doanh thu (7 ngày qua)</h5>
                     </div>
                     <canvas id="revenueChart" style="max-height: 300px;"></canvas>
                 </div>
@@ -484,7 +258,7 @@
                         <a href="admin-bookings.jsp" class="btn btn-sm btn-light border rounded-pill px-3">Xem tất cả</a>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-custom mb-0">
+                        <table class="table mb-0">
                             <thead>
                                 <tr>
                                     <th>Mã đơn</th>
@@ -581,8 +355,8 @@
                     </div>
                     <% } %>
 
-                    <div class="mt-4 p-3 rounded-4 bg-light border">
-                        <p class="small text-muted mb-0"><i class="bi bi-info-circle me-1"></i> Mẹo: Bạn có thể click vào các ô để xem chi tiết báo cáo.</p>
+                    <div class="mt-4 p-3 rounded-4 border" style="background: var(--primary-light);">
+                        <p class="small mb-0" style="color: var(--primary);"><i class="bi bi-lightbulb me-1"></i> Mẹo: Click vào các ô thống kê để xem chi tiết.</p>
                     </div>
                 </div>
             </div>
@@ -601,14 +375,13 @@
                     <div class="legend-item"><span class="legend-dot" style="background: #fef3c7;"></span> Đang dọn</div>
                     <div class="legend-item"><span class="legend-dot" style="background: #e2e8f0;"></span> Bảo trì</div>
                 </div>
-                <a href="admin-rooms.jsp" class="btn btn-sm btn-light rounded-pill px-3 border shadow-sm">Quản lý phòng</a>
+                <a href="admin-rooms.jsp" class="btn btn-sm btn-primary-gradient rounded-pill px-3">Quản lý phòng</a>
             </div>
             
             <div class="room-grid">
                 <%
                     if(conn != null) {
                         try {
-                            // Sử dụng LEFT JOIN để không bỏ sót phòng nào nếu lỡ quên gán loại phòng
                             String sqlRooms = "SELECT r.*, rt.type_name FROM rooms r LEFT JOIN room_types rt ON r.room_type_id = rt.id ORDER BY r.room_number ASC";
                             Statement stRooms = conn.createStatement();
                             ResultSet rsRooms = stRooms.executeQuery(sqlRooms);
@@ -655,13 +428,15 @@
                     label: 'Doanh thu (VNĐ)',
                     data: [<%= request.getAttribute("chartData") %>],
                     borderColor: '#1a6b5a',
-                    backgroundColor: 'rgba(26, 107, 90, 0.1)',
+                    backgroundColor: 'rgba(26, 107, 90, 0.08)',
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
                     pointBackgroundColor: '#d4a847',
                     pointBorderColor: '#fff',
-                    pointRadius: 4
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
                 }]
             },
             options: {
@@ -673,15 +448,17 @@
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grid: { borderDash: [5, 5], color: 'rgba(0,0,0,0.05)' },
+                        grid: { borderDash: [5, 5], color: 'rgba(0,0,0,0.04)' },
                         ticks: {
                             callback: function(value) {
                                 return value.toLocaleString('vi-VN') + ' đ';
-                            }
+                            },
+                            font: { family: 'Outfit' }
                         }
                     },
                     x: {
-                        grid: { display: false }
+                        grid: { display: false },
+                        ticks: { font: { family: 'Outfit' } }
                     }
                 }
             }
