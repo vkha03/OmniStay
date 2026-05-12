@@ -1,20 +1,29 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- ==========================================================================
+     PHÂN HỆ QUẢN LÝ ĐƠN ĐẶT PHÒNG VÀ HÓA ĐƠN LƯU TRÚ (ADMIN BOOKINGS CONTROLLER)
+     Xử lý toàn bộ logic tài chính và vòng đời của một đơn đặt phòng:
+     từ bước tiếp nhận thông tin, gán phòng, tính toán số đêm tự động, đính kèm
+     dịch vụ phát sinh, cập nhật thanh toán cho tới khi Check-out hoàn tất.
+     ========================================================================== --%>
 <%@ include file="../layouts/admin-auth.jsp" %>
 <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat, java.text.SimpleDateFormat, java.util.concurrent.TimeUnit" %>
 <%@ include file="../env-secrets.jsp" %>
 <%
+    // Bắt buộc mã hóa chuỗi đầu vào theo UTF-8 để lưu trữ chính xác thông tin khách hàng
     request.setCharacterEncoding("UTF-8");
     Connection conn = null;
     String thongBao = null;
     String loaiThongBao = "success";
 
     try {
+        // Nạp Driver và kết nối an toàn tới MySQL
         Class.forName("com.mysql.cj.jdbc.Driver");
         conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
 
+        // ─── 1. BỘ ĐIỀU KHIỂN TÁC VỤ ĐƠN HÀNG (ACTION CONTROLLER) ───
         String action = request.getParameter("action");
         if (action != null) {
-            // ─── LOGIC THÊM HÓA ĐƠN ───
+            // a) TÁC VỤ LẬP HÓA ĐƠN / ĐẶT PHÒNG MỚI (CREATE BOOKING & INVOICE)
             if (action.equals("addBooking")) {
                 String name = request.getParameter("fullName");
                 String phone = request.getParameter("phone");
@@ -302,8 +311,10 @@
                     </thead>
                     <tbody>
                         <%
+                            // 2. TRUY VẤN VÀ ĐỔ DỮ LIỆU DANH SÁCH ĐƠN ĐẶT PHÒNG / HÓA ĐƠN (RENDER BOOKINGS TABLE)
                             if(conn != null) {
                                 try {
+                                    // Thực hiện truy vấn JOIN 3 bảng: `bookings`, `booking_rooms` và `rooms` để lấy đầy đủ số phòng
                                     String sql = "SELECT b.*, r.id as room_id, r.room_number FROM bookings b " +
                                                  "LEFT JOIN booking_rooms br ON b.id = br.booking_id " +
                                                  "LEFT JOIN rooms r ON br.room_id = r.id WHERE 1=1 ";
@@ -349,10 +360,12 @@
                             <td><span class="badge bg-light text-dark border fw-normal mb-1">P.<%= roomNB %></span><br><small class="text-muted"><%= sdf.format(checkIn) %> - <%= sdf.format(checkOut) %></small></td>
                             <td><div class="fw-600 font-display text-dark" style="font-size: 1.05rem;"><%= nf.format(total).replace("VNĐ", "₫") %></div></td>
                             <td><div class="text-success"><%= nf.format(paid).replace("VNĐ", "₫") %></div></td>
+                            <%-- Tính toán khoản nợ/còn lại trực tiếp (total - paid) để hiển thị cảnh báo đỏ nếu chưa thanh toán hết --%>
                             <td><div class="<%= (total-paid) > 0 ? "text-danger fw-bold" : "text-muted" %>"><%= nf.format(total-paid).replace("VNĐ", "₫") %></div></td>
                             <td><span class="<%= rs.getString("payment_status").equals("PAID") ? "text-success" : "text-danger" %> fw-bold small"><%= rs.getString("payment_status").equals("PAID") ? "ĐÃ THANH TOÁN" : "CHƯA THANH TOÁN" %></span></td>
                             <td>
                                 <% 
+                                    // Chuyển đổi mã trạng thái sang nhãn tiếng Việt tương ứng kèm style riêng biệt
                                     String stClass = "st-pending"; String stText = "Chờ xử lý";
                                     if(status.equals("CONFIRMED")) { stClass = "st-confirmed"; stText = "Đã xác nhận"; }
                                     else if(status.equals("CHECKED_IN")) { stClass = "st-checked_in"; stText = "Đang lưu trú"; }

@@ -1,8 +1,21 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%
+    // ========================================================================
+    // LOGIC PHÁT HIỆN TRANG HIỆN TẠI (ACTIVE ROUTE DETECTION)
+    // Đoạn mã này tự động trích xuất đường dẫn URI của yêu cầu gửi đến,
+    // từ đó đối chiếu để xác định người dùng đang truy cập trang nào.
+    // Kết quả sẽ được lưu vào biến `activeNav` nhằm thêm class 'active'
+    // vào thẻ link tương ứng trên thanh điều hướng (Navbar).
+    // ========================================================================
+    
+    // Trích xuất chuỗi URI từ đối tượng request (ví dụ: '/OmniStay/pages/rooms.jsp')
     String currentURI = request.getRequestURI();
+    // Khởi tạo giá trị mặc định ban đầu là trang chủ ('index')
     String activeNav = "index";
+    
+    // Kiểm tra sự xuất hiện của các từ khóa trang trong chuỗi URI
     if (currentURI.contains("rooms.jsp") || currentURI.contains("room-detail.jsp")) {
+        // Nhóm các trang liên quan đến danh mục và chi tiết phòng
         activeNav = "rooms";
     } else if (currentURI.contains("about.jsp")) {
         activeNav = "about";
@@ -13,6 +26,7 @@
     } else if (currentURI.contains("reviews.jsp")) {
         activeNav = "reviews";
     } else if (currentURI.contains("invoice-lookup.jsp") || currentURI.contains("invoice-detail.jsp")) {
+        // Nhóm các luồng tra cứu và hiển thị chi tiết hóa đơn điện tử
         activeNav = "invoice";
     }
 %>
@@ -182,11 +196,17 @@
 </nav>
 
 <script>
-  // Script chuẩn: Chỉ quan tâm đến Class, thả cho CSS lo phần hiển thị
+  // ==========================================================================
+  // XỬ LÝ HIỆU ỨNG GIAO DIỆN KHI CUỘN TRANG (SCROLL EFFECT)
+  // Lắng nghe sự kiện cuộn chuột để chuyển đổi trạng thái hiển thị của Navbar.
+  // Khi ở đầu trang, Navbar trong suốt. Khi cuộn xuống quá 60px, thêm class
+  // 'navbar-scrolled' để kích hoạt hiệu ứng kính mờ (Glassmorphism) đậm hơn.
+  // ==========================================================================
   document.addEventListener("DOMContentLoaded", () => {
     const nav = document.getElementById("mainNav");
 
     window.addEventListener("scroll", () => {
+      // Kiểm tra vị trí cuộn dọc của cửa sổ trình duyệt (scrollY)
       if (window.scrollY > 60) {
         nav.classList.add("navbar-scrolled");
       } else {

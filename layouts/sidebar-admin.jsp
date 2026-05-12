@@ -1,5 +1,13 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- ==========================================================================
+     THANH ĐIỀU HƯỚNG QUẢN TRỊ (ADMIN SIDEBAR COMPONENT)
+     Được nhúng vào bên trái của tất cả các trang quản trị (admin-pages).
+     Cung cấp menu chuyển hướng nhanh giữa các chức năng hệ thống,
+     tự động nhận diện trang hiện tại để làm nổi bật (active) và
+     kiểm soát hiển thị các mục menu nhạy cảm dựa trên phân quyền (Role).
+     ========================================================================== --%>
 <%
+    // Trích xuất đường dẫn hiện tại để đối chiếu với từng mục menu
     String currentAdminURL = request.getRequestURI();
     if (currentAdminURL == null) currentAdminURL = "";
 %>
@@ -38,7 +46,12 @@
                 <i class="bi bi-people"></i> Khách hàng
             </a>
         </li>
-        <% if ("ADMIN".equals(adminRole)) { %>
+        <% 
+            // KIỂM TRA QUYỀN TRUY CẬP (ROLE-BASED ACCESS CONTROL)
+            // Chỉ tài khoản có vai trò 'ADMIN' mới được phép nhìn thấy và truy cập
+            // danh mục Quản lý Nhân viên. Lễ tân ('RECEPTIONIST') sẽ bị ẩn mục này.
+            if ("ADMIN".equals(adminRole)) { 
+        %>
         <li class="nav-item">
             <a class="nav-link <%= currentAdminURL.contains("admin-staff.jsp") ? "active" : "" %>" href="<%=request.getContextPath()%>/admin-pages/admin-staff.jsp">
                 <i class="bi bi-person-circle"></i> Quản Lý Nhân Viên

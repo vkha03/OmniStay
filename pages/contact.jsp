@@ -3,29 +3,48 @@
 <%@ page import="java.sql.*" %>
 <%@ page import="jakarta.mail.*, jakarta.mail.internet.*" %>
 <%@ include file="../env-secrets.jsp" %>
+<%-- ==========================================================================
+     PHÂN HỆ LIÊN HỆ & CHĂM SÓC KHÁCH HÀNG ĐA KÊNH (CONTACT & SUPPORT MODULE)
+     Giao diện tương tác và tiếp nhận phản hồi, câu hỏi, yêu cầu đặt tiệc/phòng.
+     Xử lý đồng thời ba tác vụ tích hợp: Lưu Database, Gửi Email thông báo qua
+     giao thức SMTP Gmail và Webhook gọi API bắn tin nhắn sang Zalo OA.
+     ========================================================================== --%>
 <%
-    // Xử lý gửi email và lưu Database khi form được submit
+    // ========================================================================
+    // XỬ LÝ LƯỢNG KẾT NỐI VÀ TÍCH HỢP ĐA KÊNH (OMNICHANNEL CONTACT LOGIC)
+    // Thực thi tuần tự 3 nhiệm vụ cốt lõi khi người dùng gửi yêu cầu:
+    // 1. Lưu trữ vĩnh viễn vào CSDL MySQL để tiện tra cứu và báo cáo.
+    // 2. Gửi Email thông báo tự động (Xác nhận yêu cầu) qua Jakarta Mail.
+    // 3. Đẩy thông báo thời gian thực đến điện thoại bộ phận Concierge qua Zalo API.
+    // ========================================================================
+    
     String messageSent = null;
     String errorMessage = null;
     
+    // Chỉ kích hoạt xử lý nghiệp vụ khi phương thức HTTP gửi lên là POST
     if ("POST".equalsIgnoreCase(request.getMethod())) {
+        // Thiết lập đồng bộ bảng mã UTF-8 nhằm tránh lỗi phông chữ tiếng Việt
         request.setCharacterEncoding("UTF-8");
         
+        // Trích xuất toàn bộ dữ liệu thuần túy từ biểu mẫu liên hệ
         String fullname = request.getParameter("fullname");
         String email = request.getParameter("email");
         String phone = request.getParameter("phone");
         String subjectSelect = request.getParameter("subjectSelect");
         String message = request.getParameter("message");
         
+        // Xác thực đầu vào (Input Validation): Đảm bảo các trường bắt buộc không bị bỏ trống
         if (fullname != null && email != null && message != null && !fullname.trim().isEmpty() && !email.trim().isEmpty() && !message.trim().isEmpty()) {
             Connection conn = null;
             PreparedStatement pstmt = null;
             
             try {
-                // 1. LƯU VÀO DATABASE
+                // 1. LƯU VÀO CƠ SỞ DỮ LIỆU (PERSIST RECORD IN DATABASE)
+                // Khởi tạo trình điều khiển JDBC kết nối đến cơ sở dữ liệu
                 Class.forName("com.mysql.cj.jdbc.Driver");
                 conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
                 
+                // Chuẩn bị truy vấn tham số hóa chèn bản ghi vào bảng `contacts`
                 String sql = "INSERT INTO contacts (full_name, email, subject, message) VALUES (?, ?, ?, ?)";
                 pstmt = conn.prepareStatement(sql);
                 pstmt.setString(1, fullname);
@@ -34,35 +53,44 @@
                 pstmt.setString(4, message);
                 pstmt.executeUpdate();
 
-                // 2. GỬI EMAIL THÔNG BÁO BẰNG JAKARTA MAIL
+                // 2. GỬI EMAIL THÔNG BÁO TỰ ĐỘNG BẰNG JAKARTA MAIL (AUTOMATED EMAIL ACKNOWLEDGEMENT)
+                // Khai báo tài khoản gửi đi mặc định và mật khẩu ứng dụng (App Password)
                 final String fromEmail = "dvk2341@gmail.com"; 
                 final String password = SECRET_MAIL_PASS; 
                 
+                // Cấu hình các tham số giao thức SMTP (Simple Mail Transfer Protocol) của máy chủ Gmail
                 Properties props = new Properties();
                 props.put("mail.smtp.host", "smtp.gmail.com");
-                props.put("mail.smtp.port", "587");
-                props.put("mail.smtp.auth", "true");
-                props.put("mail.smtp.starttls.enable", "true");
+                props.put("mail.smtp.port", "587"); // Cổng TLS an toàn tiêu chuẩn
+                props.put("mail.smtp.auth", "true"); // Yêu cầu xác thực tài khoản
+                props.put("mail.smtp.starttls.enable", "true"); // Kích hoạt đàm phán mã hóa TLS
                 props.put("mail.smtp.ssl.protocols", "TLSv1.2");
                 
+                // Khởi tạo phiên giao dịch Mail Session sử dụng bộ xác thực tùy chỉnh
                 Session mailSession = Session.getInstance(props, new Authenticator() {
                     protected PasswordAuthentication getPasswordAuthentication() {
                         return new PasswordAuthentication(fromEmail, password);
                     }
                 });
                 
+                // Soạn thảo cấu trúc thư (MimeMessage) tuân thủ tiêu chuẩn thư điện tử quốc tế
                 MimeMessage mimeMessage = new MimeMessage(mailSession);
                 mimeMessage.setFrom(new InternetAddress(fromEmail, "OmniStay Hotel"));
+                // Gửi thông báo trực tiếp đến hòm thư chăm sóc khách hàng của khách sạn
                 mimeMessage.setRecipient(Message.RecipientType.TO, new InternetAddress("concierge@omnistay.vn"));
+                // Gửi bản sao (CC) đến chính khách hàng để họ lưu trữ bằng chứng đã liên hệ
                 mimeMessage.setRecipient(Message.RecipientType.CC, new InternetAddress(email));
                 mimeMessage.setSubject("[OmniStay] Xác nhận liên hệ: " + subjectSelect, "UTF-8");
                 
+                // Xây dựng mã nguồn nội dung thư bằng HTML nội tuyến (Inline HTML) sang trọng
                 String emailContent = "<!DOCTYPE html><html><body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'><div style='max-width: 600px; margin: 0 auto; border: 1px solid #e8e2d9; border-radius: 8px; overflow: hidden;'><div style='background: #1a6b5a; padding: 20px; text-align: center;'><h2 style='color: #d4a847; margin: 0;'>OmniStay Hotel</h2><p style='color: white; margin: 0;'>Xác nhận yêu cầu liên hệ</p></div><div style='padding: 20px;'><p>Xin chào <strong>" + fullname + "</strong>,</p><p>Hệ thống của OmniStay đã ghi nhận yêu cầu của quý khách với thông tin chi tiết như sau:</p><table style='width: 100%; border-collapse: collapse; margin-top: 10px;'><tr style='border-bottom: 1px solid #eee;'><td style='padding: 8px 0; width: 100px;'><strong>SĐT:</strong></td><td style='padding: 8px 0;'>" + phone + "</td></tr><tr style='border-bottom: 1px solid #eee;'><td style='padding: 8px 0;'><strong>Chủ đề:</strong></td><td style='padding: 8px 0;'>" + subjectSelect + "</td></tr><tr><td style='padding: 8px 0; vertical-align: top;'><strong>Lời nhắn:</strong></td><td style='padding: 8px 0;'>" + message.replace("\n", "<br>") + "</td></tr></table><p style='margin-top: 20px;'>Đội ngũ Chăm sóc khách hàng sẽ liên hệ lại với quý khách trong vòng 2 giờ làm việc.</p><p>Trân trọng,<br><strong>Đội ngũ OmniStay</strong></p></div></div></body></html>";
                 mimeMessage.setContent(emailContent, "text/html; charset=UTF-8");
+                // Phát lệnh chuyển phát thư qua mạng Internet
                 Transport.send(mimeMessage);
                 
-                // 3. GỬI THÔNG BÁO QUA ZALO BOT
+                // 3. ĐẨY THÔNG BÁO TỨC THỜI QUA ZALO PLATFORM BOT API (REAL-TIME ZALO WEBHOOK)
                 try {
+                    // Lấy mã xác thực ứng dụng và mã định danh nhóm chat từ biến môi trường
                     String botToken = SECRET_ZALO_TOKEN;
                     String chatId = SECRET_ZALO_CHATID;
                     
@@ -71,6 +99,7 @@
                     System.out.println("Chat ID: " + chatId);
                     
                     if (botToken != null && !botToken.isEmpty() && chatId != null && !chatId.isEmpty()) {
+                        // Chuẩn bị định dạng tin nhắn văn bản thuần túy tóm tắt thông tin liên hệ
                         String zaloMessage = "🔔 CÓ LIÊN HỆ MỚI TỪ OMNISTAY\n"
                                 + "- Khách hàng: " + fullname + "\n"
                                 + "- SĐT: " + phone + "\n"
@@ -78,20 +107,23 @@
                                 + "- Chủ đề: " + subjectSelect + "\n"
                                 + "- Lời nhắn: " + message;
                                 
-                        // Escape chuỗi thành định dạng JSON hợp lệ
+                        // Kỹ thuật xử lý chuỗi: Khử các ký tự đặc biệt (Escape) để nhúng vừa vặn vào chuỗi JSON
                         zaloMessage = zaloMessage.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "");
                         
+                        // Đóng gói cấu trúc Payload theo định dạng JSON chuẩn của Zalo OA API
                         String jsonPayload = "{\"chat_id\": \"" + chatId + "\", \"text\": \"" + zaloMessage + "\"}";
                         System.out.println("Payload: " + jsonPayload);
                         
                         String apiUrl = "https://bot-api.zaloplatforms.com/bot" + botToken + "/sendMessage";
                         System.out.println("API URL: " + apiUrl);
                         
+                        // Mở kết nối mạng HTTPURLConnection trực tiếp từ tầng backend
                         java.net.URL url = new java.net.URL(apiUrl);
                         java.net.HttpURLConnection httpConn = (java.net.HttpURLConnection) url.openConnection();
                         httpConn.setRequestMethod("POST");
                         httpConn.setRequestProperty("Content-Type", "application/json");
                         httpConn.setDoOutput(true);
+                        // Cấu hình thời gian trễ tối đa (Timeout) để tránh tình trạng treo luồng máy chủ
                         httpConn.setConnectTimeout(5000);
                         httpConn.setReadTimeout(5000);
                         
@@ -101,11 +133,11 @@
                             os.write(input, 0, input.length);
                         }
                         
-                        // Gọi HTTP Request để lấy kết quả
+                        // Đọc mã trạng thái trả về để xác minh lệnh gửi đã tới máy chủ Zalo thành công
                         int responseCode = httpConn.getResponseCode();
                         System.out.println("Mã phản hồi HTTP: " + responseCode);
                         
-                        // Đọc chi tiết phản hồi từ Zalo API
+                        // Đọc chi tiết nội dung luồng phản hồi (Response InputStream) phục vụ theo dõi và phân tích
                         java.io.InputStream is = (responseCode >= 200 && responseCode < 300) ? httpConn.getInputStream() : httpConn.getErrorStream();
                         if (is != null) {
                             java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
@@ -117,16 +149,20 @@
                         System.out.println("Thiếu Token hoặc Chat ID, huỷ gửi Zalo.");
                     }
                 } catch (Exception zaloEx) {
+                    // Cách ly biệt lập luồng lỗi Zalo API để không làm ảnh hưởng đến thông báo thành công của người dùng
                     System.out.println("Lỗi gửi Zalo Bot (Exception): " + zaloEx.getMessage());
                     zaloEx.printStackTrace();
                 }
 
+                // Gán cờ báo hiệu toàn bộ chuỗi tác vụ đã thành công mỹ mãn
                 messageSent = "success";
             } catch (Exception e) {
+                // Bắt và phân loại lỗi tổng thể nếu CSDL hoặc hòm thư từ chối kết nối
                 errorMessage = e.getMessage();
                 messageSent = "error";
                 e.printStackTrace();
             } finally {
+                // Đảm bảo giải phóng sạch sẽ tài nguyên kết nối cơ sở dữ liệu trong mọi tình huống
                 if (pstmt != null) try { pstmt.close(); } catch(SQLException ignore) {}
                 if (conn != null) try { conn.close(); } catch(SQLException ignore) {}
             }

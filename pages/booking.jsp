@@ -1,18 +1,28 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
 <%@ include file="../env-secrets.jsp" %>
+<%-- ==========================================================================
+     TRANG NHẬP THÔNG TIN ĐẶT PHÒNG (BOOKING FORM PAGE)
+     Thu thập thông tin khách hàng (Họ tên, Liên hệ, Thời gian lưu trú).
+     Hiển thị tóm tắt đơn giá phòng và chuẩn bị tải trọng (payload) để chuyển
+     sang cổng thanh toán trực tuyến (VNPAY) ở bước tiếp theo.
+     ========================================================================== --%>
 <%
-    // 1. Hứng dữ liệu phòng
+    // 1. NHẬN THAM SỐ PHÒNG TỪ BƯỚC TRƯỚC (EXTRACT TARGET ROOM ID)
+    // Lấy mã số phòng cụ thể mà khách hàng đã chọn (Query parameter: room_id)
     String roomId = request.getParameter("room_id");
     String roomType = "";
     double price = 0;
-    String imgURL = request.getContextPath() + "/images/hero/hotel-pool-hero.jpg"; // Hình nền mặc định cho trang đặt phòng
+    // Đặt hình nền mặc định sang trọng cho phần Header trang đặt phòng
+    String imgURL = request.getContextPath() + "/images/hero/hotel-pool-hero.jpg"; 
 
+    // 2. TRUY VẤN CHI TIẾT ĐƠN GIÁ VÀ HÌNH ẢNH (QUERY ROOM PRICING DETAILS)
     Connection conn = null;
     try {
         Class.forName("com.mysql.cj.jdbc.Driver");
         conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
         
+        // Thực hiện phép JOIN giữa bảng `rooms` và `room_types` để lấy Tên loại phòng, Giá cơ bản và Ảnh
         String SQL = "SELECT rt.type_name, rt.base_price, rt.image_url " +
                      "FROM rooms rs JOIN room_types rt ON rs.room_type_id = rt.id " +
                      "WHERE rs.room_number = ?";
@@ -23,16 +33,19 @@
         if(rs.next()){
             roomType = rs.getString("type_name");
             price = rs.getDouble("base_price");
-            // Nếu có hình riêng của hạng phòng thì lấy, không thì dùng hình mặc định
+            // Ghi đè hình nền mặc định nếu hạng phòng này có hình ảnh minh họa riêng
             String dbImg = rs.getString("image_url");
             if(dbImg != null && !dbImg.isEmpty()) imgURL = dbImg;
         }
+        // Giải phóng tài nguyên ngay khi hoàn tất thao tác đọc
         rs.close(); ps.close();
         conn.close();
     } catch(Exception e) {
+        // In log chi tiết ra console server nếu xảy ra lỗi để hỗ trợ gỡ lỗi ngầm
         e.printStackTrace();
     }
     
+    // Bộ định dạng tiền tệ chuẩn cho thị trường Việt Nam
     NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 %>
 
@@ -300,19 +313,26 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Set ngày mặc định chuyên nghiệp hơn
+        // ====================================================================
+        // XỬ LÝ LƯỢNG TƯƠNG TÁC GIAO DIỆN PHÍA CLIENT (CLIENT-SIDE LOGIC)
+        // ====================================================================
+        
+        // Tự động thiết lập mốc thời gian mặc định ngay khi trang tải xong
         window.addEventListener('load', () => {
             const checkInInput = document.getElementsByName('checkIn')[0];
             const checkOutInput = document.getElementsByName('checkOut')[0];
             
+            // Khởi tạo đối tượng Date đại diện cho Hôm nay (Check-in) và Ngày mai (Check-out)
             const now = new Date();
             const tomorrow = new Date();
             tomorrow.setDate(now.getDate() + 1);
             
+            // Chuyển đổi sang định dạng chuỗi YYYY-MM-DD tương thích tuyệt đối với thẻ <input type="date">
             if(!checkInInput.value) checkInInput.value = now.toISOString().split('T')[0];
             if(!checkOutInput.value) checkOutInput.value = tomorrow.toISOString().split('T')[0];
             
-            // Logic: Check-out phải sau check-in
+            // Ràng buộc tính hợp lệ: Ngày trả phòng bắt buộc phải lớn hơn hoặc bằng Ngày nhận phòng
+            // Lắng nghe sự kiện thay đổi ngày check-in để tự động dời giới hạn cực tiểu (min) của check-out
             checkInInput.addEventListener('change', () => {
                 checkOutInput.min = checkInInput.value;
             });

@@ -1,24 +1,32 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-    <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
-    <%@ include file="../env-secrets.jsp" %>
-        <%
-    // ===== KIỂM TRA ĐÃ ĐĂNG NHẬP =====
+<%-- ==========================================================================
+     CỔNG ĐĂNG NHẬP HỆ THỐNG QUẢN TRỊ (ADMIN LOGIN AUTHENTICATION)
+     Chịu trách nhiệm xác thực danh tính nhân viên, cấp phát phiên làm việc (Session)
+     và điều hướng người dùng dựa trên vai trò hợp lệ.
+     Hỗ trợ đồng thời chức năng đăng xuất (hủy toàn bộ dữ liệu phiên hiện tại).
+     ========================================================================== --%>
+<%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
+<%@ include file="../env-secrets.jsp" %>
+<%
+    // ─── 1. KIỂM TRA PHIÊN HOẠT ĐỘNG (SESSION CHECK) ───
+    // Nếu nhân viên đã đăng nhập từ trước và không yêu cầu đăng xuất, tự động đưa vào trang Dashboard
     if (session.getAttribute("admin") != null && request.getParameter("action") == null) {
         response.sendRedirect("index.jsp");
         return;
     }
 
-    // ===== XỬ LÝ LOGOUT =====
+    // ─── 2. BỘ ĐIỀU KHIỂN ĐĂNG XUẤT (LOGOUT CONTROLLER) ───
     if(request.getParameter("action") != null && request.getParameter("action").equals("logout")){
+        // Hủy bỏ hoàn toàn đối tượng Session hiện tại nhằm đảm bảo an toàn tuyệt đối
         session.invalidate();
         response.sendRedirect("dangnhap.jsp");
         return;
     }
 
-    // ===== XỬ LÝ LOGIN =====
-
-       if(request.getMethod().equalsIgnoreCase("POST")){
-        String user = request.getParameter("username"); // email
+    // ─── 3. BỘ XỬ LÝ ĐĂNG NHẬP (LOGIN POST CONTROLLER) ───
+    if(request.getMethod().equalsIgnoreCase("POST")){
+        // Trích xuất thông tin định danh (email) và mật khẩu từ biểu mẫu
+        String user = request.getParameter("username"); 
         String pass = request.getParameter("password");
 
         Connection conn = null;
@@ -26,10 +34,11 @@
         ResultSet rs = null;
 
         try {
+            // Nạp Database Driver và kết nối tới cơ sở dữ liệu
             Class.forName("com.mysql.cj.jdbc.Driver");
-
             conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
 
+            // Kiểm tra truy vấn chính xác dựa trên cả email và mật khẩu của nhân sự
             String sql = "SELECT * FROM staff WHERE email=? AND password=?";
             ps = conn.prepareStatement(sql);
             ps.setString(1, user);
@@ -38,17 +47,24 @@
             rs = ps.executeQuery();
 
             if(rs.next()){
+                // Xác thực thành công: Gán định danh email và quyền hạn vào đối tượng Session
                 session.setAttribute("admin", rs.getString("email"));
                 session.setAttribute("role", rs.getString("role"));
 
-                response.sendRedirect("index.jsp"); // sửa đúng tên file
+                // Chuyển hướng tới bảng điều khiển trung tâm (PRG pattern)
+                response.sendRedirect("index.jsp"); 
                 return;
             } else {
+                // Xác thực thất bại: Đẩy thông báo lỗi ngược lại Request để hiển thị trên UI
                 request.setAttribute("error", "Sai tài khoản hoặc mật khẩu!");
             }
-
         } catch(Exception e){
             out.println("Lỗi: " + e.getMessage());
+        } finally {
+            // Đóng tài nguyên kết nối sau khi xử lý xong
+            if(rs != null) try { rs.close(); } catch(Exception e){}
+            if(ps != null) try { ps.close(); } catch(Exception e){}
+            if(conn != null) try { conn.close(); } catch(Exception e){}
         }
     }
 %>

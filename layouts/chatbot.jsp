@@ -1,4 +1,11 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- ==========================================================================
+     GIAO DIỆN TRỢ LÝ TRÍ TUỆ NHÂN TẠO (OMNIAI CONCIERGE WIDGET)
+     Được nhúng dạng Floating Action Button (FAB) ở góc phải dưới mọi trang.
+     Chịu trách nhiệm render giao diện khung chat, xử lý dữ liệu đầu vào,
+     giao tiếp bất đồng bộ qua cơ chế Server-Sent Events (SSE) với chat-api.jsp
+     và phân tích hiển thị phản hồi từ mô hình AI theo thời gian thực (Streaming).
+     ========================================================================== --%>
 <style>
   #chat-fab {
     position: fixed;
@@ -208,58 +215,80 @@
 </div>
 
 <script>
+// ============================================================================
+// MODULE ĐIỀU KHIỂN CHATBOT (OMNICHAT CONTROLLER)
+// Sử dụng Closure (IIFE) để đóng gói toàn bộ trạng thái, tránh ô nhiễm biến toàn cục.
+// ============================================================================
 const OmniChat = (() => {
+  // Điểm cuối API xử lý giao tiếp nội bộ với Google Gemini
   const API = '<%= request.getContextPath() %>/api/chat-api.jsp';
+  // Mảng lưu trữ ngữ cảnh hội thoại (Conversation History) để gửi kèm mỗi request
   let history = [];
+  // Cờ trạng thái ngăn chặn spam gửi tin nhắn khi AI đang xử lý trả lời
   let busy = false;
+  // Cờ theo dõi trạng thái đóng/mở của cửa sổ chat
   let open = false;
 
+  // Hàm tiện ích viết tắt truy xuất DOM theo ID
   const $ = id => document.getElementById(id);
 
+  // 1. ĐIỀU KHIỂN HIỂN THỊ (TOGGLE INTERFACE)
   function toggle() {
     open = !open;
     $('chat-window').classList.toggle('show', open);
+    // Tự động focus vào ô nhập liệu khi mở khung chat để tăng UX
     if (open) $('chatInput').focus();
   }
 
+  // 2. RENDER TIN NHẮN VÀO GIAO DIỆN (APPEND MESSAGE TO CHAT BODY)
   function addMsg(role, text) {
     const div = document.createElement('div');
     div.className = 'msg ' + (role === 'user' ? 'msg-user' : 'msg-ai');
+    // Tin nhắn người dùng: Escape HTML để chống tấn công XSS
+    // Tin nhắn AI: Phân tích và hiển thị định dạng Markdown cơ bản
     div.innerHTML = role === 'user' ? escapeHtml(text) : md(text);
     $('chatBody').appendChild(div);
+    // Tự động cuộn xuống dòng tin nhắn mới nhất
     $('chatBody').scrollTop = $('chatBody').scrollHeight;
   }
 
+  // Tiện ích mã hóa các ký tự đặc biệt HTML (XSS Prevention)
   function escapeHtml(t) {
     const d = document.createElement('div');
     d.textContent = t;
     return d.innerHTML;
   }
 
+  // Bộ phân tích cú pháp Markdown siêu nhẹ (Lightweight Markdown Parser)
   function md(t) {
     if (!t) return '';
     return t
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      .replace(/`(.+?)`/g, '<code>$1</code>')
-      .replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>')
-      .replace(/(<li>.*<\/li>\n?)+/gs, '<ul>$&</ul>')
-      .replace(/\n/g, '<br>');
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // Chữ đậm
+      .replace(/\*(.+?)\*/g, '<em>$1</em>') // Chữ nghiêng
+      .replace(/`(.+?)`/g, '<code>$1</code>') // Mã code
+      .replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>') // Danh sách
+      .replace(/(<li>.*<\/li>\n?)+/gs, '<ul>$&</ul>') // Bọc thẻ ul
+      .replace(/\n/g, '<br>'); // Ngắt dòng
   }
 
+  // 3. GỬI VÀ XỬ LÝ DÒNG DỮ LIỆU SSE (SEND & HANDLE STREAMING RESPONSE)
   async function send() {
     if (busy) return;
     const input = $('chatInput');
     const msg = input.value.trim();
     if (!msg) return;
 
+    // Xóa rỗng ô nhập liệu và khóa tương tác trong khi chờ
     input.value = '';
     busy = true;
     $('chatSendBtn').disabled = true;
 
+    // Hiển thị ngay tin nhắn của người dùng
     addMsg('user', msg);
+    // Cập nhật mảng lịch sử theo chuẩn định dạng Content của Gemini API
     history.push({ role: 'user', parts: [{ text: msg }] });
 
+    // Khởi tạo bong bóng chat chứa hiệu ứng "AI đang gõ..." (Typing indicator)
     const aiDiv = document.createElement('div');
     aiDiv.className = 'msg msg-ai';
     aiDiv.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
@@ -267,12 +296,14 @@ const OmniChat = (() => {
     $('chatBody').scrollTop = $('chatBody').scrollHeight;
 
     try {
+      // Gửi yêu cầu HTTP POST với chế độ stream
       const res = await fetch(API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: history })
       });
       
+      // Lấy đối tượng Reader để đọc các đoạn chunk trả về theo thời gian thực
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -282,10 +313,13 @@ const OmniChat = (() => {
         const { done, value } = await reader.read();
         if (done) break;
         
+        // Giải mã mảng byte thành chuỗi và cộng dồn vào bộ đệm
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
+        // Giữ lại dòng cuối cùng chưa hoàn chỉnh trong buffer để chờ chunk tiếp theo
         buffer = lines.pop(); 
         
+        // Duyệt qua từng dòng sự kiện SSE (Server-Sent Events)
         for (const line of lines) {
           if (line.startsWith('data: ') && line.length > 6) {
             const dataStr = line.substring(6).trim();
@@ -295,23 +329,26 @@ const OmniChat = (() => {
               if (data.error) {
                 fullText = data.error;
               } else if (data.candidates && data.candidates[0].content) {
+                // Tích lũy dần các từ ngữ do mô hình sinh ra
                 fullText += data.candidates[0].content.parts[0].text;
               }
               
-              // Lọc rác: Loại bỏ tất cả luồng suy nghĩ của Gemma
+              // ─── BỘ LỌC RÁC: LOẠI BỎ LUỒNG SUY NGHĨ (CHAIN-OF-THOUGHT FILTER) ───
+              // Gemini/Gemma đôi khi trả về các bước lập luận ngầm định. Đoạn mã sau
+              // trích xuất chính xác phần câu trả lời chính thức dành cho người dùng.
               let cleanText = fullText;
               
-              // Nếu có chữ Draft: thì lấy toàn bộ phần nằm sau chữ Draft:
+              // Trường hợp 1: Tách nội dung sau nhãn 'Draft:'
               if (cleanText.includes('Draft:')) {
                   const parts = cleanText.split('Draft:');
                   cleanText = parts[parts.length - 1].trim();
               } else if (cleanText.includes('* Greeting:')) {
-                  // Chỉ lấy đoạn cuối cùng sau khi phân tích
+                  // Trường hợp 2: Bỏ qua các dòng phân tích bắt đầu bằng dấu '*'
                   const lines = cleanText.split('\n');
                   cleanText = lines.filter(l => !l.startsWith('*') && l.trim() !== '').join('\n');
               }
               
-              // Nếu text vẫn quá dơ (chứa các gạch đầu dòng phân tích), lọc nốt
+              // Trường hợp 3: Dọn dẹp nốt các gạch đầu dòng meta ngầm định
               cleanText = cleanText.replace(/\* User says:.*\n/g, '')
                                    .replace(/\* Persona:.*\n/g, '')
                                    .replace(/\* Style:.*\n/g, '')
@@ -319,6 +356,7 @@ const OmniChat = (() => {
                                    
               const processedText = cleanText.trim();
               if (processedText) {
+                // Render ngay đoạn văn bản sạch lên giao diện thay thế Typing indicator
                 aiDiv.innerHTML = md(processedText);
                 $('chatBody').scrollTop = $('chatBody').scrollHeight;
               }
@@ -326,23 +364,29 @@ const OmniChat = (() => {
           }
         }
       }
+      // Lưu lại phản hồi hoàn chỉnh của AI vào ngữ cảnh lịch sử
       history.push({ role: 'model', parts: [{ text: fullText }] });
+      // Giới hạn bộ nhớ đệm lịch sử tối đa 20 tin nhắn để tránh tràn payload
       if (history.length > 20) history = history.slice(-20);
     } catch (e) {
       aiDiv.innerHTML = '⚠️ Lỗi kết nối. Vui lòng thử lại.';
     }
 
+    // Mở khóa giao diện sau khi luồng stream kết thúc
     busy = false;
     $('chatSendBtn').disabled = false;
     input.focus();
   }
 
+  // 4. LẮNG NGHE PHÍM TẮT (KEYBOARD EVENT LISTENER)
   document.addEventListener('DOMContentLoaded', () => {
     $('chatInput').addEventListener('keydown', e => {
+      // Gửi tin nhắn khi nhấn phím Enter
       if (e.key === 'Enter') { e.preventDefault(); send(); }
     });
   });
 
+  // Xuất ra public API của Module
   return { toggle, send };
 })();
 </script>

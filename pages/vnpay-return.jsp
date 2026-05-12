@@ -2,8 +2,18 @@
 <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
 <%@ page import="jakarta.mail.*, jakarta.mail.internet.*" %>
 <%@ include file="vnpay-config.jsp" %>
+<%-- ==========================================================================
+     TRANG KIỂM CHỨNG KẾT QUẢ GIAO DỊCH VNPAY (PAYMENT RETURN & IPN HANDLER)
+     Đóng vai trò điểm hứng dữ liệu (Callback/Return URL) từ máy chủ VNPAY
+     sau khi khách hàng thao tác thanh toán. Thực thi xác thực toàn vẹn bằng
+     chữ ký số HMAC-SHA512, cập nhật trạng thái đơn hàng theo nguyên tắc
+     Giao dịch đồng bộ (ACID Transaction) và kích hoạt cảnh báo đa kênh.
+     ========================================================================== --%>
 <%
-    // 1. THU THẬP THAM SỐ
+    // ========================================================================
+    // 1. THU THẬP VÀ LÀM SẠCH BỘ THAM SỐ TRẢ VỀ (PARAMETER EXTRACTION)
+    // Lặp tự động để gom toàn bộ dữ liệu trả về từ VNPAY vào danh sách Map
+    // ========================================================================
     Map<String, String> fields = new HashMap<>();
     for (Enumeration<String> params = request.getParameterNames(); params.hasMoreElements();) {
         String fieldName = params.nextElement();
@@ -13,11 +23,16 @@
         }
     }
 
+    // Tách riêng biệt chữ ký bảo mật trả về để tiện đối soát
     String vnp_SecureHash = request.getParameter("vnp_SecureHash");
+    // Loại bỏ các trường chữ ký ra khỏi Map để đảm bảo chuỗi băm tính toán lại không bị lệch
     fields.remove("vnp_SecureHashType");
     fields.remove("vnp_SecureHash");
     
-    // 2. KIỂM TRA CHỮ KÝ
+    // ========================================================================
+    // 2. KIỂM TRA TÍNH TOÀN VẸN CHỮ KÝ (CRYPTOGRAPHIC SIGNATURE VERIFICATION)
+    // Thực hiện băm lại chuỗi dữ liệu gốc theo Secret Key để đề phòng giả mạo gói tin
+    // ========================================================================
     String signValue = hashAllFields(fields);
     
     boolean isSuccess = false;
@@ -34,16 +49,21 @@
     String vnp_TransactionNo = request.getParameter("vnp_TransactionNo");
     
     if (signValue.equals(vnp_SecureHash)) {
+        // Mã phản hồi 00 chứng nhận giao dịch thẻ/tài khoản đã thành công về mặt tài chính
         if ("00".equals(request.getParameter("vnp_ResponseCode"))) {
             
-            // 3. XỬ LÝ DATABASE KHI THÀNH CÔNG
+            // ========================================================================
+            // 3. XỬ LÝ NGHIỆP VỤ DATABASE KHI THÀNH CÔNG (ACID TRANSACTION PROCESSING)
+            // Đảm bảo tính nhất quán: Đơn hàng và Trạng thái phòng phải cập nhật thành công trọn vẹn
+            // ========================================================================
             Connection conn = null;
             try {
                 Class.forName("com.mysql.cj.jdbc.Driver");
                 conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
+                // Vô hiệu hóa tự động Commit để kiểm soát an toàn giao dịch bằng tay
                 conn.setAutoCommit(false);
 
-                // 3.1 Tìm ID đơn hàng từ booking_code
+                // 3.1 Truy xuất định danh ID duy nhất của đơn đặt phòng dựa trên mã giao dịch tham chiếu (TxnRef)
                 String sqlFind = "SELECT id FROM bookings WHERE booking_code = ?";
                 PreparedStatement psF = conn.prepareStatement(sqlFind);
                 psF.setString(1, vnp_TxnRef);
@@ -51,13 +71,13 @@
                 if(rsF.next()) {
                     int bookingId = rsF.getInt("id");
 
-                    // 3.2 Cập nhật trạng thái đơn hàng sang CONFIRMED và thanh toán PAID, cập nhật số tiền đã trả
+                    // 3.2 Cập nhật trạng thái đơn hàng sang Đã xác nhận (CONFIRMED) và Trạng thái thanh toán (PAID)
                     String sqlUp = "UPDATE bookings SET status = 'CONFIRMED', payment_status = 'PAID', paid_amount = total_amount WHERE id = ?";
                     PreparedStatement psU = conn.prepareStatement(sqlUp);
                     psU.setInt(1, bookingId);
                     psU.executeUpdate();
 
-                    // 3.3 Tìm và Khóa phòng liên quan
+                    // 3.3 Tra cứu các phòng thuộc đơn hàng để đổi sang trạng thái Đã có khách (OCCUPIED)
                     String sqlRoom = "SELECT room_id FROM booking_rooms WHERE booking_id = ?";
                     PreparedStatement psR = conn.prepareStatement(sqlRoom);
                     psR.setInt(1, bookingId);
@@ -70,12 +90,15 @@
                         psL.executeUpdate();
                     }
 
+                    // Hoàn tất toàn bộ chuỗi thao tác CSDL một cách an toàn
                     conn.commit();
                     isSuccess = true;
                     statusText = "Thanh toán thành công";
                     message = "Cảm ơn bạn đã sử dụng dịch vụ của OmniStay. Phòng của bạn đã được xác nhận!";
 
-                    // 4. LẤY THÔNG TIN HIỂN THỊ UI VÀ GỬI ZALO/EMAIL
+                    // ========================================================================
+                    // 4. TRUY XUẤT THÔNG TIN HIỂN THỊ UI VÀ KÍCH HOẠT THÔNG BÁO (NOTIFICATION TRIGGERS)
+                    // ========================================================================
                     String sqlDetail = "SELECT b.booking_code, b.total_amount, b.check_in_date, b.check_out_date, b.customer_full_name, b.customer_phone, b.customer_email, r.room_number " +
                                      "FROM bookings b " +
                                      "JOIN booking_rooms br ON b.id = br.booking_id " +
@@ -93,7 +116,7 @@
                         String checkIn = rsD.getString("check_in_date");
                         String checkOut = rsD.getString("check_out_date");
 
-                        // Gửi Zalo
+                        // ─── ĐẨY THÔNG BÁO TỨC THỜI ĐẾN ĐIỆN THOẠI QUẢN TRỊ VIÊN QUA ZALO BOT API ───
                         try {
                             String zaloMsg = "🏨 THÔNG BÁO: CÓ ĐƠN ĐẶT PHÒNG MỚI!\n"
                                     + "Hệ thống vừa ghi nhận một giao dịch thành công qua VNPAY.\n\n"
@@ -105,6 +128,7 @@
                                     + "- Tổng tiền: " + String.format("%,.0f", uiAmount) + " VND\n"
                                     + "- Trạng thái: Đã thanh toán trực tuyến";
                             
+                            // Escape chuỗi thô để nhúng vào Payload JSON hợp lệ
                             zaloMsg = zaloMsg.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "");
                             String jsonPayload = "{\"chat_id\": \"" + SECRET_ZALO_CHATID + "\", \"text\": \"" + zaloMsg + "\"}";
                             String apiUrl = "https://bot-api.zaloplatforms.com/bot" + SECRET_ZALO_TOKEN + "/sendMessage";
@@ -122,7 +146,7 @@
                             System.out.println("Lỗi gửi Zalo: " + zEx.getMessage());
                         }
 
-                        // ─── GỬI EMAIL HÓA ĐƠN ───
+                        // ─── GỬI EMAIL XÁC NHẬN CHÍNH THỨC CHO KHÁCH HÀNG BẰNG JAKARTA MAIL ───
                         try {
                             if (uiGuestEmail != null && uiGuestEmail.contains("@")) {
                                 Properties props = new Properties();
@@ -189,14 +213,15 @@
                 }
                 conn.close();
             } catch (Exception e) {
-                if(conn != null) conn.rollback();
+                // Khôi phục lại trạng thái CSDL ban đầu nếu có bất kỳ lệnh cập nhật nào bị gián đoạn
+                if(conn != null) try { conn.rollback(); } catch(SQLException ignore) {}
                 message = "Lỗi hệ thống: " + e.getMessage();
             }
         } else {
             message = "Giao dịch không thành công (Mã lỗi: " + request.getParameter("vnp_ResponseCode") + ")";
         }
     } else {
-        message = "Lỗi bảo mật: Chữ ký không hợp lệ.";
+        message = "Lỗi bảo mật: Chữ ký không hợp lệ. Đã phát hiện rủi ro chỉnh sửa gói tin.";
     }
 %>
 

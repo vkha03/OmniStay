@@ -1,18 +1,28 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
 <%@ include file="../env-secrets.jsp" %>
+<%-- ==========================================================================
+     TRANG CHI TIẾT HÓA ĐƠN VÀ ĐỐI SOÁT TÀI CHÍNH (INVOICE DETAILS & STATEMENT)
+     Kết xuất hóa đơn điện tử có giá trị kiểm toán với đầy đủ thông tin phòng,
+     số tiền gốc, danh sách các dịch vụ phụ trội phát sinh và số tiền đã thanh toán.
+     Hỗ trợ in ấn (Print CSS) và tích hợp popup gửi đánh giá trực tiếp cho đơn hàng.
+     ========================================================================== --%>
 <%
+    // 1. TIẾP NHẬN THAM SỐ TRUY CỨU TỪ GET (GET PARAMETERS RECEPTION)
     String bookingCode = request.getParameter("code");
     String guestPhone = request.getParameter("phone");
     
+    // Khai báo cờ trạng thái tìm kiếm và biến lưu trữ lỗi tổng hợp
     boolean found = false;
     String error = null;
     
+    // Khởi tạo trước các biến mang dữ liệu chi tiết của khách hàng và đơn đặt phòng
     String fullName = "", email = "", phone = "", roomName = "", roomType = "", status = "", createdAt = "", checkIn = "", checkOut = "";
     String customerIdCard = "", paymentMethod = "", paymentStatus = "";
     int numAdults = 1, numChildren = 0;
     double totalAmount = 0, paidAmount = 0;
     
+    // Ràng buộc bảo mật: Chuyển hướng ngay lập tức nếu thiếu mã đặt phòng hoặc số điện thoại
     if (bookingCode == null || guestPhone == null || bookingCode.isEmpty() || guestPhone.isEmpty()) {
         response.sendRedirect("invoice-lookup.jsp");
         return;
@@ -28,9 +38,12 @@
     boolean hasServices = false;
 
     try {
+        // 2. KẾT NỐI VÀ TRUY VẤN ĐA BẢNG TỔNG HỢP (MULTI-TABLE JOIN LOOKUP)
         Class.forName("com.mysql.cj.jdbc.Driver");
         conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
         
+        // Truy vấn ánh xạ thông tin từ 4 bảng: bookings, booking_rooms, rooms và room_types
+        // nhằm có đủ Tên khách, Loại phòng, Ngày check-in/out và Tổng tiền đã tạm tính
         String sql = "SELECT b.*, r.id as r_id, r.room_number, rt.type_name " +
                      "FROM bookings b " +
                      "JOIN booking_rooms br ON b.id = br.booking_id " +
@@ -65,9 +78,11 @@
             numAdults = rs.getInt("num_adults");
             numChildren = rs.getInt("num_children");
             paidAmount = rs.getDouble("paid_amount");
+            // Biến totalAmount lúc này lưu trữ tổng tiền phòng + tiền dịch vụ
             totalAmount = rs.getDouble("total_amount");
             
-            // Tính toán dịch vụ
+            // 3. TÍNH TOÁN CHI PHÍ DỊCH VỤ PHÁT SINH (SIDE SERVICES AUDITING)
+            // Truy vấn tổng tiền dịch vụ phát sinh từ bảng `booking_services` dựa trên số lượng và giá lịch sử
             PreparedStatement psSvcCount = conn.prepareStatement("SELECT SUM(quantity * historical_price) as total_svc FROM booking_services WHERE booking_id = ?");
             psSvcCount.setInt(1, bookingId);
             ResultSet rsSvcCount = psSvcCount.executeQuery();
@@ -78,7 +93,8 @@
             rsSvcCount.close();
             psSvcCount.close();
 
-            // Kiểm tra xem đã đánh giá chưa
+            // 4. KIỂM TRA TRẠNG THÁI ĐÁNH GIÁ (CHECK REVIEW EXISTENCE)
+            // Ngăn chặn hiển thị lặp lại form đánh giá nếu đơn hàng đã từng được phản hồi
             PreparedStatement psCheck = conn.prepareStatement("SELECT id FROM reviews WHERE booking_id = ?");
             psCheck.setInt(1, bookingId);
             ResultSet rsCheck = psCheck.executeQuery();
@@ -88,6 +104,8 @@
         } else {
             error = "Không tìm thấy dữ liệu phù hợp với thông tin bạn cung cấp.";
         }
+        
+        // 5. GIẢI PHÓNG TÀI NGUYÊN GIAO DỊCH CHÍNH (MAIN CONNECTION CLEANUP)
         rs.close();
         ps.close();
         conn.close();
@@ -95,6 +113,7 @@
         error = "Lỗi kết nối: " + e.getMessage();
     }
     
+    // Định dạng tiền tệ mặc định hiển thị ký hiệu đồng (₫) sang trọng
     NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 %>
 <!DOCTYPE html>
@@ -393,7 +412,8 @@
                                         <td class="text-end fw-bold"><%= nf.format(totalAmount - totalServices).replace("VNĐ","₫") %></td>
                                     </tr>
                                     <%
-                                        // Hiển thị danh sách dịch vụ nếu có
+                                        // 6. KẾT XUẤT ĐỘNG DANH SÁCH DỊCH VỤ PHỤ TRỘI TRÊN GIAO DIỆN HÓA ĐƠN
+                                        // Mở kết nối chuyên biệt để render danh sách chi tiết các tiện ích phát sinh
                                         if (hasServices) {
                                             Connection connSvc = null;
                                             try {
@@ -417,6 +437,7 @@
                                     </tr>
                                     <%
                                                 }
+                                                // Đảm bảo thu hồi bộ nhớ ngay sau khi lặp xong mảng dịch vụ
                                                 rsSvc.close();
                                                 psSvc.close();
                                             } catch(Exception e) { e.printStackTrace(); } finally { if(connSvc != null) connSvc.close(); }

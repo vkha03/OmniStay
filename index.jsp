@@ -1,17 +1,31 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
 <%@ include file="env-secrets.jsp" %>
+<%-- ==========================================================================
+     TRANG CHỦ KHÁCH SẠN (MAIN LANDING PAGE)
+     Trang đích đón tiếp người dùng. Chứa toàn bộ các khối quảng bá dịch vụ,
+     danh mục phòng nổi bật, tích hợp thanh tìm kiếm và kiểm tra phòng trống.
+     Các thao tác truy xuất dữ liệu được thực hiện trực tiếp qua JDBC.
+     ========================================================================== --%>
 <%! 
+    // 1. KHAI BÁO CÁC BIẾN TOÀN CỤC CHO TRANG CHỦ
+    // Trích xuất từ hằng số bảo mật trong env-secrets.jsp để nạp vào Chatbot sau này
     public static final String GEMINI_API_KEY = SECRET_GEMINI_KEY; 
     public static final String GEMINI_MODEL = SECRET_GEMINI_MODEL; 
 %>
 <%
+    // 2. KHỞI TẠO KẾT NỐI CƠ SỞ DỮ LIỆU (DATABASE INITIALIZATION)
+    // Khai báo đối tượng Connection và chuỗi lưu trữ thông báo lỗi nếu có
     Connection conn = null;
     String dbError = null;
     try {
+        // Nạp Driver MySQL JDBC vào bộ nhớ
         Class.forName("com.mysql.cj.jdbc.Driver");
+        // Thiết lập kết nối sử dụng các hằng số tĩnh định nghĩa trong env-secrets.jsp
         conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
     } catch(Exception e) {
+        // Bắt lỗi và ghi nhận nguyên nhân (sai tài khoản, mất kết nối, v.v.)
+        // để hiển thị cảnh báo thân thiện thay vì ném lỗi 500 ra trình duyệt
         dbError = e.getMessage() != null ? e.getMessage() : e.toString();
     }
 %>
@@ -481,20 +495,27 @@
             </div>
             <div class="hero-stats d-flex gap-4 mt-5">
               <%
+                // 3. TRUY VẤN THỐNG KÊ HERO SECTION (HERO DYNAMIC STATS)
+                // Khởi tạo các giá trị mặc định tĩnh đề phòng trường hợp CSDL chưa sẵn sàng
                 int totalRooms = 128;
                 double avgRating = 4.9;
                 if(conn != null) {
                     try {
+                        // Truy vấn 1: Đếm tổng số lượng phòng thực tế hiện có trong bảng `rooms`
                         PreparedStatement ps1 = conn.prepareStatement("SELECT COUNT(*) FROM rooms");
                         ResultSet rs1 = ps1.executeQuery();
                         if(rs1.next()) totalRooms = rs1.getInt(1);
-                        rs1.close(); ps1.close();
+                        rs1.close(); ps1.close(); // Đóng tài nguyên ngay sau khi lấy dữ liệu
 
+                        // Truy vấn 2: Tính điểm số trung bình (AVG) của tất cả đánh giá hợp lệ (status = 1)
+                        // Hàm ROUND(..., 1) làm tròn kết quả đến 1 chữ số thập phân
                         PreparedStatement ps2 = conn.prepareStatement("SELECT ROUND(AVG(rating), 1) FROM reviews WHERE status = 1");
                         ResultSet rs2 = ps2.executeQuery();
                         if(rs2.next() && rs2.getObject(1) != null) avgRating = rs2.getDouble(1);
                         rs2.close(); ps2.close();
-                    } catch(Exception e) {}
+                    } catch(Exception e) {
+                        // Bỏ qua lỗi ngầm định để không gián đoạn việc hiển thị Hero section
+                    }
                 }
               %>
               <div>
@@ -628,16 +649,22 @@
                 <select name="type" class="booking-input form-select">
                   <option value="all">Tất cả loại phòng</option>
                   <%
+                    // 4. NẠP ĐỘNG DANH SÁCH LOẠI PHÒNG (POPULATE ROOM TYPES DROPDOWN)
+                    // Lấy danh sách tên loại phòng từ CSDL để người dùng lựa chọn chính xác
                     if(conn != null) {
                         try {
                             PreparedStatement pst = conn.prepareStatement("SELECT type_name FROM room_types ORDER BY id ASC");
                             ResultSet rst = pst.executeQuery();
+                            // Duyệt qua từng bản ghi loại phòng tìm được
                             while(rst.next()) {
                                 String tName = rst.getString("type_name");
+                                // Xuất trực tiếp mã HTML thẻ <option> ra luồng phản hồi
                                 out.print("<option value='" + tName + "'>" + tName + "</option>");
                             }
                             rst.close(); pst.close();
-                        } catch(Exception e) {}
+                        } catch(Exception e) {
+                            // Im lặng bỏ qua nếu lỗi để giữ nguyên tùy chọn "Tất cả loại phòng"
+                        }
                     }
                   %>
                 </select>
@@ -873,11 +900,16 @@
         </div>
         <div class="row g-4 justify-content-center">
           <%
+            // 5. TRUY VẤN VÀ RENDER CÁC LOẠI PHÒNG (RENDER ROOM CARDS)
+            // Lấy thông tin chi tiết các hạng phòng từ bảng `room_types` để hiển thị dạng thẻ (card)
             if (conn != null) {
               try {
                 Statement st = conn.createStatement();
                 ResultSet rs = st.executeQuery("SELECT * FROM room_types ORDER BY id ASC");
+                // Bộ định dạng tiền tệ chuẩn Việt Nam (VD: 1.500.000 ₫)
                 NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+                
+                // Duyệt qua từng loại phòng tìm thấy
                 while(rs.next()) {
                   int maxOcc = rs.getInt("max_occupancy");
                   String typeName = rs.getString("type_name");
@@ -910,13 +942,15 @@
             </div>
           </div>
           <%
-                }
+                } // Kết thúc vòng lặp while duyệt danh sách loại phòng
                 rs.close();
                 st.close();
               } catch(Exception e) { 
+                // Bắt lỗi truy vấn SQL và in thông báo màu đỏ trực quan
                 out.println("<div class='col-12 alert alert-danger'>Lỗi thực thi SQL: " + e.getMessage() + "</div>");
               }
             } else {
+              // Trường hợp conn == null (Kết nối thất bại từ đầu trang), hiển thị thông báo lỗi DB
           %>
           <div class="col-12 text-center py-5">
             <div class="alert alert-warning d-inline-block">
@@ -970,25 +1004,31 @@
         </div>
         <div class="row g-4 text-center">
 <%
+// 6. TRUY VẤN VÀ RENDER DANH SÁCH DỊCH VỤ THÊM (AMENITIES SERVICES)
+// Lấy 8 dịch vụ tiêu biểu từ bảng `services` để quảng bá tiện ích khách sạn
 if(conn != null){
     try{
         String sql = "SELECT * FROM services LIMIT 8";
         Statement stmt = conn.createStatement();
         ResultSet rsServ = stmt.executeQuery(sql);
 
+        // Mảng biểu tượng Bootstrap Icons luân phiên gán cho từng thẻ dịch vụ
         String[] icons = {"bi-cup-hot", "bi-droplet-half", "bi-water", "bi-car-front", "bi-wifi", "bi-calendar-event", "bi-shield-check", "bi-stars"};
         int iconIndex = 0;
         NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 
+        // Duyệt lần lượt qua các dịch vụ nạp được
         while(rsServ.next()){
             String name = rsServ.getString("service_name");
             String des  = rsServ.getString("unit"); 
             double price = rsServ.getDouble("price");
 
+            // Tự động gán mô tả mẫu nếu dữ liệu cột `unit` bị trống
             if(des == null || des.trim().isEmpty()){
                 des = "Trải nghiệm dịch vụ cao cấp tại OmniStay với chất lượng phục vụ 5 sao.";
             }
             
+            // Xoay vòng chọn icon ngẫu nhiên/tuần tự từ mảng `icons`
             String icon = icons[iconIndex % icons.length];
             iconIndex++;
 %>
@@ -1009,10 +1049,11 @@ if(conn != null){
             </div>
           </div>
 <%
-        }
+        } // Kết thúc lặp dịch vụ
         rsServ.close();
         stmt.close();
     }catch(Exception e){
+        // Xử lý ngoại lệ in lỗi cụ thể nếu truy vấn bảng services thất bại
         out.println("<div class='col-12'><p class='alert alert-danger'>Lỗi lấy dữ liệu dịch vụ: " + e.getMessage() + "</p></div>");
     }
 }else{
@@ -1355,15 +1396,20 @@ if(conn != null){
         </div>
         <div class="row g-4 justify-content-center">
           <%
+            // 7. TRUY VẤN VÀ RENDER CÁC ĐÁNH GIÁ TÍCH CỰC (CUSTOMER REVIEWS)
+            // Lấy 3 đánh giá mới nhất có số điểm từ 4 sao trở lên và đã được duyệt (status = 1)
+            // Thực hiện phép JOIN với bảng `guests` để lấy ra họ tên đầy đủ của khách hàng
             if(conn != null){
               try {
                 String reviewSql = "SELECT r.*, g.full_name FROM reviews r JOIN guests g ON r.guest_id = g.id WHERE r.status = 1 AND r.rating >= 4 ORDER BY r.created_at DESC LIMIT 3";
                 PreparedStatement psReview = conn.prepareStatement(reviewSql);
                 ResultSet rsReview = psReview.executeQuery();
                 
+                // Mảng màu nền avatar ngẫu nhiên để tạo sự sinh động cho giao diện
                 String[] bgColors = {"var(--primary)", "var(--accent)", "#1a6b5a", "#d4a847"};
                 int revIdx = 0;
                 
+                // Cờ kiểm tra nếu CSDL chưa có đánh giá nào thỏa mãn
                 boolean hasDbReviews = false;
                 while(rsReview.next()){
                   hasDbReviews = true;
@@ -1371,13 +1417,19 @@ if(conn != null){
                   String comment = rsReview.getString("comment");
                   int rating = rsReview.getInt("rating");
                   Timestamp createdAt = rsReview.getTimestamp("created_at");
+                  
+                  // Trích xuất chữ cái đầu tiên của Tên để làm Avatar mặc định (Placeholder avatar)
+                  // Phân tách chuỗi theo khoảng trắng để lấy từ cuối cùng (Tên)
                   String initial = guestName.substring(0, 1).toUpperCase() + (guestName.contains(" ") ? guestName.split(" ")[guestName.split(" ").length-1].substring(0,1).toUpperCase() : "");
           %>
           <div class="col-md-4">
             <div class="review-card bg-white rounded-4 p-4 shadow-sm h-100 d-flex flex-column" style="border: 1px solid var(--border)">
               <div class="d-flex align-items-center gap-2 mb-3">
                 <span class="star fs-5">
-                  <% for(int i=0; i<5; i++) { %>
+                  <% 
+                    // Vòng lặp in chính xác số lượng sao đánh giá (sao đặc ★ và sao rỗng ☆)
+                    for(int i=0; i<5; i++) { 
+                  %>
                     <%= (i < rating) ? "★" : "☆" %>
                   <% } %>
                 </span>
@@ -1402,14 +1454,16 @@ if(conn != null){
           </div>
           <%
                   revIdx++;
-                }
+                } // Kết thúc lặp đánh giá
                 rsReview.close();
                 psReview.close();
                 
+                // Hiển thị thông báo dự phòng nếu danh sách rỗng
                 if(!hasDbReviews) {
                   out.println("<div class='col-12 text-center py-4'><p class='text-muted'>Đang cập nhật những đánh giá mới nhất...</p></div>");
                 }
               } catch(Exception e) {
+                // Bắt và in lỗi nếu có sự cố truy vấn bảng reviews
                 out.println("<div class='col-12 text-center text-danger'>Lỗi tải đánh giá: " + e.getMessage() + "</div>");
               }
             }
@@ -1822,7 +1876,12 @@ if(conn != null){
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-      // Navbar scroll
+      // ======================================================================
+      // XỬ LÝ LƯỢNG TƯƠNG TÁC PHÍA MÁY KHÁCH (CLIENT-SIDE INTERACTIONS)
+      // ======================================================================
+      
+      // 1. Hiệu ứng thanh điều hướng (Navbar Scroll Effect)
+      // Thêm lớp 'navbar-scrolled' khi cuộn qua 50px để làm nền sẫm lại
       window.addEventListener("scroll", function () {
         const navbar = document.querySelector(".navbar");
         if (navbar) {
@@ -1830,7 +1889,8 @@ if(conn != null){
         }
       });
 
-      // Scroll-triggered fade-in animations
+      // 2. Kích hoạt hiệu ứng xuất hiện dần khi cuộn trang (IntersectionObserver Fade-in)
+      // Quan sát các phần tử DOM, khi chúng lọt vào khung nhìn (viewport) sẽ thêm class 'visible'
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
@@ -1839,17 +1899,20 @@ if(conn != null){
         });
       }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
+      // Đăng ký theo dõi cho các thẻ card dịch vụ, hình ảnh và đánh giá
       document.querySelectorAll('.amenity-card, .review-card, .offer-card, .gallery-item, .dept-card').forEach(el => {
         el.classList.add('animate-fade-in');
         observer.observe(el);
       });
 
-      // Auto nights counter
+      // 3. Tự động tính toán số đêm lưu trú (Auto Nights Counter)
+      // Lắng nghe sự kiện thay đổi ngày check-in/check-out để tự động trừ và cập nhật ô hiển thị
       const ci = document.getElementById("checkin");
       const co = document.getElementById("checkout");
       const nd = document.getElementById("nightsDisplay");
       if (ci && co && nd) {
         function updateNights() {
+          // Trừ timestamp và chia cho số mili-giây của 1 ngày (86400000 ms)
           const diff = Math.round(
             (new Date(co.value) - new Date(ci.value)) / 86400000,
           );
@@ -1859,6 +1922,11 @@ if(conn != null){
         co.addEventListener("change", updateNights);
       }
     </script>
-    <% if(conn != null) try { conn.close(); } catch(Exception e) {} %>
+    <% 
+        // 8. ĐÓNG KẾT NỐI CƠ SỞ DỮ LIỆU (RESOURCE CLEANUP)
+        // Đảm bảo Connection luôn được đóng sau khi trang hoàn tất render
+        // Tránh tình trạng cạn kiệt pool kết nối (Connection pool exhaustion)
+        if(conn != null) try { conn.close(); } catch(Exception e) {} 
+    %>
   </body>
 </html>

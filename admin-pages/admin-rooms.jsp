@@ -1,22 +1,34 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- ==========================================================================
+     PHÂN HỆ QUẢN LÝ DANH SÁCH PHÒNG NGHỈ (ADMIN ROOMS CONTROLLER)
+     Chịu trách nhiệm hiển thị toàn bộ sơ đồ và danh sách phòng chi tiết.
+     Tích hợp logic xử lý CRUD (Create - Read - Update - Delete) qua phương thức
+     POST và GET nhằm cập nhật trạng thái phòng, giá cả và thiết lập phòng mới.
+     ========================================================================== --%>
 <%@ include file="../layouts/admin-auth.jsp" %>
 <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
 <%@ include file="../env-secrets.jsp" %>
 <%
+    // 1. KHỞI TẠO KẾT NỐI VÀ BỘ ĐIỀU KHIỂN CRUD (CONNECTION & CRUD CONTROLLER)
     Connection conn = null;
     String dbError = null;
     try {
+        // Nạp trình điều khiển cơ sở dữ liệu MySQL
         Class.forName("com.mysql.cj.jdbc.Driver");
         conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
         
         // --- XỬ LÝ POST ACTION (ADD / EDIT / DELETE) ---
+        // Bắt yêu cầu POST gửi lên từ các form Modal (Thêm/Sửa/Xóa)
         if("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("action") != null) {
             String action = request.getParameter("action");
+            
+            // a) TÁC VỤ THÊM PHÒNG MỚI (CREATE ROOM)
             if(action.equals("addRoom")) {
                 int room_NB = Integer.parseInt(request.getParameter("room_NB"));
                 String status = request.getParameter("status");
                 String room_type = request.getParameter("room_type_id");
                 
+                // Chuẩn bị câu lệnh chèn an toàn chống SQL Injection
                 String addSQL = "INSERT INTO rooms (room_number, status, room_type_id) VALUES (?,?,?)";
                 PreparedStatement psADD = conn.prepareStatement(addSQL);
                 psADD.setInt(1, room_NB);
@@ -24,9 +36,13 @@
                 psADD.setInt(3, Integer.parseInt(room_type));
                 psADD.executeUpdate();
                 psADD.close();
+                
+                // Gán thông báo thành công vào phiên làm việc và chuyển hướng trang để tránh submit lặp
                 session.setAttribute("thongBao", "Thêm phòng mới thành công!");
                 response.sendRedirect("admin-rooms.jsp");
                 return;
+                
+            // b) TÁC VỤ CẬP NHẬT THÔNG TIN PHÒNG (UPDATE ROOM)
             } else if(action.equals("editRoom")) {
                 String ID = request.getParameter("id"); 
                 int roomNB = Integer.parseInt(request.getParameter("room_NB"));
@@ -41,9 +57,12 @@
                 ps.setString(4, ID); 
                 ps.executeUpdate();
                 ps.close();    
+                
                 session.setAttribute("thongBao", "Cập nhật phòng thành công!");
                 response.sendRedirect("admin-rooms.jsp");
                 return; 
+                
+            // c) TÁC VỤ XÓA PHÒNG NGHỈ (DELETE ROOM)
             } else if(action.equals("deleteRoom")) {
                 String ID = request.getParameter("id");
                 String sql = "DELETE FROM rooms WHERE id = ?";
@@ -51,6 +70,7 @@
                 ps.setString(1, ID);
                 ps.executeUpdate();
                 ps.close();
+                
                 session.setAttribute("thongBao", "Đã xóa phòng khỏi hệ thống!");
                 response.sendRedirect("admin-rooms.jsp");
                 return;
@@ -59,9 +79,12 @@
     } catch(Exception e) {
         dbError = e.getMessage();
     }
+    
+    // Bộ định dạng tiền tệ chuẩn Việt Nam
     NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
     
-    // Helper translation
+    // 2. HÀM PHỤ TRỢ DỊCH TÊN LOẠI PHÒNG BẰNG LAMBDA EXPRESSION (JAVA FUNCTIONAL)
+    // Tận dụng cú pháp Lambda hiện đại hỗ trợ trên môi trường Java 8+ / Tomcat 10
     java.util.function.Function<String, String> translateType = (type) -> {
         if(type == null) return "Chưa xác định";
         switch(type.trim().toUpperCase()) {
@@ -158,6 +181,8 @@
             
             <div class="room-grid">
                 <%
+                    // 3. TRUY VẤN VÀ VẼ SƠ ĐỒ LƯỚI TRẠNG THÁI PHÒNG (ROOM MATRIX OVERVIEW)
+                    // Lấy ra tất cả các phòng để hiển thị dạng ma trận trực quan cho lễ tân dễ thao tác
                     if(conn != null) {
                         try {
                             String sqlRoomsMap = "SELECT r.*, rt.type_name FROM rooms r LEFT JOIN room_types rt ON r.room_type_id = rt.id ORDER BY r.room_number ASC";
@@ -165,6 +190,7 @@
                             ResultSet rsRoomsMap = stRoomsMap.executeQuery(sqlRoomsMap);
                             
                             while(rsRoomsMap.next()) {
+                                // Gán class tương ứng với mã trạng thái để tô màu background cho từng ô phòng
                                 String rStatus = rsRoomsMap.getString("status");
                                 if (rStatus == null) rStatus = "AVAILABLE";
                                 rStatus = rStatus.trim().toUpperCase();
@@ -185,7 +211,7 @@
                     </div>
                 </a>
                 <%
-                            }
+                            } // Kết thúc lặp sơ đồ
                             rsRoomsMap.close(); stRoomsMap.close();
                         } catch(Exception e) { out.println("Lỗi tải sơ đồ phòng: " + e.getMessage()); }
                     }
@@ -199,20 +225,12 @@
                     <thead>
                         <tr>
                             <th style="width: 120px;" class="text-center">Số phòng</th>
-                            <th>Tên loại phòng</th>
-                            <th>Sức chứa</th>
-                            <th>Giá niêm yết</th>
-                            <th>Trạng thái</th>
-                            <% if ("ADMIN".equals(adminRole)) { %>
-                            <th class="text-end">Hành động</th>
-                            <% } %>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <%
+                                  <%
+                        // 4. TRUY VẤN DANH SÁCH PHÒNG VÀ XỬ LÝ CẬP NHẬT TRẠNG THÁI NHANH (TABLE RENDERER & INLINE STATUS UPDATE)
                         if(conn!=null){
                             try{	
-                                // 1. XỬ LÝ ĐỔI TRẠNG THÁI (Inline)
+                                // a) XỬ LÝ ĐỔI TRẠNG THÁI TRỰC TIẾP TỪ BẢNG (Inline Status Update)
+                                // Khi người dùng chọn trạng thái mới ở cột Trạng thái, form sẽ tự động gửi yêu cầu GET
                                 String updateId = request.getParameter("updateId");
                                 String newStatus = request.getParameter("newStatus");
 
@@ -225,12 +243,13 @@
                                     upStatus.close();
                                 }
                                 
-                                // 2. LẤY TOÀN BỘ DỮ LIỆU ĐỔ RA BẢNG
+                                // b) LẤY TOÀN BỘ DỮ LIỆU ĐỔ RA BẢNG KẾT HỢP BỘ LỌC (Fetch Table Data with Filters)
+                                // Nối bảng `rooms` với `room_types` và linh hoạt bổ sung điều kiện WHERE dựa trên tham số GET
                                 String SQL = "SELECT rs.id, rs.room_number, rs.room_type_id, rs.status, rt.* " + 
                                              "FROM rooms rs JOIN room_types rt ON rs.room_type_id = rt.id WHERE 1=1 ";
                                 if(loaiphong != null && !loaiphong.isEmpty()){ SQL += " AND rt.type_name = '" + loaiphong +"'"; }
                                 if(trangthai != null && !trangthai.isEmpty()){ SQL += " AND rs.status = '"+ trangthai +"'"; }
-               					
+                					
                                 SQL += " ORDER BY rs.room_number ASC";
                                 PreparedStatement ps = conn.prepareStatement(SQL);
                                 ResultSet rs = ps.executeQuery();
@@ -252,6 +271,7 @@
                                 <%= nf.format(price).replace("VNĐ", "₫") %> <span class="text-muted fw-normal" style="font-size: 0.72rem;">/ đêm</span>
                             </td>
                           	<td>
+                                <!-- Form cập nhật trạng thái tự động nộp khi thay đổi lựa chọn -->
                                 <form action="admin-rooms.jsp" method="GET" style="margin: 0;">
                                     <input type="hidden" name="updateId" value="<%= id %>">
                                     <input type="hidden" name="loaiphong" value="<%= loaiphong != null ? loaiphong : "" %>">
@@ -276,7 +296,7 @@
                             <% } %>
                         </tr>
                         <%
-                                } 
+                                } // Kết thúc lặp dữ liệu bảng phòng
                                 rs.close(); ps.close();
                             } catch(Exception e) { out.println("<tr><td colspan='6'>Lỗi: " + e.getMessage() + "</td></tr>"); }
                     	} else { out.println("<tr><td colspan='6'>Lỗi kết nối database</td></tr>"); }

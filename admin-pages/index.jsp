@@ -1,31 +1,43 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- ==========================================================================
+     BẢNG ĐIỀU KHIỂN QUẢN TRỊ TRUNG TÂM (ADMIN DASHBOARD CONTROLLER)
+     Trang đích mặc định khi quản lý hoặc lễ tân đăng nhập thành công.
+     Tổng hợp toàn bộ số liệu thống kê (KPIs) theo thời gian thực từ CSDL:
+     doanh thu, đơn đặt phòng, trạng thái phòng, tin nhắn liên hệ và đánh giá.
+     ========================================================================== --%>
 <%@ include file="../layouts/admin-auth.jsp" %>
 <%@ page import="java.sql.*" %>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.Locale" %>
 <%@ include file="../env-secrets.jsp" %>
 <%
+    // 1. KHỞI TẠO CÁC BIẾN LƯU TRỮ CHỈ SỐ THỐNG KÊ (KPI METRICS INITIALIZATION)
+    // Biến kết nối CSDL và biến theo dõi lỗi
     Connection conn = null;
     String dbError = null;
     
-    // Thống kê
-    int totalRooms = 0;
-    int availableRooms = 0;
-    int todayBookings = 0;
-    int monthBookings = 0;
-    int newContacts = 0;
-    int monthGuests = 0;
-    int totalStaff = 0;
-    int totalServices = 0;
-    int todayReviews = 0;
-    double todayRevenue = 0;
-    double monthRevenue = 0;
+    // Hệ thống biến số nguyên và số thực đại diện cho các chiều dữ liệu quản trị
+    int totalRooms = 0;      // Tổng số phòng đang khai thác
+    int availableRooms = 0;  // Số lượng phòng đang ở trạng thái trống (AVAILABLE)
+    int todayBookings = 0;   // Số đơn đặt phòng mới phát sinh trong ngày hôm nay
+    int monthBookings = 0;   // Tổng số đơn đặt phòng hợp lệ trong tháng hiện tại
+    int newContacts = 0;     // Số tin nhắn liên hệ từ khách hàng chưa được đọc (UNREAD)
+    int monthGuests = 0;     // Số lượng khách hàng duy nhất có giao dịch trong tháng
+    int totalStaff = 0;      // Tổng số lượng nhân viên/lễ tân trong hệ thống
+    int totalServices = 0;   // Tổng số dịch vụ tiện ích khách sạn cung cấp
+    int todayReviews = 0;    // Số lượng đánh giá phản hồi nhận được trong ngày
+    double todayRevenue = 0; // Doanh thu ghi nhận trong ngày (đơn COMPLETED/CHECKED_IN)
+    double monthRevenue = 0; // Tổng doanh thu tạm tính trong tháng hiện tại
 
     try {
+        // Nạp trình điều khiển kết nối MySQL
         Class.forName("com.mysql.cj.jdbc.Driver");
         conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
         
-        // Lấy tổng số phòng và số phòng trống
+        // 2. TRUY VẤN VÀ TỔNG HỢP CÁC CHỈ SỐ KPI CHÍNH (QUERY CORE KPI METRICS)
+        
+        // a) Lấy tổng số phòng và số phòng đang trống
+        // Sử dụng biểu thức điều kiện CASE WHEN để đếm có chọn lọc ngay trong SQL
         Statement st1 = conn.createStatement();
         ResultSet rs1 = st1.executeQuery("SELECT COUNT(*), SUM(CASE WHEN status = 'AVAILABLE' THEN 1 ELSE 0 END) FROM rooms");
         if(rs1.next()) {
@@ -35,7 +47,8 @@
         rs1.close();
         st1.close();
         
-        // Lấy số đặt phòng (Hôm nay & Tháng này)
+        // b) Thống kê lượng đặt phòng (Hôm nay & Tháng này)
+        // Lọc bỏ các đơn đã bị hủy (status != 'CANCELLED') để số liệu chính xác
         Statement st2 = conn.createStatement();
         ResultSet rs2 = st2.executeQuery("SELECT SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END), SUM(CASE WHEN MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE()) THEN 1 ELSE 0 END) FROM bookings WHERE status != 'CANCELLED'");
         if(rs2.next()) {
@@ -45,7 +58,8 @@
         rs2.close();
         st2.close();
         
-        // Lấy doanh thu (Hôm nay & Tháng này) - Chỉ tính các đơn đã COMPLETED hoặc CHECKED_IN
+        // c) Thống kê dòng tiền doanh thu (Hôm nay & Tháng này)
+        // Chỉ tính tổng tiền các đơn đặt phòng đã thực sự thành công hoặc khách đang ở
         Statement st3 = conn.createStatement();
         ResultSet rs3 = st3.executeQuery("SELECT SUM(CASE WHEN DATE(created_at) = CURDATE() THEN total_amount ELSE 0 END), SUM(CASE WHEN MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE()) THEN total_amount ELSE 0 END) FROM bookings WHERE status IN ('COMPLETED', 'CHECKED_IN')");
         if(rs3.next()) {
@@ -55,43 +69,45 @@
         rs3.close();
         st3.close();
         
-        // Lấy số liên hệ mới
+        // d) Đếm số lượng tin nhắn liên hệ mới cần phản hồi
         Statement st4 = conn.createStatement();
         ResultSet rs4 = st4.executeQuery("SELECT COUNT(*) FROM contacts WHERE status = 'UNREAD'");
         if(rs4.next()) newContacts = rs4.getInt(1);
         rs4.close();
         st4.close();
 
-        // Lấy số khách hàng mới (có booking trong tháng này)
+        // e) Thống kê số lượng khách hàng hoạt động (Active Guests)
+        // Dùng từ khóa DISTINCT để loại bỏ các lượt đặt trùng lặp của cùng một khách
         Statement st5 = conn.createStatement();
         ResultSet rs5 = st5.executeQuery("SELECT COUNT(DISTINCT guest_id) FROM bookings WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())");
         if(rs5.next()) monthGuests = rs5.getInt(1);
         rs5.close();
         st5.close();
 
-        // Lấy tổng số nhân viên
+        // f) Đếm tổng quy mô nhân sự
         Statement st6 = conn.createStatement();
         ResultSet rs6 = st6.executeQuery("SELECT COUNT(*) FROM staff");
         if(rs6.next()) totalStaff = rs6.getInt(1);
         rs6.close();
         st6.close();
 
-        // Lấy tổng số dịch vụ
+        // g) Đếm tổng số dịch vụ khách sạn cung cấp
         Statement st7 = conn.createStatement();
         ResultSet rs7 = st7.executeQuery("SELECT COUNT(*) FROM services");
         if(rs7.next()) totalServices = rs7.getInt(1);
         rs7.close();
         st7.close();
 
-        // Lấy số đánh giá mới hôm nay
+        // h) Đếm số lượng nhận xét, đánh giá phát sinh trong ngày
         Statement st8 = conn.createStatement();
         ResultSet rs8 = st8.executeQuery("SELECT COUNT(*) FROM reviews WHERE DATE(created_at) = CURDATE()");
         if(rs8.next()) todayReviews = rs8.getInt(1);
         rs8.close();
         st8.close();
 
-        // Lấy dữ liệu biểu đồ (7 ngày gần nhất)
-        // Lưu ý: Sẽ trả về chuỗi JSON-like để JS xử lý
+        // 3. TRUY VẤN CHUỖI DỮ LIỆU BIỂU ĐỒ DOANH THU 7 NGÀY (7-DAY REVENUE TIME-SERIES)
+        // Kỹ thuật truy vấn: Tạo ra chuỗi ngày liên tiếp bằng CROSS JOIN ảo (Number table generator)
+        // Sau đó LEFT JOIN với bảng `bookings` để đảm bảo các ngày không có đơn hàng vẫn hiển thị mốc 0 đồng
         StringBuilder chartLabels = new StringBuilder();
         StringBuilder chartData = new StringBuilder();
         Statement stChart = conn.createStatement();
@@ -112,30 +128,35 @@
         rsChart.close();
         stChart.close();
 
+        // Chuẩn hóa định dạng chuỗi JSON mảng dữ liệu trả về cho thư viện Chart.js
         String labelsStr = chartLabels.toString();
         String dataStr = chartData.toString();
         if (labelsStr.endsWith(",")) labelsStr = labelsStr.substring(0, labelsStr.length() - 1);
         if (dataStr.endsWith(",")) dataStr = dataStr.substring(0, dataStr.length() - 1);
 
+        // Đẩy chuỗi dữ liệu mảng vào đối tượng `request` để truyền xuống phía View
         request.setAttribute("chartLabels", labelsStr);
         request.setAttribute("chartData", dataStr);
         
     } catch(Exception e) {
+        // Ghi nhận lỗi kết nối hoặc truy vấn để hiển thị cảnh báo thân thiện
         dbError = e.getMessage();
     }
     
     NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
     
-    // Helper translation
-    java.util.function.Function<String, String> translateType = (type) -> {
+    // (Lambda đã được loại bỏ - xem method translateType bên dưới)
+%>
+<%!
+    // Helper method thay thế lambda - tương thích Java 7+
+    private String translateType(String type) {
         if(type == null) return "Chưa xác định";
-        switch(type.trim().toUpperCase()) {
-            case "STANDARD": return "Tiêu chuẩn (Standard)";
-            case "DELUXE": return "Sang trọng (Deluxe)";
-            case "PREMIUM": return "Cao cấp (Premium)";
-            default: return type;
-        }
-    };
+        String t = type.trim().toUpperCase();
+        if("STANDARD".equals(t)) return "Tiêu chuẩn (Standard)";
+        if("DELUXE".equals(t)) return "Sang trọng (Deluxe)";
+        if("PREMIUM".equals(t)) return "Cao cấp (Premium)";
+        return type;
+    }
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -270,12 +291,15 @@
                             </thead>
                             <tbody>
                                 <%
+                                    // 4. TRUY VẤN VÀ HIỂN THỊ DANH SÁCH ĐƠN ĐẶT PHÒNG MỚI NHẤT (RECENT BOOKINGS)
+                                    // Lấy ra 5 giao dịch đặt phòng gần nhất kết hợp họ tên khách từ bảng `guests`
                                     if(conn != null) {
                                         try {
                                             String sqlRecent = "SELECT b.*, g.full_name FROM bookings b JOIN guests g ON b.guest_id = g.id ORDER BY b.created_at DESC LIMIT 5";
                                             Statement stRecent = conn.createStatement();
                                             ResultSet rsRecent = stRecent.executeQuery(sqlRecent);
                                             while(rsRecent.next()) {
+                                                // Ánh xạ trạng thái đơn hàng sang nhãn tiếng Việt và màu sắc Bootstrap tương ứng
                                                 String status = rsRecent.getString("status");
                                                 String badgeClass = "bg-secondary";
                                                 String statusVi = status;
@@ -293,7 +317,7 @@
                                     <td><span class="status-badge <%= badgeClass %>"><%= statusVi %></span></td>
                                 </tr>
                                 <%
-                                            }
+                                            } // Kết thúc lặp đơn hàng gần đây
                                             rsRecent.close(); stRecent.close();
                                         } catch(Exception e) {}
                                     }
@@ -380,6 +404,8 @@
             
             <div class="room-grid">
                 <%
+                    // 5. TRUY VẤN VÀ VẼ SƠ ĐỒ LƯỚI TRẠNG THÁI PHÒNG (ROOM MATRIX RENDERER)
+                    // Lấy toàn bộ danh sách phòng kèm tên loại phòng (LEFT JOIN room_types) sắp xếp theo số phòng tăng dần
                     if(conn != null) {
                         try {
                             String sqlRooms = "SELECT r.*, rt.type_name FROM rooms r LEFT JOIN room_types rt ON r.room_type_id = rt.id ORDER BY r.room_number ASC";
@@ -387,6 +413,7 @@
                             ResultSet rsRooms = stRooms.executeQuery(sqlRooms);
                             
                             while(rsRooms.next()) {
+                                // Chuẩn hóa trạng thái phòng hiện tại để gán class CSS tương ứng cho ô màu
                                 String rStatus = rsRooms.getString("status");
                                 if (rStatus == null) rStatus = "AVAILABLE";
                                 rStatus = rStatus.trim().toUpperCase();
@@ -396,9 +423,10 @@
                                 else if("CLEANING".equals(rStatus)) rClass = "status-cleaning";
                                 else if("MAINTENANCE".equals(rStatus)) rClass = "status-maintenance";
                                 
+                                // Gọi hàm phụ trợ `translateType` định nghĩa ở đầu trang để lấy tên loại phòng tiếng Việt
                                 String tName = rsRooms.getString("type_name");
                                 if (tName == null) tName = "Chưa thiết lập";
-                                else tName = translateType.apply(tName);
+                                else tName = translateType(tName);
                 %>
                 <a href="admin-rooms.jsp" class="room-item">
                     <div class="room-box <%= rClass %>">
@@ -407,7 +435,7 @@
                     </div>
                 </a>
                 <%
-                            }
+                            } // Kết thúc lặp sơ đồ phòng
                             rsRooms.close(); stRooms.close();
                         } catch(Exception e) { out.println("Lỗi: " + e.getMessage()); }
                     }

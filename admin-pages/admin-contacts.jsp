@@ -1,26 +1,40 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- ==========================================================================
+     PHÂN HỆ HỖ TRỢ & LIÊN HỆ KHÁCH HÀNG (ADMIN CONTACTS CONTROLLER)
+     Tiếp nhận và quản lý tin nhắn yêu cầu tư vấn, thắc mắc từ khách truy cập.
+     Hỗ trợ nhân viên theo dõi sát sao tiến độ hỗ trợ: chuyển đổi trạng thái từ
+     'UNREAD' (Chưa đọc) sang 'RESOLVED' (Đã giải quyết) hoặc xóa tin nhắn rác.
+     ========================================================================== --%>
 <%@ include file="../layouts/admin-auth.jsp" %>
 <%@ page import="java.sql.*, java.util.*, java.text.SimpleDateFormat" %>
 <%@ include file="../env-secrets.jsp" %>
 <%
+    // Mã hóa UTF-8 để bảo toàn ký tự tiếng Việt trong dữ liệu form nộp lên
     request.setCharacterEncoding("UTF-8");
     Connection conn = null;
     String thongBao = null;
     String loaiThongBao = "success";
 
     try {
+        // Nạp MySQL Driver và mở kết nối cơ sở dữ liệu
         Class.forName("com.mysql.cj.jdbc.Driver");
         conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
 
+        // ─── 1. BỘ XỬ LÝ TRẠNG THÁI LIÊN HỆ (CONTACT ACTION CONTROLLER) ───
         String action = request.getParameter("action");
         if (action != null) {
             int id = Integer.parseInt(request.getParameter("id"));
+            
+            // a) TÁC VỤ ĐÁNH DẤU ĐÃ GIẢI QUYẾT (MARK AS RESOLVED)
             if (action.equals("markResolved")) {
+                // Cập nhật trạng thái xử lý tin nhắn sang 'RESOLVED' để bộ phận CSKH nắm bắt
                 PreparedStatement ps = conn.prepareStatement("UPDATE contacts SET status = 'RESOLVED' WHERE id = ?");
                 ps.setInt(1, id);
                 ps.executeUpdate();
                 thongBao = "Đã đánh dấu là đã giải quyết!";
-            } else if (action.equals("delete")) {
+            } 
+            // b) TÁC VỤ XÓA TIN NHẮN LIÊN HỆ (DELETE CONTACT MESSAGE)
+            else if (action.equals("delete")) {
                 PreparedStatement ps = conn.prepareStatement("DELETE FROM contacts WHERE id = ?");
                 ps.setInt(1, id);
                 ps.executeUpdate();
@@ -106,8 +120,10 @@
                     </thead>
                     <tbody>
                         <%
+                            // 2. TRUY VẤN VÀ ĐỔ DỮ LIỆU LIÊN HỆ (RENDER CONTACTS TABLE)
                             if(conn != null) {
                                 try {
+                                    // Sắp xếp tin nhắn liên hệ mới nhất hiển thị trên cùng để hỗ trợ kịp thời
                                     String sql = "SELECT * FROM contacts WHERE 1=1 ";
                                     if(contactSearch != null && !contactSearch.trim().isEmpty()) {
                                         sql += " AND (full_name LIKE ? OR email LIKE ? OR subject LIKE ?)";
@@ -130,6 +146,7 @@
                                         String status = rs.getString("status");
                                         Timestamp createdAt = rs.getTimestamp("created_at");
                         %>
+                        <%-- Tăng độ đậm font chữ (font-weight: 500) giúp nhận diện nhanh các tin nhắn mang trạng thái 'UNREAD' --%>
                         <tr style="<%= status.equals("UNREAD") ? "font-weight: 500;" : "" %>">
                             <td>
                                 <div class="fw-600 text-dark" style="font-size: 1rem;"><%= name %></div>
@@ -143,6 +160,7 @@
                                 </span>
                             </td>
                             <td class="text-end">
+                                <%-- Truyền trực tiếp nội dung tin nhắn dạng chuỗi ES6 Template Literal (Backticks) vào hàm JS mở Modal --%>
                                 <a class="action-btn" onclick="viewMessage('<%= name %>', '<%= email %>', '<%= subject %>', `<%= message %>`)" title="Xem nội dung"><i class="bi bi-eye text-primary"></i></a>
                                 <% if(status.equals("UNREAD")) { %>
                                     <form action="admin-contacts.jsp" method="POST" style="display:inline;">
@@ -159,7 +177,7 @@
                             </td>
                         </tr>
                         <%
-                                    }
+                                    } // Kết thúc lặp danh sách tin nhắn
                                     rs.close(); ps.close();
                                 } catch(Exception e) { out.println("Lỗi: " + e.getMessage()); }
                             }

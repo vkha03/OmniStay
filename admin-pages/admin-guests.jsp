@@ -1,4 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- ==========================================================================
+     PHÂN HỆ QUẢN LÝ HỒ SƠ KHÁCH HÀNG (ADMIN GUESTS CONTROLLER)
+     Hiển thị và quản lý danh sách toàn bộ khách hàng đã đăng ký/lưu trú.
+     Thực hiện tổng hợp số liệu tự động (số lần đặt phòng, tổng chi tiêu)
+     kết hợp cho phép chỉnh sửa thông tin liên hệ hoặc xóa hồ sơ khách hàng.
+     ========================================================================== --%>
 <%@ include file="../layouts/admin-auth.jsp" %>
 <%@ page import="java.sql.*, java.util.*, java.text.SimpleDateFormat, java.text.NumberFormat" %>
 <%@ include file="../env-secrets.jsp" %>
@@ -6,12 +12,17 @@
     Connection conn = null;
     String dbError = null;
     try {
+        // Nạp Driver và thiết lập kết nối Database
         Class.forName("com.mysql.cj.jdbc.Driver");
         conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
         
-        // --- XỬ LÝ POST ACTION (EDIT / DELETE GUEST) ---
+        // ─── 1. XỬ LÝ CÁC HÀNH ĐỘNG CẬP NHẬT/XÓA HỒ SƠ (POST ACTION CONTROLLER) ───
         if("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("action") != null) {
+            // Đảm bảo hỗ trợ tiếng Việt có dấu khi submit form
+            request.setCharacterEncoding("UTF-8");
             String action = request.getParameter("action");
+            
+            // a) TÁC VỤ CẬP NHẬT THÔNG TIN KHÁCH HÀNG (UPDATE GUEST PROFILE)
             if(action.equals("editGuest")) {
                 int id = Integer.parseInt(request.getParameter("id"));
                 String fullName = request.getParameter("full_name");
@@ -19,6 +30,7 @@
                 String phone = request.getParameter("phone_number");
                 String email = request.getParameter("email");
                 
+                // Sử dụng PreparedStatement để ngăn chặn tấn công SQL Injection
                 String sql = "UPDATE guests SET full_name = ?, id_card = ?, phone_number = ?, email = ? WHERE id = ?";
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setString(1, fullName);
@@ -29,10 +41,13 @@
                 ps.executeUpdate();
                 ps.close();
                 
+                // Lưu thông báo thành công vào session và redirect tránh nộp lại form (PRG pattern)
                 session.setAttribute("thongBao", "Đã cập nhật thông tin khách hàng!");
                 response.sendRedirect("admin-guests.jsp");
                 return;
-            } else if(action.equals("deleteGuest")) {
+            } 
+            // b) TÁC VỤ XÓA HỒ SƠ KHÁCH HÀNG (DELETE GUEST)
+            else if(action.equals("deleteGuest")) {
                 int id = Integer.parseInt(request.getParameter("id"));
                 String sql = "DELETE FROM guests WHERE id = ?";
                 PreparedStatement ps = conn.prepareStatement(sql);
@@ -131,9 +146,11 @@
                     </thead>
                     <tbody>
                         <%
+                            // 2. TRUY VẤN VÀ ĐỔ DỮ LIỆU DANH SÁCH KHÁCH HÀNG (RENDER GUESTS TABLE)
                             if(conn != null) {
                                 try {
                                     NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+                                    // Xây dựng câu lệnh SQL tích hợp Subquery truy xuất đồng thời tổng số đơn và tổng chi tiêu thực tế
                                     String sql = "SELECT g.*, " +
                                                  "(SELECT COUNT(*) FROM bookings b WHERE b.guest_id = g.id) as booking_count, " +
                                                  "(SELECT SUM(total_amount) FROM bookings b WHERE b.guest_id = g.id AND b.status != 'CANCELLED') as total_spent " +
@@ -161,6 +178,7 @@
                                         int bookingCount = rs.getInt("booking_count");
                                         double totalSpent = rs.getDouble("total_spent");
                                         
+                                        // Tách ký tự đầu tiên của tên riêng làm Avatar động (Placeholder text avatar)
                                         String initials = "";
                                         if(name != null && !name.isEmpty()) {
                                             String[] parts = name.split(" ");
@@ -184,9 +202,10 @@
                             <td>
                                 <span class="badge bg-light text-dark border fw-normal py-1 px-2">
                                     <i class="bi bi-person-vcard text-primary me-1"></i> <%= idCard != null ? idCard : "N/A" %>
-                                </span>
+                                  </span>
                             </td>
                             <td class="text-center">
+                                <%-- Hiển thị huy hiệu khách hàng thân thiết (VIP) nếu đã đặt trên 5 lần --%>
                                 <% if(bookingCount > 5) { %>
                                 <span class="badge bg-primary rounded-pill px-2 py-1"><i class="bi bi-star-fill text-warning me-1"></i><%= bookingCount %></span>
                                 <% } else { %>
@@ -206,7 +225,7 @@
                             </td>
                         </tr>
                         <%
-                                    }
+                                    } // Kết thúc lặp danh sách khách hàng
                                     rs.close(); ps.close();
                                     conn.close();
                                 } catch(Exception e) {

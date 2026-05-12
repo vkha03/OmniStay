@@ -1,34 +1,47 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
+<%@ include file="../env-secrets.jsp" %>
+<%-- ==========================================================================
+     TRANG CHI TIẾT HẠNG PHÒNG VÀ DANH SÁCH PHÒNG CỤ THỂ (ROOM TYPE DETAILS)
+     Hiển thị thông tin chi tiết về một hạng phòng cụ thể kèm bộ sưu tập ảnh.
+     Liệt kê danh sách các số phòng thuộc hạng phòng đó cùng trạng thái thực tế
+     (Sẵn sàng, Đang có khách, Bảo trì) để khách hàng chọn lựa và tiến hành đặt.
+     ========================================================================== --%>
 <%
+    // 1. KHỞI TẠO KẾT NỐI CƠ SỞ DỮ LIỆU ĐỒNG BỘ (DATABASE INITIALIZATION)
     Connection conn = null;
     String dbError = null;
     try{
         Class.forName("com.mysql.cj.jdbc.Driver");
-        conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/omnistay", "root", "");
+        // Sử dụng cấu hình tập trung từ env-secrets.jsp để bảo mật và dễ triển khai
+        conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
     }catch(Exception e){
         dbError = e.getMessage();
     }
     NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
     
-    // 1. KHAI BÁO CÁC BIẾN (Tên phải khớp với bên dưới HTML)
+    // 2. KHAI BÁO CÁC BIẾN GIAO DIỆN (UI DATA VARIABLES)
+    // Các biến này lưu trữ dữ liệu trả về từ CSDL để kết xuất vào HTML phía dưới
     String type_name = "";
     double price = 0;
     int maxOccupancy = 0;
+    // Nhận tham số định danh loại phòng từ URL (Query parameter: id)
     String typeId = request.getParameter("id");
-    // Mảng hình ảnh Gallery để khách hàng xem chi tiết phòng
+    
+    // Mảng hình ảnh minh họa tĩnh (Gallery placeholder) mang lại trải nghiệm thị giác cao cấp
     String[] gallery = {
         "https://images.unsplash.com/photo-1611892440504-42a792e24d32?q=80&w=1000&auto=format&fit=crop",
         "https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=1000&auto=format&fit=crop",
         "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?q=80&w=1000&auto=format&fit=crop",
         "https://images.unsplash.com/photo-1566665797739-1674de7a421a?q=80&w=1000&auto=format&fit=crop"
     };
-    String imgURL = gallery[0]; // Hình đầu tiên làm Banner
+    // Dùng ảnh đầu tiên trong bộ sưu tập làm Banner chính của trang
+    String imgURL = gallery[0]; 
 
-    // 2. CHẠY SQL LẤY THÔNG TIN LOẠI PHÒNG
+    // 3. TRUY VẤN DỮ LIỆU TỔNG QUAN HẠNG PHÒNG (QUERY ROOM TYPE DATA)
     if(conn != null) {
         try {
-            // Chỉ cần gọi bảng room_types là đủ thông tin cho Banner
+            // Lấy thông tin cơ bản của loại phòng (Tên, Giá gốc, Sức chứa)
             String sql1 = "SELECT * FROM room_types WHERE id = ?";
             PreparedStatement ps1 = conn.prepareStatement(sql1);
             ps1.setString(1, typeId);
@@ -193,10 +206,15 @@
 
                     <div class="d-flex flex-column gap-3">
                         <%
+                            // 4. TRUY VẤN DANH SÁCH CÁC PHÒNG CỤ THỂ (QUERY SPECIFIC ROOMS)
+                            // Lấy tất cả các số phòng trực thuộc hạng phòng này từ bảng `rooms`
+                            // Sắp xếp theo thứ tự số phòng tăng dần để dễ tra cứu
                             String sql2 = "SELECT * FROM rooms WHERE room_type_id = ? ORDER BY room_number ASC ";
                          	PreparedStatement ps2 = conn.prepareStatement(sql2);
                          	ps2.setString(1,typeId);
                          	ResultSet rs2 = ps2.executeQuery();
+                            
+                            // Duyệt qua từng phòng để in thẻ trạng thái riêng biệt
                          	while(rs2.next()){
                          	   int roomNB = rs2.getInt("room_number");
                          	   String status = rs2.getString("status");
@@ -237,9 +255,12 @@
                         </div>
                         
                         <%  
-                        }
+                        } // Kết thúc lặp danh sách phòng cụ thể
+                         
+                         // 5. GIẢI PHÓNG TÀI NGUYÊN BỘ NHỚ (CLEANUP)
                          ps2.close();
                          rs2.close();
+                         // Đóng kết nối cơ sở dữ liệu an toàn
                          conn.close();
                         %>
                     </div>

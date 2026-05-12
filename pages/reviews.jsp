@@ -1,11 +1,19 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*, java.util.*, java.text.SimpleDateFormat" %>
 <%@ include file="../env-secrets.jsp" %>
+<%-- ==========================================================================
+     TRANG NHẬN XÉT VÀ ĐÁNH GIÁ TỪ KHÁCH HÀNG (CUSTOMER REVIEWS & FEEDBACK)
+     Hiển thị công khai các phản hồi thực tế đã được kiểm duyệt (status = 1)
+     của khách hàng từng lưu trú, truy vấn kết hợp (JOIN) từ hai bảng
+     `reviews` và `guests` sắp xếp theo thời gian mới nhất.
+     ========================================================================== --%>
 <%
+    // 1. KHỞI TẠO KẾT NỐI CSDL (DATABASE INITIALIZATION)
     Connection conn = null;
     String dbError = null;
     try {
         Class.forName("com.mysql.cj.jdbc.Driver");
+        // Truy xuất chuỗi kết nối và thông tin bảo mật từ tệp cấu hình trung tâm
         conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
     } catch(Exception e) {
         dbError = e.getMessage();
@@ -171,12 +179,15 @@
         <div class="container py-4">
             <div class="row g-4">
                 <%
+                    // 2. TRUY VẤN VÀ DUYỆT DANH SÁCH CÁC ĐÁNH GIÁ ĐÃ DUYỆT (FETCH APPROVED REVIEWS)
                     if(conn != null){
                         try {
+                            // Lọc các đánh giá hợp lệ (status = 1) và JOIN với bảng guests để lấy tên thật
                             String sql = "SELECT r.*, g.full_name FROM reviews r JOIN guests g ON r.guest_id = g.id WHERE r.status = 1 ORDER BY r.created_at DESC";
                             Statement st = conn.createStatement();
                             ResultSet rs = st.executeQuery(sql);
                             
+                            // Trình định dạng ngày tháng hiển thị thân thiện theo chuẩn Việt Nam
                             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
                             boolean hasReviews = false;
                             
@@ -186,12 +197,14 @@
                                 int rating = rs.getInt("rating");
                                 String comment = rs.getString("comment");
                                 Timestamp date = rs.getTimestamp("created_at");
+                                // Trích xuất ký tự đầu tiên của Tên để làm ảnh đại diện động (Avatar Bubble)
                                 String initial = name.substring(0, 1).toUpperCase();
                 %>
                 <div class="col-lg-4 col-md-6">
                     <div class="review-card shadow-sm">
                         <i class="bi bi-quote quote-icon"></i>
                         <div class="rating-stars">
+                            <%-- Lặp tuần tự 5 lần để in ra số lượng sao tương ứng với cột rating --%>
                             <% for(int i=0; i<5; i++) { %>
                                 <i class="bi <%= (i < rating) ? "bi-star-fill" : "bi-star" %>"></i>
                             <% } %>
@@ -207,10 +220,13 @@
                     </div>
                 </div>
                 <% 
-                            }
+                            } // Kết thúc lặp các thẻ review
+                            
+                            // Nếu không tìm thấy đánh giá nào hợp lệ, hiển thị thông điệp khích lệ thân thiện
                             if (!hasReviews) {
                                 out.println("<div class='col-12 text-center py-5'><p class='text-muted'>Chưa có đánh giá nào được hiển thị. Hãy là người đầu tiên chia sẻ trải nghiệm!</p></div>");
                             }
+                            // 3. ĐÓNG TÀI NGUYÊN BỘ NHỚ (RESOURCE CLEANUP)
                             rs.close(); st.close();
                         } catch(Exception e) {
                             out.println("<div class='col-12 alert alert-danger'>Lỗi kết nối: " + e.getMessage() + "</div>");
@@ -233,6 +249,7 @@
     <%@ include file="../layouts/footer.jsp" %>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <%-- 4. GIẢI PHÓNG KẾT NỐI (CLOSE CONNECTION) --%>
     <% if(conn != null) try { conn.close(); } catch(Exception e) {} %>
 </body>
 </html>

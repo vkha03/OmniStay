@@ -1,6 +1,13 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- ==========================================================================
+     PHÂN HỆ QUẢN TRỊ TÀI KHOẢN NHÂN SỰ (ADMIN STAFF CONTROLLER)
+     Hệ thống quản lý tài khoản người dùng nội bộ (Lễ tân, Quản trị viên).
+     Bảo mật hai lớp: kiểm tra phiên đăng nhập và giới hạn quyền truy cập chỉ cho
+     role 'ADMIN'. Hỗ trợ tạo mới, đổi mật khẩu và bảo vệ tài khoản gốc (ID=1).
+     ========================================================================== --%>
 <%@ include file="../layouts/admin-auth.jsp" %>
 <%
+    // Phân quyền chuyên sâu: Chỉ tài khoản mang vai trò ADMIN mới được phép truy cập trang này
     if (!"ADMIN".equals(adminRole)) {
         response.sendRedirect("index.jsp");
         return;
@@ -9,24 +16,28 @@
 <%@ page import="java.sql.*, java.util.*, java.text.SimpleDateFormat" %>
 <%@ include file="../env-secrets.jsp" %>
 <%
+    // Cấu hình mã hóa ký tự UTF-8 cho toàn bộ request đầu vào
     request.setCharacterEncoding("UTF-8");
     Connection conn = null;
     String thongBao = null;
-    String loaiThongBao = "success"; // success hoặc danger
+    String loaiThongBao = "success"; // Phân loại màu thông báo: success hoặc danger
 
     try {
+        // Nạp Driver và thiết lập kết nối an toàn
         Class.forName("com.mysql.cj.jdbc.Driver");
         conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
 
-        // ─── XỬ LÝ LOGIC (ADD / EDIT / DELETE) ───
+        // ─── 1. BỘ XỬ LÝ LOGIC TÀI KHOẢN CRUD (STAFF CONTROLLER ACTIONS) ───
         String action = request.getParameter("action");
         if (action != null) {
+            // a) TÁC VỤ CẤP PHÁT TÀI KHOẢN MỚI (CREATE STAFF ACCOUNT)
             if (action.equals("add")) {
                 String name = request.getParameter("fullName");
                 String email = request.getParameter("email");
                 String pass = request.getParameter("password");
                 String role = request.getParameter("role");
                 
+                // Gán tham số an toàn với PreparedStatement để ngăn chặn SQL Injection
                 PreparedStatement ps = conn.prepareStatement("INSERT INTO staff (full_name, email, password, role) VALUES (?, ?, ?, ?)");
                 ps.setString(1, name);
                 ps.setString(2, email);
@@ -35,6 +46,7 @@
                 ps.executeUpdate();
                 thongBao = "Đã thêm nhân viên mới thành công!";
             } 
+            // b) TÁC VỤ CHỈNH SỬA THÔNG TIN & MẬT KHẨU (UPDATE STAFF INFO)
             else if (action.equals("edit")) {
                 int id = Integer.parseInt(request.getParameter("staffId"));
                 String name = request.getParameter("fullName");
@@ -42,6 +54,7 @@
                 String role = request.getParameter("role");
                 String pass = request.getParameter("password");
 
+                // Cập nhật linh hoạt: nếu người dùng điền mật khẩu mới thì cập nhật, ngược lại giữ nguyên
                 String sql = "UPDATE staff SET full_name=?, email=?, role=? " + (pass != null && !pass.isEmpty() ? ", password=?" : "") + " WHERE id=?";
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setString(1, name);
@@ -56,9 +69,11 @@
                 ps.executeUpdate();
                 thongBao = "Đã cập nhật thông tin nhân viên!";
             }
+            // c) TÁC VỤ XÓA / THU HỒI TÀI KHOẢN (DELETE STAFF ACCOUNT)
             else if (action.equals("delete")) {
                 int id = Integer.parseInt(request.getParameter("staffId"));
-                if (id != 1) { // Không cho xóa admin gốc
+                // Cơ chế bảo vệ cốt lõi: Nghiêm cấm mọi hành vi xóa tài khoản Quản trị viên gốc (ID = 1)
+                if (id != 1) { 
                     PreparedStatement ps = conn.prepareStatement("DELETE FROM staff WHERE id = ?");
                     ps.setInt(1, id);
                     ps.executeUpdate();
@@ -148,8 +163,10 @@
                     </thead>
                     <tbody>
                         <%
+                            // 2. TRUY VẤN VÀ ĐỔ DỮ LIỆU DANH SÁCH NHÂN SỰ (RENDER STAFF TABLE)
                             if(conn != null) {
                                 try {
+                                    // Sắp xếp danh sách ưu tiên hiển thị Quản trị viên (ADMIN) lên đầu, sau đó theo Alphabet
                                     String sql = "SELECT * FROM staff WHERE 1=1 ";
                                     if(staffSearch != null && !staffSearch.trim().isEmpty()) {
                                         sql += " AND (full_name LIKE ? OR email LIKE ?)";
@@ -169,11 +186,14 @@
                                         String email = rs.getString("email");
                                         String role = rs.getString("role");
                                         Timestamp createdAt = rs.getTimestamp("created_at");
+                                        
+                                        // Thuật toán trích xuất ký tự viết tắt của Tên riêng làm Logo nhận diện tài khoản
                                         String initials = (name != null && name.contains(" ")) ? name.substring(name.lastIndexOf(" ")+1, name.lastIndexOf(" ")+2).toUpperCase() : (name != null ? name.substring(0,1).toUpperCase() : "?");
                         %>
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center">
+                                    <%-- Gán màu sắc Badge tương ứng: Đỏ nhạt cho Quản trị viên và Xanh ngọc cho Lễ tân --%>
                                     <div class="guest-avatar" style="background: <%= role.equals("ADMIN") ? "rgba(220, 53, 69, 0.1)" : "rgba(26, 107, 90, 0.1)" %>; color: <%= role.equals("ADMIN") ? "#dc3545" : "var(--primary)" %>">
                                         <%= initials %>
                                     </div>
@@ -198,6 +218,7 @@
                             <td><div class="small text-muted"><%= createdAt != null ? sdf.format(createdAt) : "N/A" %></div></td>
                             <td class="text-end">
                                 <a class="action-btn" onclick="openEditModal(<%= id %>, '<%= name %>', '<%= email %>', '<%= role %>')" title="Sửa"><i class="bi bi-pencil-square text-primary"></i></a>
+                                <%-- Ẩn/Vô hiệu hóa hoàn toàn nút Xóa đối với tài khoản Quản trị viên gốc (ID = 1) trên UI --%>
                                 <% if(id != 1) { %>
                                     <form action="admin-staff.jsp" method="POST" style="display:inline;" onsubmit="return confirm('Thu hồi tài khoản này?')">
                                         <input type="hidden" name="action" value="delete">
@@ -208,7 +229,7 @@
                             </td>
                         </tr>
                         <%
-                                    }
+                                    } // Kết thúc lặp danh sách nhân sự
                                     rs.close(); ps.close();
                                 } catch(Exception e) { out.println("Lỗi: " + e.getMessage()); }
                             }

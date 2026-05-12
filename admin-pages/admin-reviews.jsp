@@ -1,28 +1,42 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- ==========================================================================
+     PHÂN HỆ KIỂM DUYỆT ĐÁNH GIÁ KHÁCH HÀNG (ADMIN REVIEWS CONTROLLER)
+     Hệ thống xem xét và kiểm duyệt các phản hồi từ khách hàng sau khi lưu trú.
+     Cho phép quản trị viên thay đổi trạng thái (hiển thị / ẩn) trên giao diện
+     công cộng hoặc xóa bỏ hoàn toàn các nhận xét vi phạm tiêu chuẩn cộng đồng.
+     ========================================================================== --%>
 <%@ include file="../layouts/admin-auth.jsp" %>
 <%@ page import="java.sql.*, java.util.*, java.text.SimpleDateFormat" %>
 <%@ include file="../env-secrets.jsp" %>
 <%
+    // Gán đồng nhất mã hóa UTF-8 để hiển thị chính xác bình luận tiếng Việt
     request.setCharacterEncoding("UTF-8");
     Connection conn = null;
     String thongBao = null;
 
     try {
+        // Nạp Database Driver và thiết lập kết nối an toàn
         Class.forName("com.mysql.cj.jdbc.Driver");
         conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
 
+        // ─── 1. BỘ ĐIỀU KHIỂN TÁC VỤ KIỂM DUYỆT (REVIEW CONTROLLER ACTIONS) ───
         String action = request.getParameter("action");
         if (action != null) {
             int id = Integer.parseInt(request.getParameter("id"));
+            
+            // a) TÁC VỤ ẨN/HIỆN ĐÁNH GIÁ (TOGGLE REVIEW STATUS)
             if (action.equals("toggleStatus")) {
                 int currentStatus = Integer.parseInt(request.getParameter("currentStatus"));
+                // Đảo ngược trạng thái: nếu đang hiện (1) thì ẩn (0) và ngược lại
                 int newStatus = (currentStatus == 1) ? 0 : 1;
                 PreparedStatement ps = conn.prepareStatement("UPDATE reviews SET status = ? WHERE id = ?");
                 ps.setInt(1, newStatus);
                 ps.setInt(2, id);
                 ps.executeUpdate();
                 thongBao = "Đã cập nhật trạng thái hiển thị!";
-            } else if (action.equals("delete")) {
+            } 
+            // b) TÁC VỤ XÓA VĨNH VIỄN ĐÁNH GIÁ (DELETE REVIEW)
+            else if (action.equals("delete")) {
                 PreparedStatement ps = conn.prepareStatement("DELETE FROM reviews WHERE id = ?");
                 ps.setInt(1, id);
                 ps.executeUpdate();
@@ -108,8 +122,10 @@
                     </thead>
                     <tbody>
                         <%
+                            // 2. TRUY VẤN VÀ ĐỔ DỮ LIỆU ĐÁNH GIÁ (RENDER REVIEWS TABLE)
                             if(conn != null) {
                                 try {
+                                    // Kết nối 3 bảng: reviews, guests và rooms để hiển thị tường minh ai đánh giá phòng nào
                                     String sql = "SELECT r.*, g.full_name, rs.room_number FROM reviews r " +
                                                  "JOIN guests g ON r.guest_id = g.id " +
                                                  "JOIN rooms rs ON r.room_id = rs.id WHERE 1=1 ";
@@ -136,11 +152,13 @@
                                         int status = rs.getInt("status");
                                         Timestamp createdAt = rs.getTimestamp("created_at");
                         %>
+                        <%-- Giảm độ sáng (opacity) của dòng nếu đánh giá đó đang bị ẩn khỏi phía người dùng --%>
                         <tr style="<%= status == 0 ? "opacity: 0.6;" : "" %>">
                             <td><div class="fw-600 text-dark"><%= name %></div><div class="text-muted small"><%= sdf.format(createdAt) %></div></td>
                             <td><span class="badge bg-light text-dark border fw-normal py-1 px-2"><i class="bi bi-door-closed text-primary me-1"></i>P.<%= roomNB %></span></td>
                             <td>
                                 <div class="star-rating">
+                                    <%-- Vòng lặp in chính xác số lượng sao vàng (fill) tương ứng với điểm số rating --%>
                                     <% for(int i=0; i<5; i++) { %>
                                         <i class="bi <%= i < rating ? "bi-star-fill text-warning" : "bi-star text-muted" %>"></i>
                                     <% } %>
@@ -170,7 +188,7 @@
                             </td>
                         </tr>
                         <%
-                                    }
+                                    } // Kết thúc lặp danh sách đánh giá
                                     rs.close(); ps.close();
                                 } catch(Exception e) { out.println("Lỗi: " + e.getMessage()); }
                             }

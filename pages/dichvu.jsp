@@ -1,14 +1,23 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
+<%@ include file="../env-secrets.jsp" %>
+<%-- ==========================================================================
+     TRANG DANH SÁCH DỊCH VỤ KHÁCH SẠN (HOTEL SERVICES CATALOG)
+     Truy vấn và kết xuất danh sách toàn bộ các dịch vụ tiện ích đi kèm
+     (Spa, Đưa đón, Ẩm thực...) từ cơ sở dữ liệu để giới thiệu đến khách hàng.
+     ========================================================================== --%>
 <%
+    // 1. KHỞI TẠO KẾT NỐI CƠ SỞ DỮ LIỆU (DATABASE INITIALIZATION)
     Connection conn = null;
     String dbError = null;
     try{
         Class.forName("com.mysql.cj.jdbc.Driver");
-        conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/omnistay", "root", "");
+        // Đảm bảo tính nhất quán cấu hình toàn hệ thống bằng cách gọi biến từ env-secrets.jsp
+        conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
     }catch(Exception e){
         dbError = e.getMessage();
     }
+    // Định dạng tiền tệ cho đơn giá dịch vụ
     NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 %>
 <!DOCTYPE html>
@@ -152,27 +161,32 @@
       <div class="container">
         <div class="row g-4">
           <%
+            // 2. TRUY VẤN VÀ DUYỆT DANH SÁCH DỊCH VỤ (FETCH & ITERATE SERVICES)
             if(conn != null){
                 try{
+                    // Lấy toàn bộ các dịch vụ hiện có trong khách sạn
                     String sql = "SELECT * FROM services";
                     PreparedStatement ps = conn.prepareStatement(sql);
                     ResultSet rs = ps.executeQuery();
                     
+                    // Danh sách biểu tượng (Bootstrap Icons) phong phú để ánh xạ xoay vòng cho các thẻ dịch vụ
                     String[] icons = {"bi-stars", "bi-cup-hot", "bi-car-front", "bi-bicycle", "bi-wifi", "bi-tv", "bi-telephone", "bi-magic"};
                     int iconIndex = 0;
 
                     while(rs.next()){
                         int id = rs.getInt("id");
 
-                        // ⚠️ CHỈNH ĐÚNG TÊN CỘT (tránh lỗi của bạn)
+                        // Trích xuất Tên dịch vụ và Mô tả (lưu tạm trong cột `unit`)
                         String name = rs.getString("service_name");
                         String des  = rs.getString("unit"); 
                         double price = rs.getDouble("price");
 
+                        // Nếu dịch vụ chưa có mô tả chi tiết, gán chuỗi giới thiệu mặc định chuẩn 5 sao
                         if(des == null || des.trim().isEmpty()){
                             des = "Trải nghiệm dịch vụ cao cấp tại OmniStay với chất lượng phục vụ 5 sao.";
                         }
                         
+                        // Lựa chọn icon xoay vòng tuần tự dựa trên phép chia lấy dư
                         String icon = icons[iconIndex % icons.length];
                         iconIndex++;
           %>
@@ -198,7 +212,9 @@
           </div>
           
           <%
-                    }
+                    } // Kết thúc lặp dịch vụ
+                    
+                    // 3. ĐÓNG TÀI NGUYÊN VÀ XỬ LÝ LỖI (RESOURCES & EXCEPTION HANDLING)
                     rs.close();
                     ps.close();
                 }catch(Exception e){
@@ -217,6 +233,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <% 
+        // 4. GIẢI PHÓNG KẾT NỐI (CONNECTION CLEANUP)
+        // Trả lại tài nguyên Connection cho Server nhằm tối ưu hóa hiệu suất
         if(conn != null) try { conn.close(); } catch(Exception e) {} 
     %>
   </body>

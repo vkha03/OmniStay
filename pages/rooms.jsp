@@ -1,7 +1,14 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
 <%@ include file="../env-secrets.jsp" %>
+<%-- ==========================================================================
+     TRANG BỘ LỌC VÀ DANH SÁCH PHÒNG (ROOMS CATALOG & FILTERING)
+     Cung cấp giao diện trực quan cho phép khách hàng tra cứu, lọc và sắp xếp
+     các loại phòng theo nhiều tiêu chí (Loại phòng, Sức chứa, Giá cả).
+     Hỗ trợ truy vấn SQL động an toàn để tối ưu hóa kết quả trả về.
+     ========================================================================== --%>
 <%
+    // 1. KHỞI TẠO KẾT NỐI VÀ XỬ LÝ LỖI (CONNECTION SETUP)
     Connection conn = null;
     String dbError = null;
     try{
@@ -11,28 +18,36 @@
         dbError = e.getMessage();
     }
     
-    // Lấy các tham số lọc
+    // 2. NHẬN CÁC THAM SỐ LỌC TỪ QUERY STRING (EXTRACT FILTER PARAMETERS)
+    // Lấy tiêu chí loại phòng (VD: Standard, Deluxe, Premium)
     String filterType = request.getParameter("type");
-    if(filterType == null) filterType = "all";
+    if(filterType == null) filterType = "all"; // Mặc định là hiển thị tất cả
     
+    // Lấy tiêu chí số lượng khách tối thiểu
     String filterOccupancy = request.getParameter("occupancy");
     if(filterOccupancy == null) filterOccupancy = "";
     
+    // Lấy tiêu chí sắp xếp (Giá tăng dần, giảm dần, độ phổ biến)
     String filterSort = request.getParameter("sort");
     if(filterSort == null) filterSort = "price_asc";
     
+    // Bộ định dạng số tiền bản địa hóa (Việt Nam Đồng)
     NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
-
-    // Helper translation
-    java.util.function.Function<String, String> translateType = (type) -> {
+%>
+<%!
+    // 3. HÀM CHUYỂN ĐỔI NGÔN NGỮ LOẠI PHÒNG (ROOM TYPE TRANSLATION HELPER)
+    // Thay thế cách viết Lambda (tránh lỗi tương thích trình biên dịch cũ trên Tomcat)
+    // Chuyển đổi mã loại phòng sang tên tiếng Việt tường minh cho khách hàng dễ đọc
+    private String translateType(String type) {
         if(type == null) return "Chưa xác định";
-        switch(type.trim().toUpperCase()) {
-            case "STANDARD": return "Tiêu chuẩn (Standard)";
-            case "DELUXE": return "Sang trọng (Deluxe)";
-            case "PREMIUM": return "Cao cấp (Premium)";
-            default: return type;
-        }
-    };
+        // Chuẩn hóa chuỗi (xóa khoảng trắng thừa và viết hoa toàn bộ để so sánh chính xác)
+        String t = type.trim().toUpperCase();
+        if("STANDARD".equals(t)) return "Tiêu chuẩn (Standard)";
+        if("DELUXE".equals(t)) return "Sang trọng (Deluxe)";
+        if("PREMIUM".equals(t)) return "Cao cấp (Premium)";
+        // Trả về chuỗi gốc nếu không khớp các mẫu định sẵn
+        return type;
+    }
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -238,17 +253,22 @@
               <select name="type" class="form-select">
                 <option value="all" <%= filterType.equals("all") ? "selected" : "" %>>Tất cả các loại</option>
                 <%
+                    // 4. TRUY VẤN NẠP BỘ LỌC LOẠI PHÒNG (POPULATE FILTER OPTIONS)
+                    // Tự động lấy danh sách tên loại phòng từ cơ sở dữ liệu
                     if(conn != null) {
                         try {
                             PreparedStatement pst = conn.prepareStatement("SELECT type_name FROM room_types ORDER BY id ASC");
                             ResultSet rst = pst.executeQuery();
                             while(rst.next()) {
                                 String tName = rst.getString("type_name");
+                                // So sánh không phân biệt hoa thường để giữ trạng thái đã chọn (selected)
                                 String selected = filterType.equalsIgnoreCase(tName) ? "selected" : "";
                                 out.print("<option value='" + tName + "' " + selected + ">" + tName + "</option>");
                             }
                             rst.close(); pst.close();
-                        } catch(Exception e) {}
+                        } catch(Exception e) {
+                            // Bỏ qua lỗi ngầm định để không làm gián đoạn form lọc
+                        }
                     }
                 %>
               </select>
@@ -277,22 +297,27 @@
 
         <div class="row g-4">
           <%
+            // 5. TRUY VẤN VÀ RENDER DANH SÁCH LOẠI PHÒNG KÈM BỘ LỌC (RENDER DYNAMIC CATALOG)
             if(conn != null){
                 try{
-                    // Xây dựng câu truy vấn động
+                    // Sử dụng StringBuilder để cộng chuỗi SQL động tối ưu bộ nhớ
+                    // Mệnh đề WHERE 1=1 giúp việc append các điều kiện AND phía sau dễ dàng hơn
                     StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM room_types WHERE 1=1");
                     List<Object> params = new ArrayList<>();
                     
+                    // Nạp điều kiện lọc theo Tên loại phòng nếu người dùng chọn cụ thể
                     if(!filterType.equals("all")) {
                         sqlBuilder.append(" AND type_name LIKE ?");
                         params.add("%" + filterType + "%");
                     }
                     
+                    // Nạp điều kiện lọc theo sức chứa tối thiểu
                     if(!filterOccupancy.isEmpty()) {
                         sqlBuilder.append(" AND max_occupancy >= ?");
                         params.add(Integer.parseInt(filterOccupancy));
                     }
                     
+                    // Áp dụng tiêu chí sắp xếp (ORDER BY) theo yêu cầu
                     if(filterSort.equals("price_asc")) {
                         sqlBuilder.append(" ORDER BY base_price ASC");
                     } else if(filterSort.equals("price_desc")) {
@@ -301,14 +326,17 @@
                         sqlBuilder.append(" ORDER BY id DESC");
                     }
                     
+                    // Khởi tạo PreparedStatement để tránh hoàn toàn rủi ro SQL Injection
                     PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString());
                     for(int i=0; i<params.size(); i++) {
                         ps.setObject(i+1, params.get(i));
                     }
                     
                     ResultSet rs = ps.executeQuery();
+                    // Cờ theo dõi xem bộ lọc có trả về kết quả nào hay không
                     boolean hasResults = false;
                     
+                    // Duyệt tuần tự qua các hạng phòng khớp điều kiện
                     while(rs.next()){
                         hasResults = true;
                         int id = rs.getInt("id");
@@ -318,6 +346,7 @@
                         String des = rs.getString("description");
                         String imgURL = rs.getString("image_url");
                         
+                        // Sử dụng ảnh mặc định sang trọng nếu CSDL thiếu đường dẫn ảnh
                         if(imgURL == null || imgURL.isEmpty()){
                             imgURL = request.getContextPath() + "/images/hero/hotel-room-hero.jpg";
                         }
@@ -334,7 +363,7 @@
               
               <div class="card-body p-4 d-flex flex-column">
                 <div>
-                    <h5 class="font-display fw-normal mb-2"><%= translateType.apply(typeName) %></h5>
+                    <h5 class="font-display fw-normal mb-2"><%= translateType(typeName) %></h5>
 
                     <p class="text-muted mb-3" style="font-size: 0.82rem; line-height: 1.6">
                       <%= des %>
@@ -363,16 +392,20 @@
           </div>
           
           <%
-                    }
+                    } // Kết thúc lặp thẻ phòng
+                    
+                    // Nếu bộ lọc quá khắt khe khiến tập kết quả trống, hiển thị trạng thái Empty State
                     if(!hasResults) {
                         out.println("<div class='col-12 text-center py-5'><div class='p-5 bg-white rounded-4 shadow-sm'><i class='bi bi-search mb-3' style='font-size: 3rem; color: var(--border)'></i><h4 class='font-display'>Không tìm thấy phòng phù hợp</h4><p class='text-muted'>Vui lòng thử lại với các tiêu chí lọc khác.</p><a href='rooms.jsp' class='btn btn-outline-primary rounded-pill mt-3'>Xem tất cả phòng</a></div></div>");
                     }
                     rs.close();
                     ps.close();
                 } catch(Exception e) { 
+                    // Ghi nhận lỗi thực thi câu truy vấn
                     out.println("<div class='col-12'><p class='alert alert-danger'>Lỗi lấy dữ liệu: " + e.getMessage() + "</p></div>");
                 }
             } else {
+                // Hiển thị cảnh báo mất kết nối nếu conn == null
                 out.println("<div class='col-12'><p class='alert alert-danger'>LỖI KẾT NỐI DATABASE: " + dbError + "</p></div>");
             }
           %>
@@ -385,6 +418,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <% 
+        // 6. GIẢI PHÓNG TÀI NGUYÊN (RESOURCE CLEANUP)
+        // Đóng Connection để hoàn trả lại cho hệ thống quản lý, tránh tràn bộ nhớ
         if(conn != null) try { conn.close(); } catch(Exception e) {} 
     %>
   </body>

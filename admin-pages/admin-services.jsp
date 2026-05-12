@@ -1,25 +1,35 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- ==========================================================================
+     PHÂN HỆ QUẢN LÝ DỊCH VỤ VÀ TIỆN ÍCH KHÁCH SẠN (ADMIN SERVICES CONTROLLER)
+     Xử lý hiển thị danh mục các dịch vụ bổ sung (spa, ăn uống, giặt ủi...)
+     Cung cấp trọn gói các thao tác thêm mới, cập nhật giá thành, đơn vị tính
+     và xóa dịch vụ thông qua cơ chế xử lý POST đồng bộ với giao diện Modal.
+     ========================================================================== --%>
 <%@ include file="../layouts/admin-auth.jsp" %>
 <%@ page import="java.sql.*, java.util.*, java.text.NumberFormat" %>
 <%@ include file="../env-secrets.jsp" %>
 <%
+    // Thiết lập bảng mã UTF-8 để nhận dữ liệu tiếng Việt có dấu từ form chính xác
     request.setCharacterEncoding("UTF-8");
     Connection conn = null;
     String thongBao = null;
     String loaiThongBao = "success";
 
     try {
+        // Khởi tạo trình điều khiển kết nối MySQL
         Class.forName("com.mysql.cj.jdbc.Driver");
         conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
 
-        // ─── XỬ LÝ LOGIC (ADD / EDIT / DELETE) ───
+        // ─── 1. XỬ LÝ LOGIC CRUD BỔ SUNG DỊCH VỤ (ADD / EDIT / DELETE ACTION) ───
         String action = request.getParameter("action");
         if (action != null) {
+            // a) TÁC VỤ THÊM MỚI DỊCH VỤ (CREATE SERVICE)
             if (action.equals("add")) {
                 String name = request.getParameter("serviceName");
                 double price = Double.parseDouble(request.getParameter("price"));
                 String unit = request.getParameter("unit");
                 
+                // Dùng PreparedStatement gán tham số tránh rủi ro SQL Injection
                 PreparedStatement ps = conn.prepareStatement("INSERT INTO services (service_name, price, unit) VALUES (?, ?, ?)");
                 ps.setString(1, name);
                 ps.setDouble(2, price);
@@ -27,6 +37,7 @@
                 ps.executeUpdate();
                 thongBao = "Đã thêm dịch vụ mới!";
             } 
+            // b) TÁC VỤ CẬP NHẬT THÔNG TIN DỊCH VỤ (UPDATE SERVICE)
             else if (action.equals("edit")) {
                 int id = Integer.parseInt(request.getParameter("serviceId"));
                 String name = request.getParameter("serviceName");
@@ -41,6 +52,7 @@
                 ps.executeUpdate();
                 thongBao = "Đã cập nhật dịch vụ!";
             }
+            // c) TÁC VỤ XÓA DỊCH VỤ (DELETE SERVICE)
             else if (action.equals("delete")) {
                 int id = Integer.parseInt(request.getParameter("serviceId"));
                 PreparedStatement ps = conn.prepareStatement("DELETE FROM services WHERE id = ?");
@@ -53,6 +65,7 @@
         thongBao = "Lỗi: " + e.getMessage();
         loaiThongBao = "danger";
     }
+    // Bộ định dạng hiển thị giá tiền tệ chuẩn VNĐ
     NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 %>
 <!DOCTYPE html>
@@ -127,8 +140,10 @@
                     </thead>
                     <tbody>
                         <%
+                            // 2. TRUY VẤN VÀ ĐỔ DỮ LIỆU DANH SÁCH DỊCH VỤ (RENDER SERVICES TABLE)
                             if(conn != null) {
                                 try {
+                                    // Tạo truy vấn SQL cơ sở, bổ sung điều kiện lọc LIKE nếu có từ khóa tìm kiếm
                                     String sql = "SELECT * FROM services WHERE 1=1 ";
                                     if(serviceSearch != null && !serviceSearch.trim().isEmpty()) {
                                         sql += " AND service_name LIKE ?";
@@ -147,6 +162,7 @@
                                         double price = rs.getDouble("price");
                                         String unit = rs.getString("unit");
                                         
+                                        // Thuật toán tự động nhận diện từ khóa trong tên dịch vụ để gán icon Bootstrap phù hợp
                                         String icon = "bi-box";
                                         if(name.toLowerCase().contains("buffet") || name.toLowerCase().contains("ăn")) icon = "bi-egg-fried";
                                         if(name.toLowerCase().contains("uống") || name.toLowerCase().contains("coca")) icon = "bi-cup-straw";
@@ -172,7 +188,7 @@
                             </td>
                         </tr>
                         <%
-                                    }
+                                    } // Kết thúc lặp danh sách dịch vụ
                                     rs.close(); ps.close();
                                 } catch(Exception e) { out.println("Lỗi: " + e.getMessage()); }
                             }

@@ -1,4 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- ==========================================================================
+     TRANG TRA CỨU HÓA ĐƠN VÀ ĐƠN ĐẶT PHÒNG (INVOICE & BOOKING LOOKUP)
+     Cung cấp biểu mẫu bảo mật cho phép khách hàng tra cứu trạng thái đơn hàng,
+     tổng chi phí và tùy chọn gửi nhận xét dựa trên Mã đặt phòng (Booking Code)
+     và Số điện thoại đăng ký nhằm bảo vệ tối đa dữ liệu cá nhân.
+     ========================================================================== --%>
 <!DOCTYPE html>
 <html lang="vi">
 <head>

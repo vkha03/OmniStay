@@ -1,5 +1,11 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-pageEncoding="UTF-8"%>
+pageEncoding="UTF-8"%> <%--
+========================================================================== PHẦN
+CHÂN TRANG HỆ THỐNG (GLOBAL FOOTER COMPONENT) Được nhúng vào cuối tất cả các
+trang giao diện công cộng (Customer facing). Chứa thông tin bản quyền, địa chỉ
+liên hệ, các liên kết điều hướng phụ và biểu mẫu đăng ký nhận bản tin khuyến
+mãi. Sử dụng cú pháp comment an toàn tuyệt đối của JSP để tránh lỗi.
+========================================================================== --%>
 <style>
   /* 1. Base Footer */
   .footer-custom {
@@ -94,8 +100,14 @@ pageEncoding="UTF-8"%>
   <div class="container mt-3">
     <div class="row g-4 mb-5">
       <div class="col-lg-4">
-        <div class="font-display fs-3 fw-bold text-white mb-3 footer-brand d-flex align-items-center gap-2">
-          <img src="<%=request.getContextPath()%>/images/logo.png" alt="Logo" style="height: 40px; border-radius: 6px;" />
+        <div
+          class="font-display fs-3 fw-bold text-white mb-3 footer-brand d-flex align-items-center gap-2"
+        >
+          <img
+            src="<%=request.getContextPath()%>/images/logo.png"
+            alt="Logo"
+            style="height: 40px; border-radius: 6px"
+          />
           <div>Omni<span style="color: var(--accent, #d4a847)">Stay</span></div>
         </div>
         <p class="footer-desc mb-4">
@@ -113,7 +125,11 @@ pageEncoding="UTF-8"%>
       <div class="col-6 col-lg-2 offset-lg-1">
         <div class="footer-title mb-4">Khách sạn</div>
         <div class="d-flex flex-column gap-3">
-          <a href="<%=request.getContextPath()%>/pages/rooms.jsp" class="footer-link">Phòng nghỉ</a>
+          <a
+            href="<%=request.getContextPath()%>/pages/rooms.jsp"
+            class="footer-link"
+            >Phòng nghỉ</a
+          >
           <a href="#amenities" class="footer-link">Dịch vụ</a>
           <a href="#" class="footer-link">Ưu đãi</a>
           <a href="#reviews" class="footer-link">Đánh giá</a>
@@ -124,7 +140,11 @@ pageEncoding="UTF-8"%>
         <div class="footer-title mb-4">Hỗ trợ</div>
         <div class="d-flex flex-column gap-3">
           <a href="#" class="footer-link">Câu hỏi thường gặp</a>
-          <a href="<%=request.getContextPath()%>/pages/contact.jsp" class="footer-link">Liên hệ</a>
+          <a
+            href="<%=request.getContextPath()%>/pages/contact.jsp"
+            class="footer-link"
+            >Liên hệ</a
+          >
           <a href="#" class="footer-link">Chính sách bảo mật</a>
           <a href="#" class="footer-link">Điều khoản dịch vụ</a>
         </div>
@@ -162,5 +182,3 @@ pageEncoding="UTF-8"%>
     </div>
   </div>
 </footer>
-
-

@@ -1,25 +1,38 @@
 <%@ page language="java" contentType="text/event-stream; charset=UTF-8" pageEncoding="UTF-8" buffer="none" %>
+<%-- ==========================================================================
+     CỔNG KẾT NỐI TRÍ TUỆ NHÂN TẠO (AI CONCIERGE STREAMING API)
+     Đóng vai trò là cầu nối Middleware xử lý luồng dữ liệu thời gian thực (SSE)
+     giữa Client (giao diện Chatbot) và mô hình ngôn ngữ lớn Google Gemini.
+     Bảo mật tuyệt đối khóa API, tự động nạp System Prompt chứa tri thức chuyên
+     sâu về dịch vụ khách sạn OmniStay.
+     ========================================================================== --%>
 <%@ page import="java.io.*, java.net.*" %>
 <%@ include file="../env-secrets.jsp" %>
 <%! 
+    // Trích xuất cấu hình bảo mật từ env-secrets.jsp để tái sử dụng xuyên suốt các request
     public static final String GEMINI_API_KEY = SECRET_GEMINI_KEY; 
     public static final String GEMINI_MODEL = SECRET_GEMINI_MODEL; 
 %>
 <%
+    // ─── 1. THIẾT LẬP CẤU HÌNH HTTP ĐẶC THÙ CHO SSE (SERVER-SENT EVENTS) ───
+    // Vô hiệu hóa bộ nhớ đệm và duy trì kết nối liên tục (Keep-Alive) để truyền dữ liệu dạng luồng
     response.setHeader("Cache-Control", "no-cache");
     response.setHeader("Connection", "keep-alive");
     request.setCharacterEncoding("UTF-8");
 
+    // Bộ lọc phương thức: Chỉ chấp nhận các truy vấn dạng POST mang theo payload chat
     if (!"POST".equalsIgnoreCase(request.getMethod())) {
         out.print("data: {\"error\":\"Method not allowed\"}\n\n");
         return;
     }
 
+    // ─── 2. TRÍCH XUẤT VÀ LÀM SẠCH PAYLOAD NỘI DUNG TRÒ CHUYỆN ───
     BufferedReader br = request.getReader();
     StringBuilder reqBody = new StringBuilder();
     String l;
     while ((l = br.readLine()) != null) reqBody.append(l);
     
+    // Phân tích cú pháp thô: Tách lấy mảng JSON chứa toàn bộ lịch sử ngữ cảnh trò chuyện
     int start = reqBody.indexOf("[");
     int end = reqBody.lastIndexOf("]");
     if (start == -1) return;
@@ -154,38 +167,48 @@
         + "═══════════════════════════════\n"
         + "LUÔN TRẢ LỜI NGẮN GỌN, SÚC TÍCH, ĐẲNG CẤP 5 SAO. Dùng emoji ✨🛎️🌿 khi phù hợp để tạo cảm giác thân thiện.";
         
+    // ─── 3. ĐÓNG GÓI DỮ LIỆU GỬI ĐI (CONSTRUCT API PAYLOAD) ───
+    // Cấu trúc đối tượng JSON tiêu chuẩn tuân thủ định dạng của Gemini API mang theo System Prompt và ngữ cảnh
     String apiBody = "{\"system_instruction\":{\"parts\":[{\"text\":\"" + systemPrompt + "\"}]},\"contents\":" + contents + "}";
 
     try {
+        // Khởi tạo kết nối trực tiếp đến điểm cuối trả luồng (Stream Endpoint) của Google
         URL url = new URL("https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":streamGenerateContent?alt=sse&key=" + GEMINI_API_KEY);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
         conn.setRequestProperty("Content-Type", "application/json");
         conn.setDoOutput(true);
+        // Thiết lập thời gian chờ hợp lý để tối ưu tài nguyên: 10s kết nối, 30s đọc phản hồi
         conn.setConnectTimeout(10000);
         conn.setReadTimeout(30000);
 
+        // Đẩy toàn bộ dung lượng Payload lên đường truyền bằng mã hóa UTF-8
         try(OutputStream os = conn.getOutputStream()) {
             os.write(apiBody.getBytes("UTF-8"));
         }
         
+        // ─── 4. KIỂM TRA MÃ TRẠNG THÁI VÀ ĐIỀU HƯỚNG PHẢN HỒI ───
         int code = conn.getResponseCode();
         if (code != 200) {
-            // Thay vì quăng lỗi mã HTTP (503, 400...), trả về thông báo lịch sự cho user
+            // Cơ chế an toàn (Graceful Degradation): Trả về phản hồi thân thiện thay vì để lộ mã lỗi kỹ thuật
             out.print("data: {\"error\":\"Hệ thống OmniAI đang bận hoặc đang bảo trì. Quý khách vui lòng gọi Hotline 1900 1234 để được bộ phận Lễ tân hỗ trợ trực tiếp. Xin lỗi quý khách vì sự bất tiện này!\"}\n\n");
             return;
         }
 
+        // ─── 5. PHÂN TÍCH VÀ CHUYỂN TIẾP LUỒNG DỮ LIỆU SSE (STREAM PROXY) ───
+        // Đọc từng dòng phản hồi ngay lập tức khi nó xuất hiện từ phía máy chủ Google
         BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
         String line;
         while ((line = reader.readLine()) != null) {
+            // Chỉ bắt và chuyển tiếp các đoạn văn bản chứa tiền tố 'data: ' đặc trưng của chuẩn SSE
             if (line.startsWith("data: ")) {
                 out.print(line + "\n\n");
+                // Đẩy bộ đệm Output ngay lập tức để tạo hiệu ứng gõ chữ (Typewriter effect) trực quan trên Client
                 out.flush();
             }
         }
     } catch(Exception e) {
-        // Bắt lỗi Exception (timeout, không kết nối được mạng) và trả thông báo lịch sự
+        // Bắt mọi rủi ro về mạng (Mất kết nối, Hết hạn yêu cầu) và hồi đáp thông tin hướng dẫn kịp thời
         out.print("data: {\"error\":\"Kết nối đến OmniAI đang bị gián đoạn. Quý khách vui lòng liên hệ Hotline 1900 1234 để được hỗ trợ kịp thời nhé!\"}\n\n");
     }
 %>

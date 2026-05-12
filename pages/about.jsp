@@ -1,21 +1,32 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*, java.util.*" %>
 <%@ include file="../env-secrets.jsp" %>
+<%-- ==========================================================================
+     TRANG GIỚI THIỆU KHÁCH SẠN (ABOUT US PAGE)
+     Cung cấp cái nhìn toàn diện về lịch sử hình thành, di sản kiến trúc,
+     tiện ích đỉnh cao và giá trị cốt lõi của thương hiệu OmniStay.
+     Tích hợp logic đếm tổng số phòng thực tế từ CSDL để minh họa trực quan.
+     ========================================================================== --%>
 <%
+    // 1. KHỞI TẠO VÀ TRUY VẤN THỐNG KÊ (DYNAMIC STATS INITIALIZATION)
     Connection conn = null;
-    int totalRooms = 38; // Default fallback
+    // Đặt giá trị dự phòng mặc định (fallback) trong trường hợp mất kết nối CSDL ngầm
+    int totalRooms = 38; 
     try {
         Class.forName("com.mysql.cj.jdbc.Driver");
+        // Gọi chuỗi kết nối an toàn bảo mật từ tệp cấu hình tập trung env-secrets.jsp
         conn = DriverManager.getConnection(SECRET_DB_URL, SECRET_DB_USER, SECRET_DB_PASS);
         
+        // Truy vấn hàm tổng hợp COUNT(*) để đếm tự động tổng số phòng đang quản lý
         PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM rooms");
         ResultSet rs = ps.executeQuery();
         if(rs.next()) {
             totalRooms = rs.getInt(1);
         }
+        // Đóng ngay ResultSet và PreparedStatement để tiết kiệm bộ nhớ đệm
         rs.close(); ps.close();
     } catch(Exception e) {
-        // Ignored
+        // Bỏ qua lỗi ngầm định để đảm bảo trang About luôn hiển thị mượt mà với số liệu fallback
     }
 %>
 <!DOCTYPE html>
@@ -494,6 +505,8 @@
       });
     </script>
     <% 
+        // 2. GIẢI PHÓNG TÀI NGUYÊN (CONNECTION CLEANUP)
+        // Hoàn trả tài nguyên kết nối về cho Server nhằm tránh rò rỉ bộ nhớ
         if(conn != null) try { conn.close(); } catch(Exception e) {} 
     %>
 </body>
